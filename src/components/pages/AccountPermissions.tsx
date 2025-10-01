@@ -148,7 +148,7 @@ export function AccountPermissions() {
       </div>
       <div className="space-y-2">
         <Label htmlFor="role">Vai trò</Label>
-        <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
+        <Select value={formData.role} onValueChange={(value:any) => setFormData({ ...formData, role: value })}>
           <SelectTrigger>
             <SelectValue placeholder="Chọn vai trò" />
           </SelectTrigger>
@@ -166,7 +166,7 @@ export function AccountPermissions() {
           <Checkbox 
             id="canView" 
             checked={formData.canView}
-            onCheckedChange={(checked) => setFormData({ ...formData, canView: checked as boolean })}
+            onCheckedChange={(checked:any) => setFormData({ ...formData, canView: checked as boolean })}
           />
           <label htmlFor="canView" className="text-sm cursor-pointer">
             Xem dữ liệu
@@ -176,7 +176,7 @@ export function AccountPermissions() {
           <Checkbox 
             id="canEdit" 
             checked={formData.canEdit}
-            onCheckedChange={(checked) => setFormData({ ...formData, canEdit: checked as boolean })}
+            onCheckedChange={(checked:any) => setFormData({ ...formData, canEdit: checked as boolean })}
           />
           <label htmlFor="canEdit" className="text-sm cursor-pointer">
             Chỉnh sửa
@@ -186,7 +186,7 @@ export function AccountPermissions() {
           <Checkbox 
             id="canDelete" 
             checked={formData.canDelete}
-            onCheckedChange={(checked) => setFormData({ ...formData, canDelete: checked as boolean })}
+            onCheckedChange={(checked:any) => setFormData({ ...formData, canDelete: checked as boolean })}
           />
           <label htmlFor="canDelete" className="text-sm cursor-pointer">
             Xóa
@@ -196,7 +196,7 @@ export function AccountPermissions() {
           <Checkbox 
             id="canExport" 
             checked={formData.canExport}
-            onCheckedChange={(checked) => setFormData({ ...formData, canExport: checked as boolean })}
+            onCheckedChange={(checked:any) => setFormData({ ...formData, canExport: checked as boolean })}
           />
           <label htmlFor="canExport" className="text-sm cursor-pointer">
             Xuất dữ liệu
@@ -298,6 +298,7 @@ export function AccountPermissions() {
               ))}
             </TableBody>
           </Table>
+          
         </CardContent>
       </Card>
 

@@ -66,7 +66,7 @@ export function AdvancedFilter({
         return (
           <Select
             value={value || '__all__'}
-            onValueChange={(newValue) => handleFilterChange(option.key, newValue === '__all__' ? undefined : newValue)}
+            onValueChange={(newValue:any) => handleFilterChange(option.key, newValue === '__all__' ? undefined : newValue)}
           >
             <SelectTrigger className="h-8">
               <SelectValue placeholder={`Chọn ${option.label.toLowerCase()}`} />
@@ -86,7 +86,7 @@ export function AdvancedFilter({
         return (
           <Popover 
             open={dateOpen === option.key} 
-            onOpenChange={(open) => setDateOpen(open ? option.key : null)}
+            onOpenChange={(open:any) => setDateOpen(open ? option.key : null)}
           >
             <PopoverTrigger asChild>
               <Button
@@ -110,7 +110,7 @@ export function AdvancedFilter({
         return (
           <div className="space-y-2">
             <Select
-              onValueChange={(newValue) => {
+              onValueChange={(newValue:any) => {
                 if (!selectedValues.includes(newValue)) {
                   handleFilterChange(option.key, [...selectedValues, newValue]);
                 }

@@ -195,7 +195,7 @@ export function DataTable({
                           {column.filterType === 'select' && column.filterOptions ? (
                             <Select
                               value={filters[column.key] || 'all'}
-                              onValueChange={(value) => updateFilter(column.key, value)}
+                              onValueChange={(value:any) => updateFilter(column.key, value)}
                             >
                               <SelectTrigger className="h-8">
                                 <SelectValue placeholder="Tất cả" />
