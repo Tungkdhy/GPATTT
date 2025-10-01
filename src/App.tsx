@@ -1,0 +1,83 @@
+import { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from './components/ui/sonner';
+import { LoginForm } from './components/auth/LoginForm';
+import { Layout } from './components/layout/Layout';
+import { Dashboard } from './components/pages/Dashboard';
+import { UserManagement } from './components/pages/UserManagement';
+import { AccountPermissions } from './components/pages/AccountPermissions';
+import { SystemParams } from './components/pages/SystemParams';
+import { DeviceManagement } from './components/pages/DeviceManagement';
+import { InsecureDevices } from './components/pages/InsecureDevices';
+import { DeviceTypes } from './components/pages/DeviceTypes';
+import { BlacklistIPs } from './components/pages/BlacklistIPs';
+import { WhitelistIPs } from './components/pages/WhitelistIPs';
+import { ScenarioManagement } from './components/pages/ScenarioManagement';
+import { ResponseScenarios } from './components/pages/ResponseScenarios';
+import { SoftwareVersions } from './components/pages/SoftwareVersions';
+import { FirewallConfigs } from './components/pages/FirewallConfigs';
+import { LogTypes } from './components/pages/LogTypes';
+import { LogList } from './components/pages/LogList';
+import { ScenarioLogs } from './components/pages/ScenarioLogs';
+import { SystemLogs } from './components/pages/SystemLogs';
+import { LogAddresses } from './components/pages/LogAddresses';
+import { MalwareHashes } from './components/pages/MalwareHashes';
+import { MalwareTypes } from './components/pages/MalwareTypes';
+import { AlertLevels } from './components/pages/AlertLevels';
+import { ErrorCodes } from './components/pages/ErrorCodes';
+import { RegionManagement } from './components/pages/RegionManagement';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { AuthProvider } from './components/auth/AuthContext';
+
+export default function App() {
+  // Set dark theme on mount
+  useEffect(() => {
+    document.documentElement.classList.add('dark');
+  }, []);
+
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<LoginForm />} />
+          <Route
+            path="/*"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Routes>
+                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/users" element={<UserManagement />} />
+                    <Route path="/account-permissions" element={<AccountPermissions />} />
+                    <Route path="/system-params" element={<SystemParams />} />
+                    <Route path="/devices" element={<DeviceManagement />} />
+                    <Route path="/insecure-devices" element={<InsecureDevices />} />
+                    <Route path="/device-types" element={<DeviceTypes />} />
+                    <Route path="/blacklist-ips" element={<BlacklistIPs />} />
+                    <Route path="/whitelist-ips" element={<WhitelistIPs />} />
+                    <Route path="/scenarios" element={<ScenarioManagement />} />
+                    <Route path="/response-scenarios" element={<ResponseScenarios />} />
+                    <Route path="/software-versions" element={<SoftwareVersions />} />
+                    <Route path="/firewall-configs" element={<FirewallConfigs />} />
+                    <Route path="/log-types" element={<LogTypes />} />
+                    <Route path="/log-list" element={<LogList />} />
+                    <Route path="/scenario-logs" element={<ScenarioLogs />} />
+                    <Route path="/system-logs" element={<SystemLogs />} />
+                    <Route path="/log-addresses" element={<LogAddresses />} />
+                    <Route path="/malware-hashes" element={<MalwareHashes />} />
+                    <Route path="/malware-types" element={<MalwareTypes />} />
+                    <Route path="/alert-levels" element={<AlertLevels />} />
+                    <Route path="/error-codes" element={<ErrorCodes />} />
+                    <Route path="/regions" element={<RegionManagement />} />
+                  </Routes>
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+        <Toaster />
+      </AuthProvider>
+    </BrowserRouter>
+  );
+}
