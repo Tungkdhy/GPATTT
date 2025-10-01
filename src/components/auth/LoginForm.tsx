@@ -87,9 +87,9 @@ export function LoginForm() {
               )}
             </Button>
           </form>
-          <div className="mt-4 text-center text-sm text-muted-foreground">
+          {/* <div className="mt-4 text-center text-sm text-muted-foreground">
             Demo: username: admin, password: admin
-          </div>
+          </div> */}
         </CardContent>
       </Card>
     </div>
