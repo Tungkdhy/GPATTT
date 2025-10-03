@@ -28,6 +28,8 @@ import { ErrorCodes } from './components/pages/ErrorCodes';
 import { RegionManagement } from './components/pages/RegionManagement';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { AuthProvider } from './components/auth/AuthContext';
+import { Action } from './components/pages/Action';
+import { CategoryTypes } from './components/pages/CategoryType';
 
 export default function App() {
   // Set dark theme on mount
@@ -49,6 +51,7 @@ export default function App() {
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/users" element={<UserManagement />} />
+                    <Route path="/action" element={<Action />} />
                     <Route path="/account-permissions" element={<AccountPermissions />} />
                     <Route path="/system-params" element={<SystemParams />} />
                     <Route path="/devices" element={<DeviceManagement />} />
@@ -70,6 +73,7 @@ export default function App() {
                     <Route path="/alert-levels" element={<AlertLevels />} />
                     <Route path="/error-codes" element={<ErrorCodes />} />
                     <Route path="/regions" element={<RegionManagement />} />
+                    <Route path="/category-type" element={<CategoryTypes />} />
                   </Routes>
                 </Layout>
               </ProtectedRoute>

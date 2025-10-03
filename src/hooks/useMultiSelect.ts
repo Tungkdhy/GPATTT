@@ -35,7 +35,7 @@ export function useMultiSelect(configs: SourceConfig<any>[]) {
       }
     };
     fetchAll();
-  }, [configs]);
+  }, []);
 
   return { options, loading, error };
 }

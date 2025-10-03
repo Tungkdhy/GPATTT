@@ -40,7 +40,11 @@ interface MenuItem {
 const menuItems: MenuItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
   { id: 'users', label: 'Quản lý người dùng', icon: Users, path: '/users' },
-  { id: 'account-permissions', label: 'Quyền tài khoản', icon: Key, path: '/account-permissions' },
+  { id: 'account-permissions', label: 'Quyền tài khoản', icon: Key, path: '#', children: [
+      { id: 'account-permissions', label: 'Danh sách quyền', icon: ShieldAlert, path: '/account-permissions' },
+      { id: 'action', label: 'Danh sách Hành động', icon: ShieldCheck, path: '/action' },
+      // { id: 'firewall-configs', label: 'Cấu hình tường lửa', icon: Shield, path: '/firewall-configs' },
+    ] },
   { id: 'system-params', label: 'Tham số hệ thống', icon: Settings, path: '/system-params' },
   { id: 'devices', label: 'Quản lý thiết bị', icon: Monitor, path: '/devices' },
   { id: 'insecure-devices', label: 'Thiết bị mất an toàn', icon: ShieldAlert, path: '/insecure-devices' },

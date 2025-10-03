@@ -32,11 +32,11 @@ export interface UpdateUserDto {
   password?: string;
 }
 
-class UsersService {
+class ActionService {
   // Lấy danh sách users
   async getAll(page: number = 1, size: number = 10,params={}): Promise<any> {
     try {
-      const res = await axiosInstance.get("user", {
+      const res = await axiosInstance.get("action/all", {
         params:{
           pageSize:size,
           pageIndex:page,
@@ -78,13 +78,13 @@ class UsersService {
   }
 
   // Tạo user mới
-  async create(data: CreateUserDto): Promise<any> {
+  async create(data: any): Promise<any> {
     try {
       // const response = await axiosInstance.post(API_ENDPOINTS.USERS.CREATE, data);
       // return response.data;
 
       // Mock response
-      const res = axiosInstance.post("user",{
+      const res = axiosInstance.post("action",{
         ...data
       })
       return res
@@ -95,13 +95,13 @@ class UsersService {
   }
 
   // Cập nhật user
-  async update(id: number, data: UpdateUserDto): Promise<any> {
+  async update(id: number, data: any): Promise<any> {
     try {
       // const response = await axiosInstance.put(API_ENDPOINTS.USERS.UPDATE(id), data);
       // return response.data;
 
       // Mock response
-      const res = await axiosInstance.put(`user/${id}`,data)
+      const res = await axiosInstance.put(`action/${id}`,data)
       return res
     } catch (error) {
       console.error('Error updating user:', error);
@@ -113,7 +113,7 @@ class UsersService {
   async delete(id: number): Promise<any> {
     try {
       // await axiosInstance.delete(API_ENDPOINTS.USERS.DELETE(id));
-      const res = await axiosInstance.delete(`user/${id}`)
+      const res = await axiosInstance.delete(`action/${id}`)
       // Mock response
       return res
      
@@ -124,4 +124,4 @@ class UsersService {
   }
 }
 
-export default new UsersService();
+export default new ActionService();

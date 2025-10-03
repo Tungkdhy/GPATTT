@@ -3,8 +3,10 @@ import { useState, useEffect } from 'react';
 const DEFAULT_PAGE_SIZE = 10;
 
 interface PaginationResult<T> {
-  data: T[];
-  total: number;
+  rows: T[];
+  count: number;
+  roles?:T[];
+  parameters?:T[];
 }
 
 interface UseServerPaginationOptions {
@@ -13,9 +15,10 @@ interface UseServerPaginationOptions {
 }
 
 export function useServerPagination<T>(
-  fetchFunction: (page: number, limit: number) => Promise<PaginationResult<T>>,
+  fetchFunction: (page: number, limit: number,param:{}) => Promise<PaginationResult<T>>,
   dependencies: any[] = [],
-  options: UseServerPaginationOptions = {}
+  options: UseServerPaginationOptions = {},
+  param ={}
 ) {
   const { pageSize = DEFAULT_PAGE_SIZE, initialPage = 1 } = options;
   
@@ -28,11 +31,12 @@ export function useServerPagination<T>(
   useEffect(() => {
     const fetchData = async () => {
       try {
+        
         setLoading(true);
         setError(null);
-        const result = await fetchFunction(currentPage, pageSize);
-        setData(result.data);
-        setTotal(result.total);
+        const result = await fetchFunction(currentPage, pageSize,param);
+        setData(result.rows ?? result?.roles ?? result?.parameters);
+        setTotal(result.count);
       } catch (err) {
         setError(err as Error);
         setData([]);

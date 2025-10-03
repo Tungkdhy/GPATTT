@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Base API URL - có thể thay đổi theo environment
 // Sử dụng giá trị mặc định, có thể override bằng cách set window.API_BASE_URL
-const API_BASE_URL = (typeof window !== 'undefined' && (window as any).API_BASE_URL) || 'http://localhost:3000/api';
+const API_BASE_URL = (typeof window !== 'undefined' && (window as any).API_BASE_URL) || 'http://10.10.53.58:3003/api/v1/';
 
 // Tạo axios instance
 const axiosInstance = axios.create({

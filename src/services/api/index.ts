@@ -18,7 +18,13 @@ export { default as logTypesService } from './logTypes.service';
 export { default as logsService } from './logs.service';
 export { default as alertLevelsService } from './alertLevels.service';
 export { default as scenarioLogsService } from './scenarioLogs.service';
-
+export { default as authService } from './auth.service';
+export { default as roleService } from './role.service';
+export { default as actionService } from './action.service';
+export { default as categoryService } from './category.service';
+export { default as categoryTypeService } from './categoryType.service';
+export { default as parametersService } from './params.service';
+// parametersService
 // Export all services from allServices.ts
 export {
   systemParamsService,

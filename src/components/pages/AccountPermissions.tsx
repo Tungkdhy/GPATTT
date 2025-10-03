@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -12,31 +12,40 @@ import { Checkbox } from '../ui/checkbox';
 import { AdvancedFilter, FilterOption } from '../common/AdvancedFilter';
 import { Plus, Edit, Trash2, Key } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
-
-const mockPermissions = [
-  { id: 1, username: 'admin', role: 'Admin', canView: true, canEdit: true, canDelete: true, canExport: true, status: 'active' },
-  { id: 2, username: 'operator1', role: 'Operator', canView: true, canEdit: true, canDelete: false, canExport: true, status: 'active' },
-  { id: 3, username: 'viewer1', role: 'Viewer', canView: true, canEdit: false, canDelete: false, canExport: false, status: 'active' },
-  { id: 4, username: 'security', role: 'Security', canView: true, canEdit: true, canDelete: true, canExport: true, status: 'inactive' },
-];
+import { useServerPagination } from '@/hooks/useServerPagination';
+import { accountPermissionsService, actionService, roleService } from '@/services/api';
 
 export function AccountPermissions() {
-  const [permissions, setPermissions] = useState(mockPermissions);
-  const [searchTerm, setSearchTerm] = useState('');
+  // const [permissions, setPermissions] = useState<any>(mockPermissions);
+  // const [searchTerm, setSearchTerm] = useState('');
+  const [actions, setActions] = useState<any>([])
+  const [id,setId] = useState("")
+  const [actionSelect, setActionSelect] = useState<any>([])
   const [filters, setFilters] = useState<Record<string, any>>({});
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedPermission, setSelectedPermission] = useState<any>(null);
+  const [reload, setReload] = useState(false)
+  const [search, setSearch] = useState("")
   const [formData, setFormData] = useState({
-    username: '',
-    role: '',
-    canView: false,
-    canEdit: false,
-    canDelete: false,
-    canExport: false
+    display_name: "",
+    description: ""
   });
+  const {
+    data: permissions,
+    currentPage,
+    totalPages,
+    total,
+    loading,
+    setCurrentPage,
+  } = useServerPagination(
+    (page, limit) => accountPermissionsService.getAll(page, limit, { search: search }),
+    [search, reload], // dependencies: ví dụ [searchTerm, filters]
+    { pageSize: 10, initialPage: 1 },
+    { search }
 
+  );
   const filterOptions: FilterOption[] = [
     {
       key: 'role',
@@ -60,12 +69,7 @@ export function AccountPermissions() {
     }
   ];
 
-  const filteredPermissions = permissions.filter(perm => {
-    const matchesSearch = perm.username.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = !filters.role || perm.role === filters.role;
-    const matchesStatus = !filters.status || perm.status === filters.status;
-    return matchesSearch && matchesRole && matchesStatus;
-  });
+
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -77,49 +81,44 @@ export function AccountPermissions() {
     }
   };
 
-  const handleAdd = () => {
-    const newPermission = {
-      id: permissions.length + 1,
-      username: formData.username,
-      role: formData.role,
-      canView: formData.canView,
-      canEdit: formData.canEdit,
-      canDelete: formData.canDelete,
-      canExport: formData.canExport,
-      status: 'active'
-    };
-    setPermissions([...permissions, newPermission]);
-    setIsDialogOpen(false);
-    setFormData({ username: '', role: '', canView: false, canEdit: false, canDelete: false, canExport: false });
-    toast.success('Thêm quyền tài khoản thành công!');
+  const handleAdd = async () => {
+    try {
+      const res = await roleService.create(formData)
+      console.log(res);
+      await roleService.createAction({id:res.data.data.id,actionIds:actionSelect})
+      toast.success('Thêm quyền quyền thành công!');
+      setReload(!reload)
+      setIsDialogOpen(false)
+    }
+    catch (e) {
+      console.log(e);
+
+    }
+
   };
 
-  const handleEdit = (perm: any) => {
+  const handleEdit = async (perm: any) => {
+    const res = await roleService.getById(perm.id)
+    setId(perm.id)
+    console.log(res);
+    setActionSelect(res.actions.map((item:any)=>item.id))
     setSelectedPermission(perm);
     setFormData({
-      username: perm.username,
-      role: perm.role,
-      canView: perm.canView,
-      canEdit: perm.canEdit,
-      canDelete: perm.canDelete,
-      canExport: perm.canExport
+      display_name: perm.display_name,
+      description: perm.description,
     });
     setIsEditDialogOpen(true);
   };
 
-  const handleUpdate = () => {
-    setPermissions(permissions.map(p => p.id === selectedPermission.id ? {
-      ...p,
-      username: formData.username,
-      role: formData.role,
-      canView: formData.canView,
-      canEdit: formData.canEdit,
-      canDelete: formData.canDelete,
-      canExport: formData.canExport
-    } : p));
+  const handleUpdate =  async() => {
+    const res = await roleService.update(id,formData)
+    const res2 = await roleService.updateRoleAction(id,{
+      id:id,
+      actionIds:actionSelect
+    })
     setIsEditDialogOpen(false);
     setSelectedPermission(null);
-    setFormData({ username: '', role: '', canView: false, canEdit: false, canDelete: false, canExport: false });
+    setFormData({ description: '', display_name: '' });
     toast.success('Cập nhật quyền thành công!');
   };
 
@@ -128,83 +127,27 @@ export function AccountPermissions() {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleDelete = () => {
-    setPermissions(permissions.filter(p => p.id !== selectedPermission.id));
+  const handleDelete = async() => {
+    await roleService.delete(selectedPermission.id)
     setIsDeleteDialogOpen(false);
     setSelectedPermission(null);
+    setReload(!reload)
     toast.success('Xóa quyền tài khoản thành công!');
   };
+  useEffect(() => {
+    const fetchAction = async () => {
+      const res = await actionService.getAll(1, 10000)
+      setActions(res.rows)
+    }
+    fetchAction()
+  }, [])
+  const togglePermission = (actionId: string) => {
+    const current = actionSelect || [];
+    const exists = current.includes(actionId);
+    const next = exists ? current.filter((a: string) => a !== actionId) : [...current, actionId];
+    setActionSelect(next);
+  };
 
-  const PermissionForm = () => (
-    <div className="space-y-4 py-4">
-      <div className="space-y-2">
-        <Label htmlFor="username">Tên người dùng</Label>
-        <Input 
-          id="username" 
-          placeholder="Nhập tên người dùng" 
-          value={formData.username}
-          onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="role">Vai trò</Label>
-        <Select value={formData.role} onValueChange={(value:any) => setFormData({ ...formData, role: value })}>
-          <SelectTrigger>
-            <SelectValue placeholder="Chọn vai trò" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Admin">Admin</SelectItem>
-            <SelectItem value="Security">Security</SelectItem>
-            <SelectItem value="Operator">Operator</SelectItem>
-            <SelectItem value="Viewer">Viewer</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-3 pt-2">
-        <Label>Quyền hạn</Label>
-        <div className="flex items-center space-x-2">
-          <Checkbox 
-            id="canView" 
-            checked={formData.canView}
-            onCheckedChange={(checked:any) => setFormData({ ...formData, canView: checked as boolean })}
-          />
-          <label htmlFor="canView" className="text-sm cursor-pointer">
-            Xem dữ liệu
-          </label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Checkbox 
-            id="canEdit" 
-            checked={formData.canEdit}
-            onCheckedChange={(checked:any) => setFormData({ ...formData, canEdit: checked as boolean })}
-          />
-          <label htmlFor="canEdit" className="text-sm cursor-pointer">
-            Chỉnh sửa
-          </label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Checkbox 
-            id="canDelete" 
-            checked={formData.canDelete}
-            onCheckedChange={(checked:any) => setFormData({ ...formData, canDelete: checked as boolean })}
-          />
-          <label htmlFor="canDelete" className="text-sm cursor-pointer">
-            Xóa
-          </label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Checkbox 
-            id="canExport" 
-            checked={formData.canExport}
-            onCheckedChange={(checked:any) => setFormData({ ...formData, canExport: checked as boolean })}
-          />
-          <label htmlFor="canExport" className="text-sm cursor-pointer">
-            Xuất dữ liệu
-          </label>
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <div className="space-y-6 fade-in-up">
@@ -221,7 +164,7 @@ export function AccountPermissions() {
             <div>
               <CardTitle>Danh sách quyền tài khoản</CardTitle>
               <CardDescription>
-                Tổng cộng {permissions.length} tài khoản đã được phân quyền
+                Tổng cộng {permissions?.length} tài khoản đã được phân quyền
               </CardDescription>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -238,7 +181,63 @@ export function AccountPermissions() {
                     Phân quyền cho tài khoản người dùng
                   </DialogDescription>
                 </DialogHeader>
-                <PermissionForm />
+                <div className="h-96  mx-auto space-y-6 py-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="role-1">Tên quyền</Label>
+                    <Input
+                      id="role-1"
+                      placeholder="Nhập tên quyền"
+                      value={formData.display_name}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, display_name: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="des">Mô tả</Label>
+                    <Input
+                      id="des"
+                      placeholder="Nhập mô tả"
+                      value={formData.description}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, description: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-3 pt-2">
+                    <Label>Quyền hạn</Label>
+
+                    {/* Box chứa danh sách quyền — để lớn hơn và scroll khi có nhiều mục */}
+                    <div style={{ height: 300 }} className="overflow-y-auto scroll-bar-1 border rounded-md p-3 bg-white shadow-sm">
+                      {/* Header nhỏ (tuỳ chọn) */}
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-sm text-muted-foreground">Tổng: {actions.length} mục</div>
+                        <div className="text-xs text-muted-foreground">Scroll để xem tất cả</div>
+                      </div>
+
+                      {/* Container scrollable */}
+                      <div className="overflow-x-hidden pr-2">
+                        {/* Grid: 2 cột trên sm trở lên; bạn có thể thay đổi sm:grid-cols-2 -> grid-cols-2 cố định */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {actions.map((item: any, idx: number) => {
+                            const id = `perm-${item.id ?? idx}`;
+                            const checked = (actionSelect || []).includes(item.id);
+                            return (
+                              <div key={id} className="flex items-center space-x-2 p-1 rounded hover:bg-slate-50">
+                                <Checkbox
+                                  id={id}
+                                  checked={checked}
+                                  onCheckedChange={() => togglePermission(item.id)}
+                                />
+                                <label htmlFor={id} className="text-sm cursor-pointer select-none">
+                                  {item.display_name}
+                                </label>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <DialogFooter>
                   <Button type="submit" className="w-full" onClick={handleAdd}>Thêm quyền</Button>
                 </DialogFooter>
@@ -250,40 +249,38 @@ export function AccountPermissions() {
           <div className="mb-6">
             <AdvancedFilter
               searchPlaceholder="Tìm kiếm người dùng..."
-              searchValue={searchTerm}
-              onSearchChange={setSearchTerm}
+              searchValue={search}
+              onSearchChange={setSearch}
               filterOptions={filterOptions}
               filters={filters}
               onFiltersChange={setFilters}
-              onReset={() => setSearchTerm('')}
+              onReset={() => setSearch('')}
             />
           </div>
 
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Tên người dùng</TableHead>
-                <TableHead>Vai trò</TableHead>
-                <TableHead>Xem</TableHead>
-                <TableHead>Sửa</TableHead>
-                <TableHead>Xóa</TableHead>
-                <TableHead>Xuất</TableHead>
+                <TableHead>Tên quyền</TableHead>
+                <TableHead>Mô tả</TableHead>
+
                 <TableHead className="text-right">Thao tác</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredPermissions.map((perm, index) => (
-                <TableRow key={perm.id} className="stagger-item" style={{animationDelay: `${index * 0.05}s`}}>
-                  <TableCell className="font-medium">{perm.username}</TableCell>
+              {permissions?.map((perm: any, index: any) => (
+                <TableRow key={perm.id} className="stagger-item" style={{ animationDelay: `${index * 0.05}s` }}>
+
                   <TableCell>
-                    <Badge variant="outline" className={getRoleColor(perm.role)}>
-                      {perm.role}
-                    </Badge>
+                    {perm.display_name}
                   </TableCell>
-                  <TableCell>{perm.canView ? '✓' : '✗'}</TableCell>
+                  <TableCell>
+                    {perm.description}
+                  </TableCell>
+                  {/* <TableCell>{perm.canView ? '✓' : '✗'}</TableCell>
                   <TableCell>{perm.canEdit ? '✓' : '✗'}</TableCell>
                   <TableCell>{perm.canDelete ? '✓' : '✗'}</TableCell>
-                  <TableCell>{perm.canExport ? '✓' : '✗'}</TableCell>
+                  <TableCell>{perm.canExport ? '✓' : '✗'}</TableCell> */}
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">
                       <Button variant="ghost" size="sm" className="scale-hover" onClick={() => handleEdit(perm)}>
@@ -298,7 +295,7 @@ export function AccountPermissions() {
               ))}
             </TableBody>
           </Table>
-          
+
         </CardContent>
       </Card>
 
@@ -310,7 +307,65 @@ export function AccountPermissions() {
               Cập nhật quyền cho tài khoản
             </DialogDescription>
           </DialogHeader>
-          <PermissionForm />
+          <div className="flex-1 overflow-y-auto pr-2">
+            <div className="h-96  mx-auto space-y-6 py-6">
+              <div className="space-y-2">
+                <Label htmlFor="role-1">Tên quyền</Label>
+                <Input
+                  id="role-1"
+                  placeholder="Nhập tên quyền"
+                  value={formData.display_name}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, display_name: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="des">Mô tả</Label>
+                <Input
+                  id="des"
+                  placeholder="Nhập mô tả"
+                  value={formData.description}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, description: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-3 pt-2">
+                <Label>Quyền hạn</Label>
+
+                {/* Box chứa danh sách quyền — để lớn hơn và scroll khi có nhiều mục */}
+                <div style={{ height: 300 }} className="overflow-y-auto scroll-bar-1 border rounded-md p-3 bg-white shadow-sm">
+                  {/* Header nhỏ (tuỳ chọn) */}
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm text-muted-foreground">Tổng: {actions.length} mục</div>
+                    <div className="text-xs text-muted-foreground">Scroll để xem tất cả</div>
+                  </div>
+
+                  {/* Container scrollable */}
+                  <div className="overflow-x-hidden pr-2">
+                    {/* Grid: 2 cột trên sm trở lên; bạn có thể thay đổi sm:grid-cols-2 -> grid-cols-2 cố định */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {actions.map((item: any, idx: number) => {
+                        const id = `perm-${item.id ?? idx}`;
+                        const checked = (actionSelect || []).includes(item.id);
+                        return (
+                          <div key={id} className="flex items-center space-x-2 p-1 rounded hover:bg-slate-50">
+                            <Checkbox
+                              id={id}
+                              checked={checked}
+                              onCheckedChange={() => togglePermission(item.id)}
+                            />
+                            <label htmlFor={id} className="text-sm cursor-pointer select-none">
+                              {item.display_name}
+                            </label>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           <DialogFooter>
             <Button type="submit" className="w-full" onClick={handleUpdate}>Cập nhật</Button>
           </DialogFooter>
@@ -322,7 +377,7 @@ export function AccountPermissions() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa quyền của <strong>{selectedPermission?.username}</strong>? 
+              Bạn có chắc chắn muốn xóa quyền của <strong>{selectedPermission?.username}</strong>?
               Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>

@@ -32,15 +32,16 @@ export interface UpdateUserDto {
   password?: string;
 }
 
-class UsersService {
+class ParamsService {
   // Lấy danh sách users
-  async getAll(page: number = 1, size: number = 10,params={}): Promise<any> {
+  async getAll(page: number = 1, size: number = 10, params = {}): Promise<any> {
     try {
-      const res = await axiosInstance.get("user", {
-        params:{
-          pageSize:size,
-          pageIndex:page,
-          ...params
+      const res = await axiosInstance.get("category", {
+        params: {
+          pageSize: size,
+          pageIndex: page,
+          ...params,
+          scope:"SYSTEM_PARAMS"
         }
       })
       // const response = await axiosInstance.get(API_ENDPOINTS.USERS.LIST);
@@ -78,13 +79,13 @@ class UsersService {
   }
 
   // Tạo user mới
-  async create(data: CreateUserDto): Promise<any> {
+  async create(data: any): Promise<any> {
     try {
       // const response = await axiosInstance.post(API_ENDPOINTS.USERS.CREATE, data);
       // return response.data;
 
       // Mock response
-      const res = axiosInstance.post("user",{
+      const res = axiosInstance.post("system-parameters", {
         ...data
       })
       return res
@@ -95,13 +96,16 @@ class UsersService {
   }
 
   // Cập nhật user
-  async update(id: number, data: UpdateUserDto): Promise<any> {
+  async update(id: number, data: any): Promise<any> {
     try {
       // const response = await axiosInstance.put(API_ENDPOINTS.USERS.UPDATE(id), data);
       // return response.data;
 
       // Mock response
-      const res = await axiosInstance.put(`user/${id}`,data)
+      const res = await axiosInstance.put(`system-parameters/${id}`, {
+        ...data,
+        category_type_id:"d173cf7c-2a08-486e-a27c-3931c9f90a82"
+      })
       return res
     } catch (error) {
       console.error('Error updating user:', error);
@@ -113,10 +117,10 @@ class UsersService {
   async delete(id: number): Promise<any> {
     try {
       // await axiosInstance.delete(API_ENDPOINTS.USERS.DELETE(id));
-      const res = await axiosInstance.delete(`user/${id}`)
+      const res = await axiosInstance.delete(`system-parameters/${id}`)
       // Mock response
       return res
-     
+
     } catch (error) {
       console.error('Error deleting user:', error);
       throw error;
@@ -124,4 +128,4 @@ class UsersService {
   }
 }
 
-export default new UsersService();
+export default new ParamsService();

@@ -19,27 +19,27 @@ export interface User {
 }
 
 export interface CreateUserDto {
-  user_name: string;
-  display_name: string;
-  role_id: string;
+  username: string;
+  email: string;
+  role: string;
   password: string;
 }
 
 export interface UpdateUserDto {
-  user_name?: string;
-  display_name?: string;
-  role_id?: string;
+  username?: string;
+  email?: string;
+  role?: string;
   password?: string;
 }
 
-class UsersService {
+class RoleService {
   // Lấy danh sách users
-  async getAll(page: number = 1, size: number = 10,params={}): Promise<any> {
+  async getAll(page: number = 1, size: number = 10000, params = {}): Promise<any> {
     try {
-      const res = await axiosInstance.get("user", {
-        params:{
-          pageSize:size,
-          pageIndex:page,
+      const res = await axiosInstance.get("role", {
+        params: {
+          pageSize: size,
+          pageIndex: page,
           ...params
         }
       })
@@ -47,7 +47,7 @@ class UsersService {
       // return response.data;
 
       // Mock response
-      return res.data.data
+      return res.data.data.roles
     } catch (error) {
       console.error('Error fetching users:', error);
       throw error;
@@ -55,22 +55,15 @@ class UsersService {
   }
 
   // Lấy thông tin user theo ID
-  async getById(id: number): Promise<User> {
+  async getById(id: number): Promise<any> {
     try {
+      const res = await axiosInstance.get(`/roles-actions/${id}`)
+      return res.data.data
       // const response = await axiosInstance.get(API_ENDPOINTS.USERS.GET(id));
       // return response.data;
 
       // Mock response
-      return new Promise((resolve, reject) => {
-        setTimeout(() => {
-          const user = mockUsers.find(u => u.id === id);
-          if (user) {
-            resolve(user);
-          } else {
-            reject(new Error('User not found'));
-          }
-        }, 300);
-      });
+
     } catch (error) {
       console.error('Error fetching user:', error);
       throw error;
@@ -78,14 +71,15 @@ class UsersService {
   }
 
   // Tạo user mới
-  async create(data: CreateUserDto): Promise<any> {
+  async create(data: any): Promise<any> {
     try {
       // const response = await axiosInstance.post(API_ENDPOINTS.USERS.CREATE, data);
       // return response.data;
 
       // Mock response
-      const res = axiosInstance.post("user",{
-        ...data
+      const res = axiosInstance.post("role", {
+        ...data,
+        code: data.display_name
       })
       return res
     } catch (error) {
@@ -93,30 +87,64 @@ class UsersService {
       throw error;
     }
   }
-
-  // Cập nhật user
-  async update(id: number, data: UpdateUserDto): Promise<any> {
+  async createAction(data: any): Promise<any> {
     try {
-      // const response = await axiosInstance.put(API_ENDPOINTS.USERS.UPDATE(id), data);
+      // const response = await axiosInstance.post(API_ENDPOINTS.USERS.CREATE, data);
       // return response.data;
 
       // Mock response
-      const res = await axiosInstance.put(`user/${id}`,data)
+      const res = axiosInstance.post("roles-actions", {
+        roleId: data.id,
+        actionIds: data.actionIds
+      })
       return res
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw error;
+    }
+  }
+  // /roles-actions/{{role_id}}/actions
+  // Cập nhật user
+  async update(id: number | string, data: any): Promise<any> {
+    try {
+      // const response = await axiosInstance.put(API_ENDPOINTS.USERS.UPDATE(id), data);
+      // return response.data;
+      const res = await axiosInstance.put(`role/${id}`, {
+        ...data,
+        code: data.display_name
+      })
+      return res
+      // Mock response
+
     } catch (error) {
       console.error('Error updating user:', error);
       throw error;
     }
   }
+  async updateRoleAction(id: number | string, data: any): Promise<any> {
+    try {
+      // const response = await axiosInstance.put(API_ENDPOINTS.USERS.UPDATE(id), data);
+      // return response.data;
+      const res = await axiosInstance.put(`roles-actions/${id}/actions`, {
+        roleId: data.id,
+        actionIds: data.actionIds
+      })
+      return res
+      // Mock response
 
+    } catch (error) {
+      console.error('Error updating user:', error);
+      throw error;
+    }
+  }
   // Xóa user
-  async delete(id: number): Promise<any> {
+  async delete(id: number): Promise<void> {
     try {
       // await axiosInstance.delete(API_ENDPOINTS.USERS.DELETE(id));
-      const res = await axiosInstance.delete(`user/${id}`)
+      const res = await axiosInstance.delete(`role/${id}`)
       // Mock response
-      return res
-     
+      // return res
+
     } catch (error) {
       console.error('Error deleting user:', error);
       throw error;
@@ -124,4 +152,4 @@ class UsersService {
   }
 }
 
-export default new UsersService();
+export default new RoleService();

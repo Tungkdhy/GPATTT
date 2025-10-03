@@ -1,256 +1,305 @@
-import { Badge } from '../ui/badge';
-import { DataTable } from '../common/DataTable';
-import { Label } from '../ui/label';
+import { useState } from 'react';
+import {
+  Card, CardContent, CardDescription, CardHeader, CardTitle
+} from '../ui/card';
+import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import {
+  Pagination, PaginationContent, PaginationItem,
+  PaginationLink, PaginationNext, PaginationPrevious
+} from "../ui/pagination";
 
-const mockRegions = [
-  { 
-    id: 1, 
-    name: 'Miền Bắc', 
-    code: 'MB', 
-    type: 'Geographic', 
-    status: 'active',
-    deviceCount: 145,
-    description: 'Khu vực miền Bắc Việt Nam',
-    parentRegion: null,
-    timezone: 'UTC+7'
-  },
-  { 
-    id: 2, 
-    name: 'Hà Nội', 
-    code: 'HN', 
-    type: 'Administrative', 
-    status: 'active',
-    deviceCount: 89,
-    description: 'Thành phố Hà Nội',
-    parentRegion: 'Miền Bắc',
-    timezone: 'UTC+7'
-  },
-  { 
-    id: 3, 
-    name: 'Datacenter HN-01', 
-    code: 'DC-HN01', 
-    type: 'Facility', 
-    status: 'active',
-    deviceCount: 56,
-    description: 'Trung tâm dữ liệu Hà Nội 01',
-    parentRegion: 'Hà Nội',
-    timezone: 'UTC+7'
-  },
-  { 
-    id: 4, 
-    name: 'Miền Nam', 
-    code: 'MN', 
-    type: 'Geographic', 
-    status: 'active',
-    deviceCount: 201,
-    description: 'Khu vực miền Nam Việt Nam',
-    parentRegion: null,
-    timezone: 'UTC+7'
-  },
-  { 
-    id: 5, 
-    name: 'TP. Hồ Chí Minh', 
-    code: 'HCM', 
-    type: 'Administrative', 
-    status: 'active',
-    deviceCount: 156,
-    description: 'Thành phố Hồ Chí Minh',
-    parentRegion: 'Miền Nam',
-    timezone: 'UTC+7'
-  },
-  { 
-    id: 6, 
-    name: 'Office Floor 1', 
-    code: 'OF-F1', 
-    type: 'Building', 
-    status: 'maintenance',
-    deviceCount: 23,
-    description: 'Tầng 1 tòa nhà văn phòng',
-    parentRegion: 'TP. Hồ Chí Minh',
-    timezone: 'UTC+7'
-  }
-];
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'active': return 'bg-green-500/10 text-green-500 border-green-500/20';
-    case 'inactive': return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
-    case 'maintenance': return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
-    default: return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
-  }
-};
-
-const getStatusText = (status: string) => {
-  switch (status) {
-    case 'active': return 'Hoạt động';
-    case 'inactive': return 'Không hoạt động';
-    case 'maintenance': return 'Bảo trì';
-    default: return 'Không xác định';
-  }
-};
-
-const getTypeColor = (type: string) => {
-  switch (type) {
-    case 'Geographic': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-    case 'Administrative': return 'bg-green-500/10 text-green-500 border-green-500/20';
-    case 'Facility': return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
-    case 'Building': return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
-    default: return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
-  }
-};
-
-const columns = [
-  {
-    key: 'name',
-    title: 'Tên khu vực'
-  },
-  {
-    key: 'code',
-    title: 'Mã khu vực',
-    render: (value: string) => (
-      <code className="px-2 py-1 bg-muted rounded text-sm font-mono">
-        {value}
-      </code>
-    )
-  },
-  {
-    key: 'type',
-    title: 'Loại',
-    render: (value: string) => (
-      <Badge variant="outline" className={getTypeColor(value)}>
-        {value}
-      </Badge>
-    )
-  },
-  {
-    key: 'status',
-    title: 'Trạng thái',
-    render: (value: string) => (
-      <Badge variant="outline" className={getStatusColor(value)}>
-        {getStatusText(value)}
-      </Badge>
-    )
-  },
-  {
-    key: 'deviceCount',
-    title: 'Số thiết bị'
-  },
-  {
-    key: 'parentRegion',
-    title: 'Khu vực cha',
-    render: (value: string | null) => value || 'Không có'
-  },
-  {
-    key: 'description',
-    title: 'Mô tả'
-  }
-];
-
-const renderForm = () => (
-  <div className="space-y-4 py-4">
-    <div className="space-y-2">
-      <Label htmlFor="region-name">
-        Tên khu vực
-      </Label>
-      <Input id="region-name" placeholder="Nhập tên khu vực" />
-    </div>
-    <div className="space-y-2">
-      <Label htmlFor="region-code">
-        Mã khu vực
-      </Label>
-      <Input id="region-code" placeholder="VD: HN, HCM" />
-    </div>
-    <div className="space-y-2">
-      <Label htmlFor="region-type">
-        Loại khu vực
-      </Label>
-      <Select>
-        <SelectTrigger>
-          <SelectValue placeholder="Chọn loại khu vực" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="geographic">Geographic</SelectItem>
-          <SelectItem value="administrative">Administrative</SelectItem>
-          <SelectItem value="facility">Facility</SelectItem>
-          <SelectItem value="building">Building</SelectItem>
-          <SelectItem value="floor">Floor</SelectItem>
-          <SelectItem value="room">Room</SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
-    <div className="space-y-2">
-      <Label htmlFor="region-status">
-        Trạng thái
-      </Label>
-      <Select>
-        <SelectTrigger>
-          <SelectValue placeholder="Chọn trạng thái" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="active">Hoạt động</SelectItem>
-          <SelectItem value="inactive">Không hoạt động</SelectItem>
-          <SelectItem value="maintenance">Bảo trì</SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
-    <div className="space-y-2">
-      <Label htmlFor="parent-region">
-        Khu vực cha
-      </Label>
-      <Select>
-        <SelectTrigger>
-          <SelectValue placeholder="Chọn khu vực cha (tùy chọn)" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="none">Không có</SelectItem>
-          <SelectItem value="mien-bac">Miền Bắc</SelectItem>
-          <SelectItem value="mien-nam">Miền Nam</SelectItem>
-          <SelectItem value="ha-noi">Hà Nội</SelectItem>
-          <SelectItem value="hcm">TP. Hồ Chí Minh</SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
-    <div className="space-y-2">
-      <Label htmlFor="region-timezone">
-        Múi giờ
-      </Label>
-      <Select>
-        <SelectTrigger>
-          <SelectValue placeholder="Chọn múi giờ" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="utc+7">UTC+7 (Việt Nam)</SelectItem>
-          <SelectItem value="utc+0">UTC+0 (GMT)</SelectItem>
-          <SelectItem value="utc+8">UTC+8</SelectItem>
-          <SelectItem value="utc+9">UTC+9</SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
-    <div className="space-y-2">
-      <Label htmlFor="region-description">
-        Mô tả
-      </Label>
-      <Textarea id="region-description" placeholder="Nhập mô tả" rows={3} />
-    </div>
-  </div>
-);
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow
+} from '../ui/table';
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter,
+  DialogHeader, DialogTitle, DialogTrigger
+} from '../ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
+} from '../ui/alert-dialog';
+import { Label } from '../ui/label';
+import { Plus, Edit, Trash2 } from 'lucide-react';
+import { toast } from 'sonner@2.0.3';
+import { categoryService } from '../../services/api';
+import { useServerPagination } from '@/hooks/useServerPagination';
 
 export function RegionManagement() {
+  const [reload, setReload] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+
+  const [formData, setFormData] = useState<any>({
+    display_name: '',
+    value: '',
+    description: '',
+    category_type_id: 'c1893aa8-5443-4cc0-a9d5-b9571cb20af2'
+  });
+
+  const {
+    data: categories,
+    currentPage,
+    totalPages,
+    setCurrentPage,
+    total
+  } = useServerPagination(
+    (page, limit) => categoryService.getAllFormat(page, limit, {scope:"AREA"}),
+    [reload],
+    { pageSize: 10, initialPage: 1 },
+    {scope:"AREA"}
+  );
+
+  // Add
+  const handleAdd = async () => {
+    try {
+      await categoryService.create(formData);
+      setIsDialogOpen(false);
+      resetForm();
+      toast.success('Thêm danh mục thành công!');
+      setReload(!reload);
+    } catch {
+      toast.error('Lỗi khi thêm danh mục');
+    }
+  };
+// c1893aa8-5443-4cc0-a9d5-b9571cb20af2
+  // Edit
+  const handleEdit = (item: any) => {
+    setSelectedItem(item);
+    setFormData({
+      display_name: item.display_name,
+      value: item.value,
+      description: item.description,
+      category_type_id: 'c1893aa8-5443-4cc0-a9d5-b9571cb20af2'
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  // Update
+  const handleUpdate = async () => {
+    try {
+      await categoryService.update(selectedItem.id, formData);
+      setIsEditDialogOpen(false);
+      resetForm();
+      setReload(!reload);
+      toast.success('Cập nhật danh mục thành công!');
+    } catch {
+      toast.error('Lỗi khi cập nhật danh mục');
+    }
+  };
+
+  // Delete
+  const handleDeleteClick = (item: any) => {
+    setSelectedItem(item);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    try {
+      await categoryService.delete(selectedItem.id);
+      setIsDeleteDialogOpen(false);
+      setSelectedItem(null);
+      toast.success('Xóa danh mục thành công!');
+      setReload(!reload);
+    } catch {
+      toast.error('Lỗi khi xóa danh mục');
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      display_name: '',
+      value: '',
+      description: '',
+      category_type_id: 'c1893aa8-5443-4cc0-a9d5-b9571cb20af2'
+    });
+  };
+
   return (
-    <DataTable
-      title="Danh mục khu vực"
-      description="Quản lý phân chia địa lý và khu vực của hệ thống"
-      data={mockRegions}
-      columns={columns}
-      searchKey="name"
-      onAdd={() => console.log('Add region')}
-      onEdit={(record) => console.log('Edit region', record)}
-      onDelete={(record) => console.log('Delete region', record)}
-      onView={(record) => console.log('View region', record)}
-      renderForm={renderForm}
-    />
+    <div className="space-y-6 fade-in-up">
+      <div className="slide-in-left">
+        <h1>Quản lý loại danh mục</h1>
+        <p className="text-muted-foreground">
+          Quản lý các loại danh mục trong hệ thống
+        </p>
+      </div>
+
+      <Card className="card-hover">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Danh sách loại danh mục</CardTitle>
+              <CardDescription>
+                Tổng cộng {total} loại danh mục
+              </CardDescription>
+            </div>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="btn-animate scale-hover">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Thêm danh mục
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Thêm loại danh mục mới</DialogTitle>
+                  <DialogDescription>
+                    Nhập thông tin loại danh mục
+                  </DialogDescription>
+                </DialogHeader>
+                {renderFormFields(formData, setFormData)}
+                <DialogFooter>
+                  <Button type="submit" className="w-full" onClick={handleAdd}>
+                    Tạo danh mục
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardHeader>
+
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Tên danh mục</TableHead>
+                <TableHead>Giá trị</TableHead>
+                <TableHead>Mô tả</TableHead>
+                <TableHead>Loại</TableHead>
+                <TableHead>Người tạo</TableHead>
+                <TableHead className="text-right">Thao tác</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {categories.map((item: any, idx: number) => (
+                <TableRow key={item.id} style={{ animationDelay: `${idx * 0.05}s` }}>
+                  <TableCell className="font-medium">{item.display_name}</TableCell>
+                  <TableCell>{item.value}</TableCell>
+                  <TableCell>{item.description}</TableCell>
+                  <TableCell>{item.category_type_id}</TableCell>
+                  <TableCell>{item.created_by_user?.display_name || "-"}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end space-x-2">
+                      <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(item)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+
+          {/* Pagination */}
+          <div className="flex justify-end mt-4">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+
+                {[...Array(totalPages)].map((_, idx) => (
+                  <PaginationItem key={idx}>
+                    <PaginationLink
+                      isActive={currentPage === idx + 1}
+                      onClick={() => setCurrentPage(idx + 1)}
+                    >
+                      {idx + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Chỉnh sửa loại danh mục</DialogTitle>
+            <DialogDescription>Cập nhật thông tin loại danh mục</DialogDescription>
+          </DialogHeader>
+          {renderFormFields(formData, setFormData)}
+          <DialogFooter>
+            <Button type="submit" className="w-full" onClick={handleUpdate}>
+              Cập nhật
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa danh mục <strong>{selectedItem?.display_name}</strong>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-white">
+              Xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
 }
+
+function renderFormFields(formData: any, setFormData: any) {
+  return (
+    <div className="space-y-4 py-4">
+      <div className="space-y-2">
+        <Label>Tên danh mục</Label>
+        <Input
+          value={formData.display_name}
+          onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Giá trị</Label>
+        <Input
+          value={formData.value}
+          onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Mô tả</Label>
+        <Input
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+        />
+      </div>
+      {/* <div className="space-y-2">
+        <Label>Loại</Label>
+        <Input
+          value={formData.category_type_id}
+          onChange={(e) => setFormData({ ...formData, category_type_id: e.target.value })}
+        />
+      </div> */}
+    </div>
+  );
+}
+
+// RegionManagement

@@ -4,6 +4,7 @@ import {
 } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
+import { Badge } from '../ui/badge';
 import {
   Pagination, PaginationContent, PaginationItem,
   PaginationLink, PaginationNext, PaginationPrevious
@@ -23,10 +24,10 @@ import {
 import { Label } from '../ui/label';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
-import { categoryService } from '../../services/api';
+import { categoryTypeService } from '../../services/api'; // ✅ Đổi sang service loại danh mục
 import { useServerPagination } from '@/hooks/useServerPagination';
 
-export function ErrorCodes() {
+export function CategoryTypes() {
   const [reload, setReload] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -35,9 +36,9 @@ export function ErrorCodes() {
 
   const [formData, setFormData] = useState<any>({
     display_name: '',
-    value: '',
     description: '',
-    category_type_id: '4fd60a31-f06f-4ddb-ad16-4c85f0f4480a'
+    visible: true,
+    scope: ""
   });
 
   const {
@@ -47,16 +48,20 @@ export function ErrorCodes() {
     setCurrentPage,
     total
   } = useServerPagination(
-    (page, limit) => categoryService.getAllFormat(page, limit, {scope:"ERROR"}),
+    (page, limit) => categoryTypeService.getAll(page, limit),
     [reload],
-    { pageSize: 10, initialPage: 1 },
-    {scope:"ERROR"}
+    { pageSize: 10, initialPage: 1 }
   );
 
   // Add
   const handleAdd = async () => {
     try {
-      await categoryService.create(formData);
+      await categoryTypeService.create({
+        display_name: formData.display_name,
+        description: formData.description,
+        visible: formData.visible,
+        scope: formData.scope,
+      });
       setIsDialogOpen(false);
       resetForm();
       toast.success('Thêm danh mục thành công!');
@@ -65,15 +70,15 @@ export function ErrorCodes() {
       toast.error('Lỗi khi thêm danh mục');
     }
   };
-// c1893aa8-5443-4cc0-a9d5-b9571cb20af2
+
   // Edit
   const handleEdit = (item: any) => {
     setSelectedItem(item);
     setFormData({
       display_name: item.display_name,
-      value: item.value,
       description: item.description,
-      category_type_id: '4fd60a31-f06f-4ddb-ad16-4c85f0f4480a'
+      visible: item.visible,
+      scope: item.scope,
     });
     setIsEditDialogOpen(true);
   };
@@ -81,7 +86,12 @@ export function ErrorCodes() {
   // Update
   const handleUpdate = async () => {
     try {
-      await categoryService.update(selectedItem.id, formData);
+      await categoryTypeService.update(selectedItem.id, {
+        display_name: formData.display_name,
+        description: formData.description,
+        visible: formData.visible,
+        scope: formData.scope,
+      });
       setIsEditDialogOpen(false);
       resetForm();
       setReload(!reload);
@@ -99,7 +109,7 @@ export function ErrorCodes() {
 
   const handleDelete = async () => {
     try {
-      await categoryService.delete(selectedItem.id);
+      await categoryTypeService.delete(selectedItem.id);
       setIsDeleteDialogOpen(false);
       setSelectedItem(null);
       toast.success('Xóa danh mục thành công!');
@@ -112,9 +122,8 @@ export function ErrorCodes() {
   const resetForm = () => {
     setFormData({
       display_name: '',
-      value: '',
       description: '',
-      category_type_id: '4fd60a31-f06f-4ddb-ad16-4c85f0f4480a'
+      visible: true
     });
   };
 
@@ -166,10 +175,12 @@ export function ErrorCodes() {
             <TableHeader>
               <TableRow>
                 <TableHead>Tên danh mục</TableHead>
-                <TableHead>Giá trị</TableHead>
                 <TableHead>Mô tả</TableHead>
-                <TableHead>Loại</TableHead>
+                <TableHead>Trạng thái</TableHead>
                 <TableHead>Người tạo</TableHead>
+                <TableHead>Ngày tạo</TableHead>
+                <TableHead>Cập nhật bởi</TableHead>
+                <TableHead>Ngày cập nhật</TableHead>
                 <TableHead className="text-right">Thao tác</TableHead>
               </TableRow>
             </TableHeader>
@@ -177,10 +188,18 @@ export function ErrorCodes() {
               {categories.map((item: any, idx: number) => (
                 <TableRow key={item.id} style={{ animationDelay: `${idx * 0.05}s` }}>
                   <TableCell className="font-medium">{item.display_name}</TableCell>
-                  <TableCell>{item.value}</TableCell>
                   <TableCell>{item.description}</TableCell>
-                  <TableCell>{item.category_type_id}</TableCell>
+                  <TableCell>
+                    {item.visible ? (
+                      <Badge className="bg-green-500">Hiển thị</Badge>
+                    ) : (
+                      <Badge className="bg-gray-400">Ẩn</Badge>
+                    )}
+                  </TableCell>
                   <TableCell>{item.created_by_user?.display_name || "-"}</TableCell>
+                  <TableCell>{item.created_at ? new Date(item.created_at).toLocaleString() : "-"}</TableCell>
+                  <TableCell>{item.updated_by_user?.display_name || "-"}</TableCell>
+                  <TableCell>{item.updated_at ? new Date(item.updated_at).toLocaleString() : "-"}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">
                       <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
@@ -278,26 +297,27 @@ function renderFormFields(formData: any, setFormData: any) {
         />
       </div>
       <div className="space-y-2">
-        <Label>Giá trị</Label>
-        <Input
-          value={formData.value}
-          onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-        />
-      </div>
-      <div className="space-y-2">
         <Label>Mô tả</Label>
         <Input
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
         />
       </div>
-      {/* <div className="space-y-2">
-        <Label>Loại</Label>
+      <div className="space-y-2">
+        <Label>Scope</Label>
         <Input
-          value={formData.category_type_id}
-          onChange={(e) => setFormData({ ...formData, category_type_id: e.target.value })}
+          value={formData.scope}
+          onChange={(e) => setFormData({ ...formData, scope: e.target.value })}
         />
-      </div> */}
+      </div>
+      <div className="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          checked={formData.visible}
+          onChange={(e) => setFormData({ ...formData, visible: e.target.checked })}
+        />
+        <Label>Hiển thị</Label>
+      </div>
     </div>
   );
 }

@@ -35,16 +35,23 @@ export interface UpdateAccountPermissionDto {
 }
 
 class AccountPermissionsService {
-  async getAll(): Promise<AccountPermission[]> {
+  async getAll(page: number = 1, size: number = 10, params: any = {}): Promise<any> {
     try {
-      // const response = await axiosInstance.get(API_ENDPOINTS.ACCOUNT_PERMISSIONS.LIST);
+      const fil = params?.search ? { search: params.search } : {}
+      const res = await axiosInstance.get("role", {
+        params: {
+          pageSize: size,
+          pageIndex: page,
+          ...fil
+        }
+      })
+      // const response = await axiosInstance.get(API_ENDPOINTS.USERS.LIST);
       // return response.data;
-      
-      return new Promise((resolve) => {
-        setTimeout(() => resolve(mockPermissions), 500);
-      });
+
+      // Mock response
+      return res.data.data
     } catch (error) {
-      console.error('Error fetching account permissions:', error);
+      console.error('Error fetching users:', error);
       throw error;
     }
   }
@@ -53,7 +60,7 @@ class AccountPermissionsService {
     try {
       // const response = await axiosInstance.get(API_ENDPOINTS.ACCOUNT_PERMISSIONS.GET(id));
       // return response.data;
-      
+
       return new Promise((resolve, reject) => {
         setTimeout(() => {
           const permission = mockPermissions.find(p => p.id === id);
@@ -74,7 +81,7 @@ class AccountPermissionsService {
     try {
       // const response = await axiosInstance.post(API_ENDPOINTS.ACCOUNT_PERMISSIONS.CREATE, data);
       // return response.data;
-      
+
       return new Promise((resolve) => {
         setTimeout(() => {
           const newPermission: AccountPermission = {
@@ -91,18 +98,38 @@ class AccountPermissionsService {
       throw error;
     }
   }
+  async createAction(data: CreateAccountPermissionDto): Promise<AccountPermission> {
+    try {
+      // const response = await axiosInstance.post(API_ENDPOINTS.ACCOUNT_PERMISSIONS.CREATE, data);
+      // return response.data;
 
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          const newPermission: AccountPermission = {
+            id: mockPermissions.length + 1,
+            ...data,
+            status: 'active',
+            lastModified: new Date().toISOString().slice(0, 16).replace('T', ' ')
+          };
+          resolve(newPermission);
+        }, 500);
+      });
+    } catch (error) {
+      console.error('Error creating account permission:', error);
+      throw error;
+    }
+  }
   async update(id: number, data: UpdateAccountPermissionDto): Promise<AccountPermission> {
     try {
       // const response = await axiosInstance.put(API_ENDPOINTS.ACCOUNT_PERMISSIONS.UPDATE(id), data);
       // return response.data;
-      
+
       return new Promise((resolve, reject) => {
         setTimeout(() => {
           const permission = mockPermissions.find(p => p.id === id);
           if (permission) {
-            const updatedPermission = { 
-              ...permission, 
+            const updatedPermission = {
+              ...permission,
               ...data,
               lastModified: new Date().toISOString().slice(0, 16).replace('T', ' ')
             };
@@ -121,7 +148,7 @@ class AccountPermissionsService {
   async delete(id: number): Promise<void> {
     try {
       // await axiosInstance.delete(API_ENDPOINTS.ACCOUNT_PERMISSIONS.DELETE(id));
-      
+
       return new Promise((resolve) => {
         setTimeout(() => resolve(), 500);
       });

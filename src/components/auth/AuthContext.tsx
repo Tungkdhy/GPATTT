@@ -1,3 +1,4 @@
+import { authService } from '@/services/api';
 import { createContext, useContext, useState, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -16,15 +17,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
   const navigate = useNavigate();
 
-  const login = (username: string, password: string) => {
+  const login = async (username: string, password: string) => {
     // Simple authentication check (demo purposes)
-    if (username === 'admin' && password === 'admin') {
-      setIsAuthenticated(true);
-      localStorage.setItem('isAuthenticated', 'true');
-      navigate('/dashboard');
-      return true;
+    try {
+      const res = await authService.login({
+        userName:username,
+        password
+      })
+      console.log(res);
+      
+      if (res.data) {
+        setIsAuthenticated(true);
+        localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem("auth_token",res.data.tokens.accessToken)
+        navigate('/dashboard');
+        return true;
+      }
+      return false;
     }
-    return false;
+    catch (e) {
+
+    }
   };
 
   const logout = () => {

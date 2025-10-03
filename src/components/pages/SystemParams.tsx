@@ -1,341 +1,336 @@
+// SystemParams
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import {
+  Card, CardContent, CardDescription, CardHeader, CardTitle
+} from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Switch } from '../ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { Separator } from '../ui/separator';
 import { Badge } from '../ui/badge';
-import { Save, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "../ui/pagination";
+
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow
+} from '../ui/table';
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter,
+  DialogHeader, DialogTitle, DialogTrigger
+} from '../ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
+} from '../ui/alert-dialog';
+import { Label } from '../ui/label';
+import { Plus, Edit, Trash2 } from 'lucide-react';
+import { toast } from 'sonner@2.0.3';
+import { parametersService } from '../../services/api';
+import { useServerPagination } from '@/hooks/useServerPagination';
 
 export function SystemParams() {
-  const [unsavedChanges, setUnsavedChanges] = useState(false);
+  const [reload, setReload] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedParam, setSelectedParam] = useState<any>(null);
 
-  const handleSave = () => {
-    setUnsavedChanges(false);
-    // Simulate save operation
+  const [formData, setFormData] = useState<any>({
+    display_name: '',
+    value: '',
+    description: '',
+    unit: '',
+    min: '',
+    max: '',
+    default_value: '',
+    display_value: ''
+  });
+
+  const {
+    data: parameters,
+    currentPage,
+    totalPages,
+    total,
+    loading,
+    setCurrentPage,
+  } = useServerPagination(
+    (page, limit) => parametersService.getAll(page, limit),
+    [reload],
+    { pageSize: 10, initialPage: 1 }
+  );
+
+  const handleAdd = async () => {
+    try {
+      await parametersService.create({
+        display_name: formData.display_name,
+        value: formData.value,
+        description: formData.description,
+        data: {
+          unit: formData.unit,
+          display_value: formData.display_value,
+          min: Number(formData.min),
+          max: Number(formData.max),
+          default_value: formData.default_value
+        }
+      });
+      setIsDialogOpen(false);
+      resetForm();
+      toast.success('Thêm tham số thành công!');
+      setReload(!reload);
+    } catch (error) {
+      toast.error('Lỗi khi thêm tham số');
+    }
+  };
+
+  const handleEdit = (param: any) => {
+    setSelectedParam(param);
+    setFormData({
+      display_name: param.display_name,
+      value: param.value,
+      description: param.description,
+      unit: param.data.unit,
+      display_value: param.data.display_value,
+      min: param.data.min,
+      max: param.data.max,
+      default_value: param.data.default_value
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdate = async () => {
+    try {
+      await parametersService.update(selectedParam.id, {
+        display_name: formData.display_name,
+        value: formData.value,
+        description: formData.description,
+        data: {
+          unit: formData.unit,
+          display_value: formData.display_value,
+          min: Number(formData.min),
+          max: Number(formData.max),
+          default_value: formData.default_value
+        }
+      });
+      setIsEditDialogOpen(false);
+      resetForm();
+      setReload(!reload);
+      toast.success('Cập nhật tham số thành công!');
+    } catch (error) {
+      toast.error('Lỗi khi cập nhật tham số');
+    }
+  };
+
+  const handleDeleteClick = (param: any) => {
+    setSelectedParam(param);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    try {
+      await parametersService.delete(selectedParam.id);
+      setIsDeleteDialogOpen(false);
+      setSelectedParam(null);
+      toast.success('Xóa tham số thành công!');
+      setReload(!reload);
+    } catch (error) {
+      toast.error('Lỗi khi xóa tham số');
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      display_name: '',
+      value: '',
+      description: '',
+      unit: '',
+      min: '',
+      max: '',
+      default_value: '',
+      display_value: ''
+    });
   };
 
   return (
     <div className="space-y-6 fade-in-up">
-      <div className="flex items-center justify-between slide-in-left">
-        <div>
-          <h1>Tham số hệ thống</h1>
-          <p className="text-muted-foreground">
-            Cấu hình các tham số và thiết lập hệ thống
-          </p>
-        </div>
-        {unsavedChanges && (
-          <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20 badge-bounce">
-            <AlertTriangle className="mr-1 h-3 w-3" />
-            Có thay đổi chưa lưu
-          </Badge>
-        )}
+      <div className="slide-in-left">
+        <h1>Quản lý tham số hệ thống</h1>
+        <p className="text-muted-foreground">
+          Quản lý cấu hình và tham số của hệ thống
+        </p>
       </div>
 
-      <Tabs defaultValue="general" className="space-y-4">
-        <TabsList className="stagger-item">
-          <TabsTrigger value="general">Tổng quát</TabsTrigger>
-          <TabsTrigger value="security">Bảo mật</TabsTrigger>
-          <TabsTrigger value="monitoring">Giám sát</TabsTrigger>
-          <TabsTrigger value="backup">Sao lưu</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="general" className="space-y-4">
-          <Card className="card-hover">
-            <CardHeader>
-              <CardTitle>Cấu hình chung</CardTitle>
-              <CardDescription>Các thiết lập cơ bản của hệ thống</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="system-name">Tên hệ thống</Label>
-                  <Input 
-                    id="system-name" 
-                    defaultValue="Security Management System"
-                    onChange={() => setUnsavedChanges(true)}
-                    className="input-focus"
+      <Card className="card-hover">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Danh sách tham số</CardTitle>
+              <CardDescription>
+                Tổng cộng {parameters.length} tham số
+              </CardDescription>
+            </div>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="btn-animate scale-hover">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Thêm tham số
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Thêm tham số mới</DialogTitle>
+                  <DialogDescription>
+                    Cấu hình tham số hệ thống
+                  </DialogDescription>
+                </DialogHeader>
+                {renderFormFields(formData, setFormData)}
+                <DialogFooter>
+                  <Button type="submit" className="w-full" onClick={handleAdd}>
+                    Tạo tham số
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Tên hiển thị</TableHead>
+                <TableHead>Giá trị</TableHead>
+                <TableHead>Mô tả</TableHead>
+                <TableHead>Đơn vị tính</TableHead>
+                <TableHead>Mặc định</TableHead>
+                <TableHead className="text-right">Thao tác</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {parameters.map((param: any, index: number) => (
+                <TableRow key={param.id} style={{ animationDelay: `${index * 0.05}s` }}>
+                  <TableCell className="font-medium">{param.display_name}</TableCell>
+                  <TableCell>{param.value}</TableCell>
+                  <TableCell>{param.description}</TableCell>
+                  <TableCell>
+                    <Badge>{param?.data?.unit}</Badge>
+                  </TableCell>
+                  <TableCell>{param?.data?.default_value}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end space-x-2">
+                      <Button variant="ghost" size="sm" onClick={() => handleEdit(param)}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(param)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <div className="flex justify-end mt-4">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="admin-email">Email quản trị</Label>
-                  <Input 
-                    id="admin-email" 
-                    type="email"
-                    defaultValue="admin@example.com"
-                    onChange={() => setUnsavedChanges(true)}
-                    className="input-focus"
+                </PaginationItem>
+
+                {[...Array(totalPages)].map((_, idx) => (
+                  <PaginationItem key={idx}>
+                    <PaginationLink
+                      isActive={currentPage === idx + 1}
+                      onClick={() => setCurrentPage(idx + 1)}
+                    >
+                      {idx + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
                   />
-                </div>
-              </div>
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        </CardContent>
+      </Card>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="session-timeout">Thời gian hết phiên (phút)</Label>
-                  <Input 
-                    id="session-timeout" 
-                    type="number"
-                    defaultValue="30"
-                    onChange={() => setUnsavedChanges(true)}
-                    className="input-focus"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="max-login-attempts">Số lần đăng nhập tối đa</Label>
-                  <Input 
-                    id="max-login-attempts" 
-                    type="number"
-                    defaultValue="5"
-                    onChange={() => setUnsavedChanges(true)}
-                    className="input-focus"
-                  />
-                </div>
-              </div>
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Chỉnh sửa tham số</DialogTitle>
+            <DialogDescription>Cập nhật thông tin tham số</DialogDescription>
+          </DialogHeader>
+          {renderFormFields(formData, setFormData)}
+          <DialogFooter>
+            <Button type="submit" className="w-full" onClick={handleUpdate}>
+              Cập nhật
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-              <Separator />
+      {/* Delete Confirmation */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa tham số <strong>{selectedParam?.display_name}</strong>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-white">
+              Xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
 
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Kích hoạt log debug</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Ghi lại thông tin chi tiết để debug
-                    </p>
-                  </div>
-                  <Switch onCheckedChange={() => setUnsavedChanges(true)} />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Tự động backup</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Tự động sao lưu dữ liệu hàng ngày
-                    </p>
-                  </div>
-                  <Switch defaultChecked onCheckedChange={() => setUnsavedChanges(true)} />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Thông báo email</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Gửi email khi có sự kiện quan trọng
-                    </p>
-                  </div>
-                  <Switch defaultChecked onCheckedChange={() => setUnsavedChanges(true)} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="security" className="space-y-4">
-          <Card className="card-hover">
-            <CardHeader>
-              <CardTitle>Cấu hình bảo mật</CardTitle>
-              <CardDescription>Thiết lập các chính sách bảo mật</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="password-min-length">Độ dài mật khẩu tối thiểu</Label>
-                  <Input 
-                    id="password-min-length" 
-                    type="number"
-                    defaultValue="8"
-                    onChange={() => setUnsavedChanges(true)}
-                    className="input-focus"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password-expiry">Hết hạn mật khẩu (ngày)</Label>
-                  <Input 
-                    id="password-expiry" 
-                    type="number"
-                    defaultValue="90"
-                    onChange={() => setUnsavedChanges(true)}
-                    className="input-focus"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Yêu cầu ký tự đặc biệt</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Mật khẩu phải chứa ký tự đặc biệt
-                    </p>
-                  </div>
-                  <Switch defaultChecked onCheckedChange={() => setUnsavedChanges(true)} />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Xác thực 2 yếu tố</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Bắt buộc 2FA cho tất cả người dùng
-                    </p>
-                  </div>
-                  <Switch onCheckedChange={() => setUnsavedChanges(true)} />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Khóa IP sau nhiều lần sai</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Tự động khóa IP khi đăng nhập sai nhiều lần
-                    </p>
-                  </div>
-                  <Switch defaultChecked onCheckedChange={() => setUnsavedChanges(true)} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="monitoring" className="space-y-4">
-          <Card className="card-hover">
-            <CardHeader>
-              <CardTitle>Cấu hình giám sát</CardTitle>
-              <CardDescription>Thiết lập các tham số giám sát hệ thống</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="scan-interval">Chu kỳ quét (giây)</Label>
-                  <Input 
-                    id="scan-interval" 
-                    type="number"
-                    defaultValue="60"
-                    onChange={() => setUnsavedChanges(true)}
-                    className="input-focus"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="alert-threshold">Ngưỡng cảnh báo (%)</Label>
-                  <Input 
-                    id="alert-threshold" 
-                    type="number"
-                    defaultValue="80"
-                    onChange={() => setUnsavedChanges(true)}
-                    className="input-focus"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Giám sát CPU</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Theo dõi sử dụng CPU của hệ thống
-                    </p>
-                  </div>
-                  <Switch defaultChecked onCheckedChange={() => setUnsavedChanges(true)} />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Giám sát RAM</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Theo dõi sử dụng bộ nhớ
-                    </p>
-                  </div>
-                  <Switch defaultChecked onCheckedChange={() => setUnsavedChanges(true)} />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Giám sát mạng</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Theo dõi lưu lượng mạng
-                    </p>
-                  </div>
-                  <Switch defaultChecked onCheckedChange={() => setUnsavedChanges(true)} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="backup" className="space-y-4">
-          <Card className="card-hover">
-            <CardHeader>
-              <CardTitle>Cấu hình sao lưu</CardTitle>
-              <CardDescription>Thiết lập chính sách sao lưu dữ liệu</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="backup-time">Thời gian backup</Label>
-                  <Input 
-                    id="backup-time" 
-                    type="time"
-                    defaultValue="02:00"
-                    onChange={() => setUnsavedChanges(true)}
-                    className="input-focus"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="retention-days">Giữ lại (ngày)</Label>
-                  <Input 
-                    id="retention-days" 
-                    type="number"
-                    defaultValue="30"
-                    onChange={() => setUnsavedChanges(true)}
-                    className="input-focus"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="backup-location">Đường dẫn sao lưu</Label>
-                <Input 
-                  id="backup-location" 
-                  defaultValue="/var/backups/security-system"
-                  onChange={() => setUnsavedChanges(true)}
-                  className="input-focus"
-                />
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Nén backup</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Nén file backup để tiết kiệm dung lượng
-                    </p>
-                  </div>
-                  <Switch defaultChecked onCheckedChange={() => setUnsavedChanges(true)} />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Backup từ xa</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Sao lưu lên server từ xa
-                    </p>
-                  </div>
-                  <Switch onCheckedChange={() => setUnsavedChanges(true)} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      <div className="flex items-center space-x-2 stagger-item">
-        <Button onClick={handleSave} disabled={!unsavedChanges} className="btn-animate scale-hover">
-          <Save className="mr-2 h-4 w-4" />
-          Lưu thay đổi
-        </Button>
-        <Button variant="outline" className="scale-hover">
-          <RefreshCw className="mr-2 h-4 w-4" />
-          Khôi phục mặc định
-        </Button>
+function renderFormFields(formData: any, setFormData: any) {
+  return (
+    <div className="space-y-4 py-4">
+      <div className="space-y-2">
+        <Label>Tên hiển thị</Label>
+        <Input value={formData.display_name} onChange={(e) => setFormData({ ...formData, display_name: e.target.value })} />
+      </div>
+      <div className="space-y-2">
+        <Label>Giá trị</Label>
+        <Input value={formData.value} onChange={(e) => setFormData({ ...formData, value: e.target.value })} />
+      </div>
+      <div className="space-y-2">
+        <Label>Mô tả</Label>
+        <Input value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
+      </div>
+      <div className="space-y-2">
+        <Label>Đơn vị tính</Label>
+        <Input value={formData.unit} onChange={(e) => setFormData({ ...formData, unit: e.target.value })} />
+      </div>
+      <div className="space-y-2">
+        <Label>Hiển thị giá trị</Label>
+        <Input value={formData.display_value} onChange={(e) => setFormData({ ...formData, display_value: e.target.value })} />
+      </div>
+      <div className="flex space-x-4">
+        <div className="space-y-2 flex-1">
+          <Label>Tôi thiểu</Label>
+          <Input type="number" value={formData.min} onChange={(e) => setFormData({ ...formData, min: e.target.value })} />
+        </div>
+        <div className="space-y-2 flex-1">
+          <Label>Tối đa</Label>
+          <Input type="number" value={formData.max} onChange={(e) => setFormData({ ...formData, max: e.target.value })} />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label>Giá trị mặc định</Label>
+        <Input value={formData.default_value} onChange={(e) => setFormData({ ...formData, default_value: e.target.value })} />
       </div>
     </div>
   );

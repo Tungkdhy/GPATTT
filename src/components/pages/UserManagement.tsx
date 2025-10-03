@@ -11,80 +11,76 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { AdvancedFilter, FilterOption } from '../common/AdvancedFilter';
 import { Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
-import { usersService } from '../../services/api';
-
+import { roleService, usersService } from '../../services/api';
+import { useServerPagination } from '@/hooks/useServerPagination';
+import { useMultiSelect } from '@/hooks/useMultiSelect';
+const roleMapper = (item: { id: string; display_name: string }) => ({
+  label: item.display_name,
+  value: item.id,
+});
 export function UserManagement() {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+
+  // const [users, setUsers] = useState<any>([]);
+  // const [loading, setLoading] = useState(false);
+  const [reload,setReload] = useState(false)
+  const [name, setName] = useState('');
   const [filters, setFilters] = useState<Record<string, any>>({});
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    role: '',
+    user_name: '',
+    display_name: '',
+    role_id: '',
     password: ''
   });
+  const {
+    data: users,
+    currentPage,
+    totalPages,
+    total,
+    loading,
+    setCurrentPage,
+  } = useServerPagination(
+    (page, limit) => usersService.getAll(page, limit, { name: name }),
+    [name,reload], // dependencies: ví dụ [searchTerm, filters]
+    { pageSize: 10, initialPage: 1 },
+    { name }
+  );
+  const { options } = useMultiSelect([
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+    { key: "roles", fetcher: () => roleService.getAll(1, 10000), mapper: roleMapper },
+  ]);
 
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const data = await usersService.getAll();
-      setUsers(data);
-    } catch (error) {
-      toast.error('Lỗi khi tải danh sách người dùng');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const filterOptions: FilterOption[] = [
     {
       key: 'role',
       label: 'Vai trò',
       type: 'select',
-      options: [
-        { value: 'Admin', label: 'Admin' },
-        { value: 'Security', label: 'Security' },
-        { value: 'Operator', label: 'Operator' },
-        { value: 'Viewer', label: 'Viewer' }
-      ]
+      options: options.roles
     },
-    {
-      key: 'status',
-      label: 'Trạng thái',
-      type: 'select',
-      options: [
-        { value: 'active', label: 'Hoạt động' },
-        { value: 'inactive', label: 'Không hoạt động' }
-      ]
-    }
+
   ];
 
-  const filteredUsers = users.filter(user => {
+  const filteredUsers = users.filter((user: any) => {
     // Search filter
-    const matchesSearch = user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    // Role filter
-    const matchesRole = !filters.role || user.role === filters.role;
-    
-    // Status filter
-    const matchesStatus = !filters.status || user.status === filters.status;
-    
-    return matchesSearch && matchesRole && matchesStatus;
+    // const matchesSearch = user.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    //   user.email.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // // Role filter
+    // const matchesRole = !filters.role || user.role === filters.role;
+
+    // // Status filter
+    // const matchesStatus = !filters.status || user.status === filters.status;
+
+    // return matchesSearch && matchesRole && matchesStatus;
   });
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'Admin': return 'bg-red-500/10 text-red-500 border-red-500/20';
+      case 'ADMIN': return 'bg-red-500/10 text-red-500 border-red-500/20';
       case 'Security': return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
       case 'Operator': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
       case 'Viewer': return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
@@ -93,7 +89,7 @@ export function UserManagement() {
   };
 
   const getStatusColor = (status: string) => {
-    return status === 'active' 
+    return status
       ? 'bg-green-500/10 text-green-500 border-green-500/20'
       : 'bg-gray-500/10 text-gray-500 border-gray-500/20';
   };
@@ -101,10 +97,12 @@ export function UserManagement() {
   const handleAdd = async () => {
     try {
       const newUser = await usersService.create(formData);
-      setUsers([...users, newUser]);
+      console.log(newUser);
+
       setIsDialogOpen(false);
-      setFormData({ username: '', email: '', role: '', password: '' });
+      setFormData({ user_name: '', display_name: '', role_id: '', password: '' });
       toast.success('Thêm người dùng thành công!');
+      setReload(!reload)
     } catch (error) {
       toast.error('Lỗi khi thêm người dùng');
     }
@@ -113,9 +111,9 @@ export function UserManagement() {
   const handleEdit = (user: any) => {
     setSelectedUser(user);
     setFormData({
-      username: user.username,
-      email: user.email,
-      role: user.role,
+      user_name: user.user_name,
+      display_name: user.display_name,
+      role_id: user?.role?.id,
       password: ''
     });
     setIsEditDialogOpen(true);
@@ -124,14 +122,16 @@ export function UserManagement() {
   const handleUpdate = async () => {
     try {
       const updatedUser = await usersService.update(selectedUser.id, {
-        username: formData.username,
-        email: formData.email,
-        role: formData.role
+        user_name: formData.user_name,
+        display_name: formData.display_name,
+        role_id: formData.role_id
       });
-      setUsers(users.map(u => u.id === selectedUser.id ? updatedUser : u));
+      // setUsers(users.map((u:any) => u.id === selectedUser.id ? updatedUser : u));
       setIsEditDialogOpen(false);
       setSelectedUser(null);
-      setFormData({ username: '', email: '', role: '', password: '' });
+      setFormData({ user_name: '', display_name: '', role_id: '', password: '' });
+      setReload(!reload)
+
       toast.success('Cập nhật người dùng thành công!');
     } catch (error) {
       toast.error('Lỗi khi cập nhật người dùng');
@@ -146,10 +146,11 @@ export function UserManagement() {
   const handleDelete = async () => {
     try {
       await usersService.delete(selectedUser.id);
-      setUsers(users.filter(u => u.id !== selectedUser.id));
+      // setUsers(users.filter(u => u.id !== selectedUser.id));
       setIsDeleteDialogOpen(false);
       setSelectedUser(null);
       toast.success('Xóa người dùng thành công!');
+      setReload(!reload)
     } catch (error) {
       toast.error('Lỗi khi xóa người dùng');
     }
@@ -189,41 +190,40 @@ export function UserManagement() {
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
-                    <Label htmlFor="username">
+                    <Label htmlFor="user_name">
                       Tên đăng nhập
                     </Label>
-                    <Input 
-                      id="username" 
-                      placeholder="Nhập tên đăng nhập" 
-                      value={formData.username}
-                      onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                    <Input
+                      id="user_name"
+                      placeholder="Nhập tên đăng nhập"
+                      value={formData.user_name}
+                      onChange={(e) => setFormData({ ...formData, user_name: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">
-                      Email
+                      Tên hiển thị
                     </Label>
-                    <Input 
-                      id="email" 
-                      type="email" 
-                      placeholder="Nhập địa chỉ email" 
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    <Input
+                      id="email"
+                      type="text"
+                      placeholder="Nhập tên hiển thị"
+                      value={formData.display_name}
+                      onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="role">
                       Vai trò
                     </Label>
-                    <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
+                    <Select value={formData.role_id} onValueChange={(value: any) => setFormData({ ...formData, role_id: value })}>
                       <SelectTrigger>
                         <SelectValue placeholder="Chọn vai trò" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Admin">Admin</SelectItem>
-                        <SelectItem value="Security">Security</SelectItem>
-                        <SelectItem value="Operator">Operator</SelectItem>
-                        <SelectItem value="Viewer">Viewer</SelectItem>
+                        {
+                          options?.roles?.map((item: any) => (<SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>))
+                        }
                       </SelectContent>
                     </Select>
                   </div>
@@ -231,10 +231,10 @@ export function UserManagement() {
                     <Label htmlFor="password">
                       Mật khẩu
                     </Label>
-                    <Input 
-                      id="password" 
-                      type="password" 
-                      placeholder="Nhập mật khẩu" 
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="Nhập mật khẩu"
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     />
@@ -251,12 +251,12 @@ export function UserManagement() {
           <div className="mb-6">
             <AdvancedFilter
               searchPlaceholder="Tìm kiếm người dùng..."
-              searchValue={searchTerm}
-              onSearchChange={setSearchTerm}
+              searchValue={name}
+              onSearchChange={setName}
               filterOptions={filterOptions}
               filters={filters}
               onFiltersChange={setFilters}
-              onReset={() => setSearchTerm('')}
+              onReset={() => setName('')}
             />
           </div>
 
@@ -265,28 +265,30 @@ export function UserManagement() {
               <TableRow>
                 <TableHead>Tên đăng nhập</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Số điện thoại</TableHead>
                 <TableHead>Vai trò</TableHead>
                 <TableHead>Trạng thái</TableHead>
-                <TableHead>Đăng nhập cuối</TableHead>
+                {/* <TableHead>Đăng nhập cuối</TableHead> */}
                 <TableHead className="text-right">Thao tác</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredUsers.map((user, index) => (
-                <TableRow key={user.id} className="stagger-item" style={{animationDelay: `${index * 0.05}s`}}>
-                  <TableCell className="font-medium">{user.username}</TableCell>
+              {users.map((user: any, index: number) => (
+                <TableRow key={user.id} className="stagger-item" style={{ animationDelay: `${index * 0.05}s` }}>
+                  <TableCell className="font-medium">{user.user_name}</TableCell>
                   <TableCell>{user.email}</TableCell>
+                  <TableCell>{user.phone_number}</TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={getRoleColor(user.role)}>
-                      {user.role}
+                    <Badge variant="outline" className={getRoleColor(user?.role?.display_name)}>
+                      {user?.role?.display_name}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={getStatusColor(user.status)}>
-                      {user.status === 'active' ? 'Hoạt động' : 'Không hoạt động'}
+                    <Badge variant="outline" className={getStatusColor(user.is_online)}>
+                      {user.is_online ? 'Hoạt động' : 'Không hoạt động'}
                     </Badge>
                   </TableCell>
-                  <TableCell>{user.lastLogin}</TableCell>
+                  {/* <TableCell>{user.lastLogin}</TableCell> */}
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">
                       <Button variant="ghost" size="sm" className="scale-hover" onClick={() => handleEdit(user)}>
@@ -315,41 +317,40 @@ export function UserManagement() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-username">
+              <Label htmlFor="edit-user_name">
                 Tên đăng nhập
               </Label>
-              <Input 
-                id="edit-username" 
-                placeholder="Nhập tên đăng nhập" 
-                value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              <Input
+                id="edit-user_name"
+                placeholder="Nhập tên đăng nhập"
+                value={formData.user_name}
+                onChange={(e) => setFormData({ ...formData, user_name: e.target.value })}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-email">
-                Email
+                Tên hiển thị
               </Label>
-              <Input 
-                id="edit-email" 
-                type="email" 
-                placeholder="Nhập địa chỉ email" 
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              <Input
+                id="edit-email"
+                type="text"
+                placeholder="Nhập tên hiển thị"
+                value={formData.display_name}
+                onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-role">
                 Vai trò
               </Label>
-              <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
+              <Select value={formData.role_id} onValueChange={(value: any) => setFormData({ ...formData, role_id: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Chọn vai trò" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Admin">Admin</SelectItem>
-                  <SelectItem value="Security">Security</SelectItem>
-                  <SelectItem value="Operator">Operator</SelectItem>
-                  <SelectItem value="Viewer">Viewer</SelectItem>
+                  {
+                    options?.roles?.map((item: any) => (<SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>))
+                  }
                 </SelectContent>
               </Select>
             </div>
@@ -366,7 +367,7 @@ export function UserManagement() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa người dùng <strong>{selectedUser?.username}</strong>? 
+              Bạn có chắc chắn muốn xóa người dùng <strong>{selectedUser?.user_name}</strong>?
               Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
