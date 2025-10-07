@@ -30,6 +30,7 @@ import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { AuthProvider } from './components/auth/AuthContext';
 import { Action } from './components/pages/Action';
 import { CategoryTypes } from './components/pages/CategoryType';
+import { CloudManagers } from './components/pages/CloudManagers';
 
 export default function App() {
   // Set dark theme on mount
@@ -74,6 +75,7 @@ export default function App() {
                     <Route path="/error-codes" element={<ErrorCodes />} />
                     <Route path="/regions" element={<RegionManagement />} />
                     <Route path="/category-type" element={<CategoryTypes />} />
+                    <Route path="/cloud-managers" element={<CloudManagers />} />
                   </Routes>
                 </Layout>
               </ProtectedRoute>

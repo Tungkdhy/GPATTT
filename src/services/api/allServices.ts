@@ -3,6 +3,7 @@
 
 import axiosInstance from './axiosInstance';
 import { API_ENDPOINTS } from './endpoints';
+import { logsService } from './logs.service';
 
 // ============= SYSTEM PARAMS SERVICE =============
 const mockSystemParams = [
@@ -457,93 +458,8 @@ class SystemLogsService {
 export const systemLogsService = new SystemLogsService();
 
 // ============= MALWARE HASHES SERVICE =============
-const mockMalwareHashes = [
-  { id: 1, hash: 'd41d8cd98f00b204e9800998ecf8427e', type: 'MD5', malwareName: 'Trojan.Win32.Generic', severity: 'critical', detectedDate: '2024-01-15 10:00', source: 'VirusTotal' },
-  { id: 2, hash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', type: 'SHA256', malwareName: 'Ransomware.WannaCry', severity: 'critical', detectedDate: '2024-01-14 15:30', source: 'Threat Database' },
-  { id: 3, hash: 'da39a3ee5e6b4b0d3255bfef95601890afd80709', type: 'SHA1', malwareName: 'Spyware.Keylogger', severity: 'high', detectedDate: '2024-01-13 09:15', source: 'Custom Scan' },
-];
-
-export interface MalwareHash {
-  id: number;
-  hash: string;
-  type: string;
-  malwareName: string;
-  severity: string;
-  detectedDate: string;
-  source: string;
-}
-
-export interface CreateMalwareHashDto {
-  hash: string;
-  type: string;
-  malwareName: string;
-  severity: string;
-  source: string;
-}
-
-export interface UpdateMalwareHashDto {
-  hash?: string;
-  type?: string;
-  malwareName?: string;
-  severity?: string;
-  source?: string;
-}
-
-class MalwareHashesService {
-  async getAll(): Promise<MalwareHash[]> {
-    return new Promise((resolve) => {
-      setTimeout(() => resolve(mockMalwareHashes), 500);
-    });
-  }
-
-  async getById(id: number): Promise<MalwareHash> {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const hash = mockMalwareHashes.find(h => h.id === id);
-        if (hash) {
-          resolve(hash);
-        } else {
-          reject(new Error('Malware hash not found'));
-        }
-      }, 300);
-    });
-  }
-
-  async create(data: CreateMalwareHashDto): Promise<MalwareHash> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const newHash: MalwareHash = {
-          id: mockMalwareHashes.length + 1,
-          ...data,
-          detectedDate: new Date().toISOString().slice(0, 16).replace('T', ' ')
-        };
-        resolve(newHash);
-      }, 500);
-    });
-  }
-
-  async update(id: number, data: UpdateMalwareHashDto): Promise<MalwareHash> {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const hash = mockMalwareHashes.find(h => h.id === id);
-        if (hash) {
-          const updatedHash = { ...hash, ...data };
-          resolve(updatedHash);
-        } else {
-          reject(new Error('Malware hash not found'));
-        }
-      }, 500);
-    });
-  }
-
-  async delete(id: number): Promise<void> {
-    return new Promise((resolve) => {
-      setTimeout(() => resolve(), 500);
-    });
-  }
-}
-
-export const malwareHashesService = new MalwareHashesService();
+// Export malwareHashesService from separate file
+export { default as malwareHashesService } from './malwareHashes.service';
 
 // ============= MALWARE TYPES SERVICE =============
 const mockMalwareTypes = [
@@ -817,3 +733,6 @@ class RegionManagementService {
 }
 
 export const regionManagementService = new RegionManagementService();
+
+// Export the logs service
+export { logsService };

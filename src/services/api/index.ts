@@ -15,7 +15,7 @@ export { default as accountPermissionsService } from './accountPermissions.servi
 export { default as blacklistIPsService } from './blacklistIPs.service';
 export { default as whitelistIPsService } from './whitelistIPs.service';
 export { default as logTypesService } from './logTypes.service';
-export { default as logsService } from './logs.service';
+export { logsService } from './logs.service';
 export { default as alertLevelsService } from './alertLevels.service';
 export { default as scenarioLogsService } from './scenarioLogs.service';
 export { default as authService } from './auth.service';
@@ -24,6 +24,9 @@ export { default as actionService } from './action.service';
 export { default as categoryService } from './category.service';
 export { default as categoryTypeService } from './categoryType.service';
 export { default as parametersService } from './params.service';
+export { default as malwareTypesService } from './malwareTypes.service';
+export { default as managerVersionsService } from './managerVersions.service';
+export { default as cloudManagersService } from './cloudManagers.service';
 // parametersService
 // Export all services from allServices.ts
 export {
@@ -33,7 +36,7 @@ export {
   firewallConfigsService,
   systemLogsService,
   malwareHashesService,
-  malwareTypesService,
+  // malwareTypesService,
   errorCodesService,
   regionManagementService
 } from './allServices';
@@ -48,10 +51,26 @@ export type { LogAddress, CreateLogAddressDto, UpdateLogAddressDto } from './log
 export type { AccountPermission, CreateAccountPermissionDto, UpdateAccountPermissionDto } from './accountPermissions.service';
 export type { BlacklistIP, CreateBlacklistIPDto, UpdateBlacklistIPDto } from './blacklistIPs.service';
 export type { WhitelistIP, CreateWhitelistIPDto, UpdateWhitelistIPDto } from './whitelistIPs.service';
-export type { LogType, CreateLogTypeDto, UpdateLogTypeDto } from './logTypes.service';
-export type { Log, CreateLogDto, UpdateLogDto } from './logs.service';
+export type { LogType as LogTypeEntity, CreateLogTypeDto, UpdateLogTypeDto } from './logTypes.service';
+export type { Log, LogsResponse, LogsParams, LogUser, LogType } from './logs.service';
 export type { AlertLevel, CreateAlertLevelDto, UpdateAlertLevelDto } from './alertLevels.service';
 export type { ScenarioLog, CreateScenarioLogDto, UpdateScenarioLogDto } from './scenarioLogs.service';
+export type { 
+  ManagerVersionItem, 
+  ManagerVersionsListResponse, 
+  CreateManagerVersionDto, 
+  UpdateManagerVersionDto 
+} from './managerVersions.service';
+export type { 
+  CloudManager, 
+  CreateCloudManagerDto, 
+  UpdateCloudManagerDto 
+} from './cloudManagers.service';
+// export type { 
+//   MalwareType, 
+//   CreateMalwareTypeDto, 
+//   UpdateMalwareTypeDto 
+// } from './malwareTypes.service';
 
 // Export types from allServices.ts
 export type {
@@ -70,9 +89,6 @@ export type {
   SystemLog,
   CreateSystemLogDto,
   UpdateSystemLogDto,
-  MalwareHash,
-  CreateMalwareHashDto,
-  UpdateMalwareHashDto,
   MalwareType,
   CreateMalwareTypeDto,
   UpdateMalwareTypeDto,
@@ -83,3 +99,11 @@ export type {
   CreateRegionDto,
   UpdateRegionDto
 } from './allServices';
+
+// Export malware hash types from separate file
+export type {
+  MalwareHashWithType,
+  MalwareHashItem,
+  CreateMalwareHashDto,
+  UpdateMalwareHashDto
+} from './malwareHashes.service';

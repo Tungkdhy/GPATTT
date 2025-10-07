@@ -1,213 +1,113 @@
-import { useState } from 'react';
-import { Badge } from '../ui/badge';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { AdvancedFilter, FilterOption } from '../common/AdvancedFilter';
+import { managerVersionsService, type ManagerVersionItem } from '../../services/api';
+import { toast } from 'sonner@2.0.3';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import { Label } from '../ui/label';
-import { Textarea } from '../ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { AdvancedFilter, FilterOption } from '../common/AdvancedFilter';
 import { Plus, Edit, Trash2 } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
-
-const mockVersions = [
-  { id: 1, name: 'Security Agent', version: '2.1.0', type: 'Agent', status: 'stable', releaseDate: '2024-01-15', description: 'Phiên bản ổn định với cải tiến bảo mật' },
-  { id: 2, name: 'Firewall Manager', version: '1.5.2', type: 'Manager', status: 'beta', releaseDate: '2024-01-10', description: 'Phiên bản beta với tính năng mới' },
-  { id: 3, name: 'Log Collector', version: '3.0.1', type: 'Service', status: 'deprecated', releaseDate: '2023-12-20', description: 'Phiên bản cũ, sẽ ngừng hỗ trợ' },
-  { id: 4, name: 'Network Monitor', version: '1.2.5', type: 'Monitor', status: 'stable', releaseDate: '2024-01-05', description: 'Phiên bản ổn định cho giám sát mạng' },
-  { id: 5, name: 'Threat Detection', version: '4.0.0', type: 'Engine', status: 'stable', releaseDate: '2024-01-12', description: 'Phiên bản mới với AI detection' },
-];
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'stable': return 'bg-green-500/10 text-green-500 border-green-500/20';
-    case 'beta': return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
-    case 'deprecated': return 'bg-red-500/10 text-red-500 border-red-500/20';
-    case 'alpha': return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
-    default: return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
-  }
-};
-
-const getStatusText = (status: string) => {
-  switch (status) {
-    case 'stable': return 'Ổn định';
-    case 'beta': return 'Beta';
-    case 'deprecated': return 'Ngừng hỗ trợ';
-    case 'alpha': return 'Alpha';
-    default: return 'Không xác định';
-  }
-};
 
 export function SoftwareVersions() {
-  const [versions, setVersions] = useState(mockVersions);
+  const [versions, setVersions] = useState<ManagerVersionItem[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<Record<string, any>>({});
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    version: '',
-    type: '',
-    status: '',
-    releaseDate: '',
-    description: ''
+  const [selectedItem, setSelectedItem] = useState<ManagerVersionItem | null>(null);
+  const [formData, setFormData] = useState<{ version_name: string; hash_version: string }>({
+    version_name: '',
+    hash_version: ''
   });
 
-  const filterOptions: FilterOption[] = [
-    {
-      key: 'type',
-      label: 'Loại',
-      type: 'select',
-      options: [
-        { value: 'Agent', label: 'Agent' },
-        { value: 'Manager', label: 'Manager' },
-        { value: 'Service', label: 'Service' },
-        { value: 'Monitor', label: 'Monitor' },
-        { value: 'Engine', label: 'Engine' }
-      ]
-    },
-    {
-      key: 'status',
-      label: 'Trạng thái',
-      type: 'select',
-      options: [
-        { value: 'stable', label: 'Ổn định' },
-        { value: 'beta', label: 'Beta' },
-        { value: 'alpha', label: 'Alpha' },
-        { value: 'deprecated', label: 'Ngừng hỗ trợ' }
-      ]
+  const loadList = async () => {
+    try {
+      const res = await managerVersionsService.list();
+      setVersions(res.data.rows || []);
+      setTotalCount(res.data.count || 0);
+    } catch (e: any) {
+      toast.error('Không thể tải danh sách phiên bản quản lý');
     }
-  ];
-
-  const filteredData = versions.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = !filters.type || item.type === filters.type;
-    const matchesStatus = !filters.status || item.status === filters.status;
-    return matchesSearch && matchesType && matchesStatus;
-  });
-
-  const handleAdd = () => {
-    const newItem = {
-      id: versions.length + 1,
-      ...formData
-    };
-    setVersions([...versions, newItem]);
-    setIsDialogOpen(false);
-    setFormData({ name: '', version: '', type: '', status: '', releaseDate: '', description: '' });
-    toast.success('Thêm phiên bản phần mềm thành công!');
   };
 
-  const handleEdit = (item: any) => {
+  useEffect(() => {
+    loadList();
+  }, []);
+
+  const filterOptions: FilterOption[] = [];
+
+  const filteredData = versions.filter(item => {
+    const term = searchTerm.toLowerCase();
+    const matchesSearch =
+      item.version_name.toLowerCase().includes(term) ||
+      item.hash_version.toLowerCase().includes(term) ||
+      (item.created_by_name?.toLowerCase() || '').includes(term);
+    return matchesSearch;
+  });
+
+  const resetForm = () => setFormData({ version_name: '', hash_version: '' });
+
+  const handleAdd = async () => {
+    try {
+      await managerVersionsService.create({
+        version_name: formData.version_name,
+        hash_version: formData.hash_version
+      });
+      toast.success('Thêm phiên bản quản lý thành công');
+      setIsDialogOpen(false);
+      resetForm();
+      await loadList();
+    } catch (e: any) {
+      toast.error('Không thể thêm phiên bản');
+    }
+  };
+
+  const handleEdit = (item: ManagerVersionItem) => {
     setSelectedItem(item);
-    setFormData({
-      name: item.name,
-      version: item.version,
-      type: item.type,
-      status: item.status,
-      releaseDate: item.releaseDate,
-      description: item.description
-    });
+    setFormData({ version_name: item.version_name, hash_version: item.hash_version });
     setIsEditDialogOpen(true);
   };
 
-  const handleUpdate = () => {
-    setVersions(versions.map(item => item.id === selectedItem.id ? {
-      ...item,
-      ...formData
-    } : item));
-    setIsEditDialogOpen(false);
-    setSelectedItem(null);
-    setFormData({ name: '', version: '', type: '', status: '', releaseDate: '', description: '' });
-    toast.success('Cập nhật phiên bản phần mềm thành công!');
+  const handleUpdate = async () => {
+    if (!selectedItem) return;
+    try {
+      await managerVersionsService.update(selectedItem.id, {
+        version_name: formData.version_name,
+        hash_version: formData.hash_version
+      });
+      toast.success('Cập nhật phiên bản quản lý thành công');
+      setIsEditDialogOpen(false);
+      setSelectedItem(null);
+      resetForm();
+      await loadList();
+    } catch (e: any) {
+      toast.error('Không thể cập nhật phiên bản');
+    }
   };
 
-  const handleDeleteClick = (item: any) => {
+  const handleDeleteClick = (item: ManagerVersionItem) => {
     setSelectedItem(item);
     setIsDeleteDialogOpen(true);
   };
 
-  const handleDelete = () => {
-    setVersions(versions.filter(item => item.id !== selectedItem.id));
-    setIsDeleteDialogOpen(false);
-    setSelectedItem(null);
-    toast.success('Xóa phiên bản phần mềm thành công!');
+  const handleDelete = async () => {
+    if (!selectedItem) return;
+    try {
+      await managerVersionsService.remove(selectedItem.id);
+      toast.success('Xóa phiên bản quản lý thành công');
+      setIsDeleteDialogOpen(false);
+      setSelectedItem(null);
+      await loadList();
+    } catch (e: any) {
+      toast.error('Không thể xóa phiên bản');
+    }
   };
 
-  const renderForm = (data: typeof formData, onChange: (data: typeof formData) => void) => (
-    <div className="space-y-4 py-4">
-      <div className="space-y-2">
-        <Label htmlFor="software-name">Tên phần mềm</Label>
-        <Input 
-          id="software-name" 
-          placeholder="Nhập tên phần mềm" 
-          value={data.name}
-          onChange={(e) => onChange({ ...data, name: e.target.value })}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="software-version">Phiên bản</Label>
-        <Input 
-          id="software-version" 
-          placeholder="x.y.z" 
-          value={data.version}
-          onChange={(e) => onChange({ ...data, version: e.target.value })}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="software-type">Loại</Label>
-        <Select value={data.type} onValueChange={(value) => onChange({ ...data, type: value })}>
-          <SelectTrigger>
-            <SelectValue placeholder="Chọn loại phần mềm" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Agent">Agent</SelectItem>
-            <SelectItem value="Manager">Manager</SelectItem>
-            <SelectItem value="Service">Service</SelectItem>
-            <SelectItem value="Monitor">Monitor</SelectItem>
-            <SelectItem value="Engine">Engine</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="software-status">Trạng thái</Label>
-        <Select value={data.status} onValueChange={(value) => onChange({ ...data, status: value })}>
-          <SelectTrigger>
-            <SelectValue placeholder="Chọn trạng thái" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="stable">Ổn định</SelectItem>
-            <SelectItem value="beta">Beta</SelectItem>
-            <SelectItem value="alpha">Alpha</SelectItem>
-            <SelectItem value="deprecated">Ngừng hỗ trợ</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="release-date">Ngày phát hành</Label>
-        <Input 
-          id="release-date" 
-          type="date" 
-          value={data.releaseDate}
-          onChange={(e) => onChange({ ...data, releaseDate: e.target.value })}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="software-description">Mô tả</Label>
-        <Textarea 
-          id="software-description" 
-          placeholder="Nhập mô tả" 
-          rows={3} 
-          value={data.description}
-          onChange={(e) => onChange({ ...data, description: e.target.value })}
-        />
-      </div>
-    </div>
-  );
 
   return (
     <div className="space-y-6 fade-in-up">
@@ -224,7 +124,7 @@ export function SoftwareVersions() {
             <div>
               <CardTitle>Danh sách phiên bản</CardTitle>
               <CardDescription>
-                Tổng cộng {versions.length} phiên bản
+                Tổng cộng {totalCount} phiên bản
               </CardDescription>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -236,12 +136,21 @@ export function SoftwareVersions() {
               </DialogTrigger>
               <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Thêm phiên bản mới</DialogTitle>
+                  <DialogTitle>Thêm phiên bản quản lý</DialogTitle>
                   <DialogDescription>
-                    Tạo phiên bản phần mềm mới
+                    Nhập thông tin phiên bản
                   </DialogDescription>
                 </DialogHeader>
-                {renderForm(formData, setFormData)}
+                <div className="space-y-4 py-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="version-name">Version name</Label>
+                    <Input id="version-name" placeholder="v1.0.0" value={formData.version_name} onChange={(e) => setFormData({ ...formData, version_name: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="hash-version">Hash version</Label>
+                    <Input id="hash-version" placeholder="a1b2c3..." value={formData.hash_version} onChange={(e) => setFormData({ ...formData, hash_version: e.target.value })} />
+                  </div>
+                </div>
                 <DialogFooter>
                   <Button type="submit" className="w-full" onClick={handleAdd}>Thêm</Button>
                 </DialogFooter>
@@ -265,28 +174,20 @@ export function SoftwareVersions() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Tên phần mềm</TableHead>
-                <TableHead>Phiên bản</TableHead>
-                <TableHead>Loại</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Ngày phát hành</TableHead>
-                <TableHead>Mô tả</TableHead>
+                <TableHead>Version Name</TableHead>
+                <TableHead>Hash Version</TableHead>
+                <TableHead>Created By</TableHead>
+                <TableHead>Created At</TableHead>
                 <TableHead className="text-right">Thao tác</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredData.map((item, index) => (
                 <TableRow key={item.id} className="stagger-item" style={{animationDelay: `${index * 0.05}s`}}>
-                  <TableCell className="font-medium">{item.name}</TableCell>
-                  <TableCell>{item.version}</TableCell>
-                  <TableCell>{item.type}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={getStatusColor(item.status)}>
-                      {getStatusText(item.status)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{item.releaseDate}</TableCell>
-                  <TableCell className="max-w-xs truncate">{item.description}</TableCell>
+                  <TableCell className="font-medium">{item.version_name}</TableCell>
+                  <TableCell className="max-w-xs truncate">{item.hash_version}</TableCell>
+                  <TableCell>{item.created_by_name}</TableCell>
+                  <TableCell>{new Date(item.created_at).toLocaleString()}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">
                       <Button variant="ghost" size="sm" className="scale-hover" onClick={() => handleEdit(item)}>
@@ -308,12 +209,21 @@ export function SoftwareVersions() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Chỉnh sửa phiên bản</DialogTitle>
+            <DialogTitle>Chỉnh sửa phiên bản quản lý</DialogTitle>
             <DialogDescription>
               Cập nhật thông tin phiên bản
             </DialogDescription>
           </DialogHeader>
-          {renderForm(formData, setFormData)}
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="version-name-edit">Version name</Label>
+              <Input id="version-name-edit" placeholder="v1.0.0" value={formData.version_name} onChange={(e) => setFormData({ ...formData, version_name: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="hash-version-edit">Hash version</Label>
+              <Input id="hash-version-edit" placeholder="a1b2c3..." value={formData.hash_version} onChange={(e) => setFormData({ ...formData, hash_version: e.target.value })} />
+            </div>
+          </div>
           <DialogFooter>
             <Button type="submit" className="w-full" onClick={handleUpdate}>Cập nhật</Button>
           </DialogFooter>
@@ -326,8 +236,7 @@ export function SoftwareVersions() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa phiên bản <strong>{selectedItem?.name} v{selectedItem?.version}</strong>? 
-              Hành động này không thể hoàn tác.
+              Bạn có chắc chắn muốn xóa phiên bản <strong>{selectedItem?.version_name}</strong>?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -338,6 +247,7 @@ export function SoftwareVersions() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
     </div>
   );
 }

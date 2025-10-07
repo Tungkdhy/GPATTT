@@ -52,6 +52,15 @@ export const API_ENDPOINTS = {
     GET: (id: number) => `/software-versions/${id}`,
   },
 
+  // Manager Versions
+  MANAGER_VERSIONS: {
+    LIST: '/manager-versions',
+    CREATE: '/manager-versions',
+    UPDATE: (id: string | number) => `/manager-versions/${id}`,
+    DELETE: (id: string | number) => `/manager-versions/${id}`,
+    GET: (id: string | number) => `/manager-versions/${id}`,
+  },
+
   // Log Addresses
   LOG_ADDRESSES: {
     LIST: '/log-addresses',
@@ -149,6 +158,15 @@ export const API_ENDPOINTS = {
     UPDATE: (id: number) => `/response-scenarios/${id}`,
     DELETE: (id: number) => `/response-scenarios/${id}`,
     GET: (id: number) => `/response-scenarios/${id}`,
+  },
+
+  // Cloud Managers
+  CLOUD_MANAGERS: {
+    LIST: '/cloud-managers',
+    CREATE: '/cloud-managers',
+    UPDATE: (id: string) => `/cloud-managers/${id}`,
+    DELETE: (id: string) => `/cloud-managers/${id}`,
+    GET: (id: string) => `/cloud-managers/${id}`,
   },
 
   // Dashboard

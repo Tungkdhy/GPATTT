@@ -10,120 +10,95 @@ const mockBlacklistIPs = [
 ];
 
 export interface BlacklistIP {
-  id: number;
-  ipAddress: string;
-  reason: string;
-  source: string;
-  addedDate: string;
-  expiryDate: string;
+  id: string;
+  ip_public: string;
+  ip_local: string;
+  type: string;
+  description: string;
   status: string;
+  location: string;
+  created_at: string;
+  created_by_name: string;
+  updated_by_name: string | null;
 }
 
 export interface CreateBlacklistIPDto {
-  ipAddress: string;
-  reason: string;
-  source: string;
-  expiryDate: string;
+  ip_public: string;
+  ip_local: string;
+  type: string;
+  description: string;
+  location: string;
 }
 
 export interface UpdateBlacklistIPDto {
-  ipAddress?: string;
-  reason?: string;
-  source?: string;
-  expiryDate?: string;
+  ip_public?: string;
+  ip_local?: string;
+  type?: string;
+  description?: string;
+  location?: string;
   status?: string;
 }
 
 class BlacklistIPsService {
-  async getAll(): Promise<BlacklistIP[]> {
+  async getAll(page: number = 1, size: number = 10, params: any = {}): Promise<any> {
     try {
-      // const response = await axiosInstance.get(API_ENDPOINTS.BLACKLIST_IPS.LIST);
-      // return response.data;
-      
-      return new Promise((resolve) => {
-        setTimeout(() => resolve(mockBlacklistIPs), 500);
+      const response = await axiosInstance.get('manager-ips', {
+        params: {
+          pageSize: size,
+          pageIndex: page,
+          ...params
+        }
       });
+      return response.data.data;
     } catch (error) {
       console.error('Error fetching blacklist IPs:', error);
       throw error;
     }
   }
 
-  async getById(id: number): Promise<BlacklistIP> {
+  async getById(id: string): Promise<BlacklistIP> {
     try {
-      // const response = await axiosInstance.get(API_ENDPOINTS.BLACKLIST_IPS.GET(id));
-      // return response.data;
-      
-      return new Promise((resolve, reject) => {
-        setTimeout(() => {
-          const ip = mockBlacklistIPs.find(i => i.id === id);
-          if (ip) {
-            resolve(ip);
-          } else {
-            reject(new Error('Blacklist IP not found'));
-          }
-        }, 300);
-      });
+      const response = await axiosInstance.get(`manager-ips/${id}`);
+      return response.data.data;
     } catch (error) {
       console.error('Error fetching blacklist IP:', error);
       throw error;
     }
   }
 
-  async create(data: CreateBlacklistIPDto): Promise<BlacklistIP> {
+  async create(data: CreateBlacklistIPDto): Promise<any> {
     try {
-      // const response = await axiosInstance.post(API_ENDPOINTS.BLACKLIST_IPS.CREATE, data);
-      // return response.data;
-      
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const newIP: BlacklistIP = {
-            id: mockBlacklistIPs.length + 1,
-            ...data,
-            addedDate: new Date().toISOString().slice(0, 16).replace('T', ' '),
-            status: 'active'
-          };
-          resolve(newIP);
-        }, 500);
-      });
-    } catch (error) {
+      const response = await axiosInstance.post('manager-ips', data);
+      return response.data;
+    } catch (error: any) {
       console.error('Error creating blacklist IP:', error);
-      throw error;
+      // Extract error message from API response
+      const errorMessage = error.response?.data?.message || error.message || 'Có lỗi xảy ra khi tạo IP manager';
+      throw new Error(errorMessage);
     }
   }
 
-  async update(id: number, data: UpdateBlacklistIPDto): Promise<BlacklistIP> {
+  async update(id: string, data: UpdateBlacklistIPDto): Promise<any> {
     try {
-      // const response = await axiosInstance.put(API_ENDPOINTS.BLACKLIST_IPS.UPDATE(id), data);
-      // return response.data;
-      
-      return new Promise((resolve, reject) => {
-        setTimeout(() => {
-          const ip = mockBlacklistIPs.find(i => i.id === id);
-          if (ip) {
-            const updatedIP = { ...ip, ...data };
-            resolve(updatedIP);
-          } else {
-            reject(new Error('Blacklist IP not found'));
-          }
-        }, 500);
-      });
-    } catch (error) {
+      const response = await axiosInstance.put(`manager-ips/${id}`, data);
+      return response.data;
+    } catch (error: any) {
       console.error('Error updating blacklist IP:', error);
-      throw error;
+      // Extract error message from API response
+      const errorMessage = error.response?.data?.message || error.message || 'Có lỗi xảy ra khi cập nhật IP manager';
+      throw new Error(errorMessage);
     }
   }
 
-  async delete(id: number): Promise<void> {
+  async delete(id: string): Promise<any> {
     try {
-      // await axiosInstance.delete(API_ENDPOINTS.BLACKLIST_IPS.DELETE(id));
-      
-      return new Promise((resolve) => {
-        setTimeout(() => resolve(), 500);
-      });
-    } catch (error) {
+      const response = await axiosInstance.delete(`manager-ips/${id}`);
+      return response.data;
+    } catch (error: any) {
       console.error('Error deleting blacklist IP:', error);
-      throw error;
+      // Extract error message from API response
+      const errorMessage = error.response?.data?.message || error.message || 'Có lỗi xảy ra khi xóa IP manager';
+      throw new Error(errorMessage);
     }
   }
 }

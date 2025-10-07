@@ -1,132 +1,103 @@
 import axiosInstance from './axiosInstance';
 import { API_ENDPOINTS } from './endpoints';
 
-// Mock data
-const mockLogs = [
-  { id: 1, timestamp: '2024-01-15 12:30:45', source: 'Firewall-Main', type: 'Security', level: 'critical', message: 'Unauthorized access attempt detected', ip: '203.0.113.45' },
-  { id: 2, timestamp: '2024-01-15 12:28:30', source: 'Server-001', type: 'System', level: 'warning', message: 'High CPU usage detected (85%)', ip: '192.168.1.10' },
-  { id: 3, timestamp: '2024-01-15 12:25:15', source: 'Switch-Core', type: 'Network', level: 'info', message: 'Port 24 link up', ip: '192.168.1.5' },
-  { id: 4, timestamp: '2024-01-15 12:20:00', source: 'IDS-001', type: 'Security', level: 'high', message: 'Port scanning detected', ip: '172.16.0.99' },
-  { id: 5, timestamp: '2024-01-15 12:15:30', source: 'WebApp-01', type: 'Application', level: 'error', message: 'Database connection failed', ip: '192.168.1.50' },
-];
+export interface LogUser {
+  display_name: string;
+  user_name: string;
+}
+
+export interface LogType {
+  id: string;
+  display_name: string;
+  value: string;
+}
 
 export interface Log {
-  id: number;
-  timestamp: string;
-  source: string;
-  type: string;
-  level: string;
-  message: string;
-  ip: string;
+  id: string;
+  user_id: string;
+  action_name: string;
+  description: string;
+  is_active: boolean;
+  log_type_id: string;
+  created_at: string;
+  user: LogUser;
+  log_type: LogType;
 }
 
-export interface CreateLogDto {
-  source: string;
-  type: string;
-  level: string;
+export interface LogsResponse {
+  statusCode: string;
   message: string;
-  ip: string;
+  data: {
+    count: number;
+    rows: Log[];
+  };
 }
 
-export interface UpdateLogDto {
-  source?: string;
-  type?: string;
-  level?: string;
-  message?: string;
-  ip?: string;
+export interface LogsParams {
+  type?: number;
+  pageSize?: number;
+  pageIndex?: number;
+  search?: string;
+  logType?: string;
+  actionName?: string;
+  userId?: string;
+  isActive?: boolean;
+  startDate?: string;
+  endDate?: string;
 }
 
 class LogsService {
-  async getAll(): Promise<Log[]> {
+  async getAll(params: LogsParams = {}): Promise<LogsResponse> {
     try {
-      // const response = await axiosInstance.get(API_ENDPOINTS.LOGS.LIST);
-      // return response.data;
+      const queryParams = new URLSearchParams();
       
-      return new Promise((resolve) => {
-        setTimeout(() => resolve(mockLogs), 500);
-      });
+      if (params.type !== undefined) queryParams.append('type', params.type.toString());
+      if (params.pageSize !== undefined) queryParams.append('pageSize', params.pageSize.toString());
+      if (params.pageIndex !== undefined) queryParams.append('pageIndex', params.pageIndex.toString());
+      if (params.search) queryParams.append('search', params.search);
+      if (params.logType) queryParams.append('logType', params.logType);
+      if (params.actionName) queryParams.append('actionName', params.actionName);
+      if (params.userId) queryParams.append('userId', params.userId);
+      if (params.isActive !== undefined) queryParams.append('isActive', params.isActive.toString());
+      if (params.startDate) queryParams.append('startDate', params.startDate);
+      if (params.endDate) queryParams.append('endDate', params.endDate);
+
+      const response = await axiosInstance.get(`${API_ENDPOINTS.LOGS.LIST}?${queryParams.toString()}`);
+      return response.data;
     } catch (error) {
       console.error('Error fetching logs:', error);
       throw error;
     }
   }
 
-  async getById(id: number): Promise<Log> {
+  async getById(id: string): Promise<Log> {
     try {
-      // const response = await axiosInstance.get(API_ENDPOINTS.LOGS.GET(id));
-      // return response.data;
-      
-      return new Promise((resolve, reject) => {
-        setTimeout(() => {
-          const log = mockLogs.find(l => l.id === id);
-          if (log) {
-            resolve(log);
-          } else {
-            reject(new Error('Log not found'));
-          }
-        }, 300);
-      });
+      const response = await axiosInstance.get(API_ENDPOINTS.LOGS.GET(id));
+      return response.data.data;
     } catch (error) {
-      console.error('Error fetching log:', error);
+      console.error('Error fetching log by id:', error);
       throw error;
     }
   }
 
-  async create(data: CreateLogDto): Promise<Log> {
+  async delete(id: string): Promise<void> {
     try {
-      // const response = await axiosInstance.post(API_ENDPOINTS.LOGS.CREATE, data);
-      // return response.data;
-      
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const newLog: Log = {
-            id: mockLogs.length + 1,
-            timestamp: new Date().toISOString().slice(0, 19).replace('T', ' '),
-            ...data
-          };
-          resolve(newLog);
-        }, 500);
-      });
-    } catch (error) {
-      console.error('Error creating log:', error);
-      throw error;
-    }
-  }
-
-  async update(id: number, data: UpdateLogDto): Promise<Log> {
-    try {
-      // const response = await axiosInstance.put(API_ENDPOINTS.LOGS.UPDATE(id), data);
-      // return response.data;
-      
-      return new Promise((resolve, reject) => {
-        setTimeout(() => {
-          const log = mockLogs.find(l => l.id === id);
-          if (log) {
-            const updatedLog = { ...log, ...data };
-            resolve(updatedLog);
-          } else {
-            reject(new Error('Log not found'));
-          }
-        }, 500);
-      });
-    } catch (error) {
-      console.error('Error updating log:', error);
-      throw error;
-    }
-  }
-
-  async delete(id: number): Promise<void> {
-    try {
-      // await axiosInstance.delete(API_ENDPOINTS.LOGS.DELETE(id));
-      
-      return new Promise((resolve) => {
-        setTimeout(() => resolve(), 500);
-      });
+      await axiosInstance.delete(API_ENDPOINTS.LOGS.DELETE(id));
     } catch (error) {
       console.error('Error deleting log:', error);
       throw error;
     }
   }
+
+  async getLogTypes(): Promise<LogType[]> {
+    try {
+      const response = await axiosInstance.get(API_ENDPOINTS.LOG_TYPES.LIST);
+      return response.data.data || response.data.rows || response.data;
+    } catch (error) {
+      console.error('Error fetching log types:', error);
+      throw error;
+    }
+  }
 }
 
-export default new LogsService();
+export const logsService = new LogsService();

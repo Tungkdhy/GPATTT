@@ -1,92 +1,234 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import { AdvancedFilter, FilterOption } from '../common/AdvancedFilter';
-import { Eye, Download, Activity } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
-
-const mockSystemLogs = [
-  { id: 1, timestamp: '2024-01-15 10:30:25', module: 'Authentication', event: 'User login', user: 'admin', severity: 'info', details: 'Successful login from 192.168.1.100' },
-  { id: 2, timestamp: '2024-01-15 10:28:13', module: 'Database', event: 'Connection error', user: 'system', severity: 'critical', details: 'Failed to connect to primary database' },
-  { id: 3, timestamp: '2024-01-15 10:25:45', module: 'Security', event: 'Firewall rule updated', user: 'security', severity: 'warning', details: 'Updated firewall configuration' },
-  { id: 4, timestamp: '2024-01-15 10:20:11', module: 'System', event: 'Service restart', user: 'system', severity: 'info', details: 'Restarted monitoring service' },
-  { id: 5, timestamp: '2024-01-15 10:15:33', module: 'Application', event: 'API error', user: 'api-service', severity: 'error', details: 'API endpoint returned 500 error' },
-];
+import { TablePagination } from '../common/TablePagination';
+import { Eye, Download, Activity, Trash2, Calendar, User, FileText, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
+import { useServerPagination } from '../../hooks/useServerPagination';
+import { logsService, Log, LogType } from '../../services/api';
+import { format } from 'date-fns';
 
 export function SystemLogs() {
-  const [logs] = useState(mockSystemLogs);
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<Record<string, any>>({});
-  const [selectedLog, setSelectedLog] = useState<any>(null);
+  const [selectedLog, setSelectedLog] = useState<Log | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [deleteLogId, setDeleteLogId] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [logTypes, setLogTypes] = useState<LogType[]>([]);
+  const [reload,setReload] = useState(false);
+
+  // Fetch log types for filter options
+  useEffect(() => {
+    const fetchLogTypes = async () => {
+      try {
+        const types = await logsService.getLogTypes();
+        setLogTypes(types);
+      } catch (error) {
+        console.error('Error fetching log types:', error);
+      }
+    };
+    fetchLogTypes();
+  }, []);
+
+  // Fetch logs with pagination
+  const fetchLogs = async (page: number, limit: number, params: any) => {
+    const queryParams = {
+      type: 0, // Default type for system logs
+      pageSize: limit,
+      pageIndex: page,
+      ...params
+    };
+
+    if (searchTerm) {
+      queryParams.search = searchTerm;
+    }
+
+    if (filters.logType) {
+      queryParams.logType = filters.logType;
+    }
+
+    if (filters.actionName) {
+      queryParams.actionName = filters.actionName;
+    }
+
+    if (filters.userId) {
+      queryParams.userId = filters.userId;
+    }
+
+    if (filters.isActive !== undefined) {
+      queryParams.isActive = filters.isActive;
+    }
+
+    if (filters.startDate) {
+      queryParams.startDate = filters.startDate;
+    }
+
+    if (filters.endDate) {
+      queryParams.endDate = filters.endDate;
+    }
+
+    const response = await logsService.getAll(queryParams);
+    return response.data;
+  };
+
+  const {
+    data: logs,
+    currentPage,
+    totalPages,
+    total,
+    loading,
+    error,
+    setCurrentPage,
+    pageSize
+  } = useServerPagination(fetchLogs, [searchTerm, filters,reload], { pageSize: 10 }, {});
+
+  // Function to refresh data
+  const refreshData = () => {
+    setCurrentPage(currentPage);
+  };
 
   const filterOptions: FilterOption[] = [
     {
-      key: 'module',
-      label: 'Module',
+      key: 'logType',
+      label: 'Loại log',
+      type: 'select',
+      options: logTypes.map(type => ({
+        value: type.id,
+        label: type.display_name
+      }))
+    },
+    {
+      key: 'actionName',
+      label: 'Hành động',
       type: 'select',
       options: [
-        { value: 'Authentication', label: 'Authentication' },
-        { value: 'Database', label: 'Database' },
-        { value: 'Security', label: 'Security' },
-        { value: 'System', label: 'System' },
-        { value: 'Application', label: 'Application' }
+        { value: 'CREATE', label: 'Tạo mới' },
+        { value: 'UPDATE', label: 'Cập nhật' },
+        { value: 'DELETE', label: 'Xóa' },
+        { value: 'LOGIN', label: 'Đăng nhập' },
+        { value: 'LOGOUT', label: 'Đăng xuất' }
       ]
     },
     {
-      key: 'severity',
-      label: 'Mức độ',
+      key: 'isActive',
+      label: 'Trạng thái',
       type: 'select',
       options: [
-        { value: 'info', label: 'Thông tin' },
-        { value: 'warning', label: 'Cảnh báo' },
-        { value: 'error', label: 'Lỗi' },
-        { value: 'critical', label: 'Nghiêm trọng' }
+        { value: 'true', label: 'Hoạt động' },
+        { value: 'false', label: 'Không hoạt động' }
       ]
+    },
+    {
+      key: 'startDate',
+      label: 'Từ ngày',
+      type: 'date'
+    },
+    {
+      key: 'endDate',
+      label: 'Đến ngày',
+      type: 'date'
     }
   ];
 
-  const filteredLogs = logs.filter(log => {
-    const matchesSearch = log.event.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.details.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.user.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesModule = !filters.module || log.module === filters.module;
-    const matchesSeverity = !filters.severity || log.severity === filters.severity;
-    return matchesSearch && matchesModule && matchesSeverity;
-  });
-
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'info': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-      case 'warning': return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
-      case 'error': return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
-      case 'critical': return 'bg-red-500/10 text-red-500 border-red-500/20';
-      default: return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
-    }
+  const getActionColor = (actionName: string) => {
+    if (actionName.includes('CREATE')) return 'bg-green-500/10 text-green-500 border-green-500/20';
+    if (actionName.includes('UPDATE')) return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+    if (actionName.includes('DELETE')) return 'bg-red-500/10 text-red-500 border-red-500/20';
+    if (actionName.includes('LOGIN')) return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
+    if (actionName.includes('LOGOUT')) return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
+    return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
   };
 
-  const getModuleColor = (module: string) => {
-    switch (module) {
-      case 'Authentication': return 'bg-green-500/10 text-green-500 border-green-500/20';
-      case 'Database': return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
+  const getLogTypeColor = (logType: string) => {
+    switch (logType) {
+      case 'Application': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
       case 'Security': return 'bg-red-500/10 text-red-500 border-red-500/20';
-      case 'System': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-      case 'Application': return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
+      case 'System': return 'bg-green-500/10 text-green-500 border-green-500/20';
+      case 'Network': return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
       default: return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
     }
   };
 
-  const handleViewDetail = (log: any) => {
+  const handleViewDetail = (log: Log) => {
     setSelectedLog(log);
     setIsDetailOpen(true);
   };
 
-  const handleExport = () => {
-    toast.success('Đang xuất nhật ký hệ thống...');
+  const handleDeleteClick = (logId: string) => {
+    setDeleteLogId(logId);
+    setIsDeleteDialogOpen(true);
   };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteLogId) return;
+
+    try {
+      await logsService.delete(deleteLogId);
+      toast.success('Xóa log thành công');
+      setIsDeleteDialogOpen(false);
+      setDeleteLogId(null);
+      // Refresh the data
+      setReload(!reload);
+      refreshData();
+    } catch (error) {
+      console.error('Error deleting log:', error);
+      toast.error('Có lỗi xảy ra khi xóa log');
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      toast.success('Đang xuất nhật ký hệ thống...');
+      // Simulate export process
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast.success('Xuất dữ liệu thành công');
+      // Refresh data after export
+      refreshData();
+    } catch (error) {
+      toast.error('Có lỗi xảy ra khi xuất dữ liệu');
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), 'dd/MM/yyyy HH:mm:ss');
+    } catch {
+      return dateString;
+    }
+  };
+
+  // Calculate statistics
+  const totalLogs = total;
+  const createLogs = logs.filter(log => log.action_name.includes('CREATE')).length;
+  const updateLogs = logs.filter(log => log.action_name.includes('UPDATE')).length;
+  const deleteLogs = logs.filter(log => log.action_name.includes('DELETE')).length;
+  const activeLogs = logs.filter(log => log.is_active).length;
+
+  if (error) {
+    return (
+      <div className="space-y-6 fade-in-up">
+        <div className="slide-in-left">
+          <h1>Nhật ký hệ thống</h1>
+          <p className="text-muted-foreground">
+            Xem và phân tích nhật ký hoạt động của hệ thống
+          </p>
+        </div>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center text-red-500">
+              <p>Có lỗi xảy ra khi tải dữ liệu: {error.message}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 fade-in-up">
@@ -97,47 +239,55 @@ export function SystemLogs() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card className="stagger-item">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <div style={{display:"flex",justifyContent:"space-between"}} className="grid gap-4 grid-cols-5 w-full">
+        <Card className="stagger-item" style={{width:"100%"}}>
+       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm">Tổng logs</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{logs.length}</div>
+            <div className="text-2xl font-bold">{totalLogs}</div>
+            <p className="text-xs text-muted-foreground">Tổng số bản ghi</p>
           </CardContent>
         </Card>
-        <Card className="stagger-item" style={{animationDelay: '0.1s'}}>
+        <Card className="stagger-item" style={{width:"100%",animationDelay: '0.1s'}}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm">Lỗi</CardTitle>
-            <Activity className="h-4 w-4 text-orange-500" />
+            <CardTitle className="text-sm">Tạo mới</CardTitle>
+            <Activity className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-500">
-              {logs.filter(l => l.severity === 'error').length}
-            </div>
+            <div className="text-2xl font-bold text-green-500">{createLogs}</div>
+            <p className="text-xs text-muted-foreground">Hành động tạo</p>
           </CardContent>
         </Card>
-        <Card className="stagger-item" style={{animationDelay: '0.2s'}}>
+        <Card className="stagger-item" style={{width:"100%",animationDelay: '0.2s'}}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm">Nghiêm trọng</CardTitle>
+            <CardTitle className="text-sm">Cập nhật</CardTitle>
+            <Activity className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-500">{updateLogs}</div>
+            <p className="text-xs text-muted-foreground">Hành động sửa</p>
+          </CardContent>
+        </Card>
+        <Card className="stagger-item" style={{width:"100%",animationDelay: '0.3s'}}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm">Xóa</CardTitle>
             <Activity className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-500">
-              {logs.filter(l => l.severity === 'critical').length}
-            </div>
+            <div className="text-2xl font-bold text-red-500">{deleteLogs}</div>
+            <p className="text-xs text-muted-foreground">Hành động xóa</p>
           </CardContent>
         </Card>
-        <Card className="stagger-item" style={{animationDelay: '0.3s'}}>
+        <Card className="stagger-item" style={{width:"100%",animationDelay: '0.4s'}}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm">Cảnh báo</CardTitle>
-            <Activity className="h-4 w-4 text-yellow-500" />
+            <CardTitle className="text-sm">Hoạt động</CardTitle>
+            <Activity className="h-4 w-4 text-purple-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-500">
-              {logs.filter(l => l.severity === 'warning').length}
-            </div>
+            <div className="text-2xl font-bold text-purple-500">{activeLogs}</div>
+            <p className="text-xs text-muted-foreground">Log đang hoạt động</p>
           </CardContent>
         </Card>
       </div>
@@ -148,13 +298,25 @@ export function SystemLogs() {
             <div>
               <CardTitle>Nhật ký hệ thống</CardTitle>
               <CardDescription>
-                Hiển thị {filteredLogs.length}/{logs.length} bản ghi
+                Hiển thị {logs.length}/{total} bản ghi
               </CardDescription>
             </div>
-            <Button className="btn-animate scale-hover" onClick={handleExport}>
-              <Download className="mr-2 h-4 w-4" />
-              Xuất dữ liệu
-            </Button>
+            <div className="flex space-x-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="btn-animate scale-hover" 
+                onClick={refreshData}
+                disabled={loading}
+              >
+                <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                Làm mới
+              </Button>
+              <Button className="btn-animate scale-hover" onClick={handleExport}>
+                <Download className="mr-2 h-4 w-4" />
+                Xuất dữ liệu
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -166,99 +328,175 @@ export function SystemLogs() {
               filterOptions={filterOptions}
               filters={filters}
               onFiltersChange={setFilters}
-              onReset={() => setSearchTerm('')}
+              onReset={() => {
+                setSearchTerm('');
+                setFilters({});
+              }}
             />
           </div>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Thời gian</TableHead>
-                <TableHead>Module</TableHead>
-                <TableHead>Sự kiện</TableHead>
-                <TableHead>Người dùng</TableHead>
-                <TableHead>Mức độ</TableHead>
-                <TableHead className="text-right">Thao tác</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredLogs.map((log, index) => (
-                <TableRow key={log.id} className="stagger-item" style={{animationDelay: `${index * 0.05}s`}}>
-                  <TableCell className="font-medium font-mono text-sm">{log.timestamp}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={getModuleColor(log.module)}>
-                      {log.module}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{log.event}</TableCell>
-                  <TableCell>{log.user}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={getSeverityColor(log.severity)}>
-                      {log.severity === 'info' ? 'Thông tin' :
-                       log.severity === 'warning' ? 'Cảnh báo' :
-                       log.severity === 'error' ? 'Lỗi' : 'Nghiêm trọng'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" className="scale-hover" onClick={() => handleViewDetail(log)}>
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-2 text-muted-foreground">Đang tải dữ liệu...</p>
+            </div>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Thời gian</TableHead>
+                    <TableHead>Loại log</TableHead>
+                    <TableHead>Hành động</TableHead>
+                    <TableHead>Người dùng</TableHead>
+                    <TableHead>Mô tả</TableHead>
+                    <TableHead>Trạng thái</TableHead>
+                    <TableHead className="text-right">Thao tác</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {logs.map((log, index) => (
+                    <TableRow key={log.id} className="stagger-item" style={{animationDelay: `${index * 0.05}s`}}>
+                      <TableCell className="font-medium font-mono text-sm">
+                        {formatDate(log.created_at)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={getLogTypeColor(log.log_type.display_name)}>
+                          {log.log_type.display_name}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={getActionColor(log.action_name)}>
+                          {log.action_name}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          <span>{log.user.display_name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate" title={log.description}>
+                        {log.description}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={log.is_active ? "default" : "secondary"}>
+                          {log.is_active ? 'Hoạt động' : 'Không hoạt động'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end space-x-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="scale-hover" 
+                            onClick={() => handleViewDetail(log)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="scale-hover text-red-500 hover:text-red-700" 
+                            onClick={() => handleDeleteClick(log.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              <div className="mt-6">
+                <TablePagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={total}
+                  startIndex={(currentPage-1)*pageSize}
+                  endIndex={(currentPage)*pageSize}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
+      {/* Detail Dialog */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Chi tiết nhật ký</DialogTitle>
-            <DialogDescription>
-              Thông tin chi tiết về sự kiện hệ thống
-            </DialogDescription>
+            <DialogTitle className="text-lg">Chi tiết nhật ký</DialogTitle>
           </DialogHeader>
           {selectedLog && (
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-3 gap-2">
-                <div className="text-sm text-muted-foreground">Thời gian:</div>
-                <div className="col-span-2 text-sm font-mono">{selectedLog.timestamp}</div>
+            <div className="space-y-3 py-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Thời gian:</span>
+                <span className="text-sm font-mono">{formatDate(selectedLog.created_at)}</span>
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="text-sm text-muted-foreground">Module:</div>
-                <div className="col-span-2">
-                  <Badge variant="outline" className={getModuleColor(selectedLog.module)}>
-                    {selectedLog.module}
-                  </Badge>
+              
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Loại log:</span>
+                <Badge variant="outline" className={getLogTypeColor(selectedLog.log_type.display_name)}>
+                  {selectedLog.log_type.display_name}
+                </Badge>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Hành động:</span>
+                <Badge variant="outline" className={getActionColor(selectedLog.action_name)}>
+                  {selectedLog.action_name}
+                </Badge>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Người dùng:</span>
+                <div className="text-right">
+                  <div className="text-sm font-medium">{selectedLog.user.display_name}</div>
+                  <div className="text-xs text-muted-foreground">@{selectedLog.user.user_name}</div>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="text-sm text-muted-foreground">Sự kiện:</div>
-                <div className="col-span-2 text-sm">{selectedLog.event}</div>
+              
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Trạng thái:</span>
+                <Badge variant={selectedLog.is_active ? "default" : "secondary"}>
+                  {selectedLog.is_active ? 'Hoạt động' : 'Không hoạt động'}
+                </Badge>
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="text-sm text-muted-foreground">Người dùng:</div>
-                <div className="col-span-2 text-sm">{selectedLog.user}</div>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="text-sm text-muted-foreground">Mức độ:</div>
-                <div className="col-span-2">
-                  <Badge variant="outline" className={getSeverityColor(selectedLog.severity)}>
-                    {selectedLog.severity === 'info' ? 'Thông tin' :
-                     selectedLog.severity === 'warning' ? 'Cảnh báo' :
-                     selectedLog.severity === 'error' ? 'Lỗi' : 'Nghiêm trọng'}
-                  </Badge>
+              
+              <div className="pt-2 border-t">
+                <div className="text-sm text-muted-foreground mb-2">Mô tả:</div>
+                <div className="text-sm bg-muted/50 p-3 rounded-md max-h-32 overflow-y-auto">
+                  {selectedLog.description}
                 </div>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="text-sm text-muted-foreground">Chi tiết:</div>
-                <div className="col-span-2 text-sm">{selectedLog.details}</div>
               </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa log này không? Hành động này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConfirm}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              Xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

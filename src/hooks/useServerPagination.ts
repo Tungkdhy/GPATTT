@@ -7,6 +7,7 @@ interface PaginationResult<T> {
   count: number;
   roles?:T[];
   parameters?:T[];
+  data?:T[];
 }
 
 interface UseServerPaginationOptions {
@@ -35,7 +36,7 @@ export function useServerPagination<T>(
         setLoading(true);
         setError(null);
         const result = await fetchFunction(currentPage, pageSize,param);
-        setData(result.rows ?? result?.roles ?? result?.parameters);
+        setData(result.rows ?? result?.roles ?? result?.parameters ?? result?.data);
         setTotal(result.count);
       } catch (err) {
         setError(err as Error);

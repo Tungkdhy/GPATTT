@@ -1,21 +1,37 @@
 import axiosInstance from './axiosInstance';
-import { API_ENDPOINTS } from './endpoints';
 
-// Mock data
-const mockUsers = [
-  { id: 1, username: 'admin', email: 'admin@example.com', role: 'Admin', status: 'active', lastLogin: '2024-01-15 10:30' },
-  { id: 2, username: 'operator1', email: 'operator1@example.com', role: 'Operator', status: 'active', lastLogin: '2024-01-15 09:15' },
-  { id: 3, username: 'viewer1', email: 'viewer1@example.com', role: 'Viewer', status: 'inactive', lastLogin: '2024-01-10 14:20' },
-  { id: 4, username: 'security', email: 'security@example.com', role: 'Security', status: 'active', lastLogin: '2024-01-15 11:45' },
-];
+// Mock data removed as it's not being used
+
+export interface UserRole {
+  id: string;
+  display_name: string;
+  description: string;
+  code: string;
+}
+
+export interface UserOrganization {
+  organization_name: string;
+}
+
+export interface UserUnit {
+  unit_name: string;
+}
 
 export interface User {
-  id: number;
-  username: string;
-  email: string;
-  role: string;
-  status: string;
-  lastLogin: string;
+  id: string;
+  user_name: string;
+  display_name: string;
+  email: string | null;
+  phone_number: string | null;
+  is_online: boolean | null;
+  is_active: boolean;
+  organization_id: string | null;
+  unit_id: string | null;
+  created_at: string;
+  created_by: string | null;
+  role: UserRole;
+  organization: UserOrganization | null;
+  unit: UserUnit | null;
 }
 
 export interface CreateUserDto {
@@ -30,6 +46,7 @@ export interface UpdateUserDto {
   display_name?: string;
   role_id?: string;
   password?: string;
+  is_active?: boolean;
 }
 
 class UsersService {
@@ -55,20 +72,36 @@ class UsersService {
   }
 
   // Lấy thông tin user theo ID
-  async getById(id: number): Promise<User> {
+  async getById(id: string): Promise<User> {
     try {
       // const response = await axiosInstance.get(API_ENDPOINTS.USERS.GET(id));
       // return response.data;
 
-      // Mock response
-      return new Promise((resolve, reject) => {
+      // Mock response - return a mock user with the new structure
+      return new Promise((resolve) => {
         setTimeout(() => {
-          const user = mockUsers.find(u => u.id === id);
-          if (user) {
-            resolve(user);
-          } else {
-            reject(new Error('User not found'));
-          }
+          const mockUser: User = {
+            id: id,
+            user_name: 'mock_user',
+            display_name: 'Mock User',
+            email: 'mock@example.com',
+            phone_number: null,
+            is_online: true,
+            is_active: true,
+            organization_id: null,
+            unit_id: null,
+            created_at: new Date().toISOString(),
+            created_by: null,
+            role: {
+              id: '1',
+              display_name: 'Admin',
+              description: 'Administrator',
+              code: 'ADMIN'
+            },
+            organization: null,
+            unit: null
+          };
+          resolve(mockUser);
         }, 300);
       });
     } catch (error) {
@@ -95,7 +128,7 @@ class UsersService {
   }
 
   // Cập nhật user
-  async update(id: number, data: UpdateUserDto): Promise<any> {
+  async update(id: string, data: UpdateUserDto): Promise<any> {
     try {
       // const response = await axiosInstance.put(API_ENDPOINTS.USERS.UPDATE(id), data);
       // return response.data;
@@ -110,7 +143,7 @@ class UsersService {
   }
 
   // Xóa user
-  async delete(id: number): Promise<any> {
+  async delete(id: string): Promise<any> {
     try {
       // await axiosInstance.delete(API_ENDPOINTS.USERS.DELETE(id));
       const res = await axiosInstance.delete(`user/${id}`)
@@ -119,6 +152,19 @@ class UsersService {
      
     } catch (error) {
       console.error('Error deleting user:', error);
+      throw error;
+    }
+  }
+
+  // Toggle trạng thái is_active
+  async toggleActive(id: string, isActive: boolean): Promise<any> {
+    try {
+      const res = await axiosInstance.put(`user/${id}`, {
+        is_active: isActive
+      });
+      return res;
+    } catch (error) {
+      console.error('Error toggling user active status:', error);
       throw error;
     }
   }

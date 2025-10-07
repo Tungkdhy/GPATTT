@@ -21,7 +21,8 @@ import {
   Bell,
   Activity,
   Zap,
-  ShieldCheck
+  ShieldCheck,
+  Cloud
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
@@ -88,6 +89,7 @@ const menuItems: MenuItem[] = [
   },
   { id: 'alert-levels', label: 'Mức cảnh báo', icon: Bell, path: '/alert-levels' },
   { id: 'error-codes', label: 'Mã lỗi', icon: AlertTriangle, path: '/error-codes' },
+  { id: 'cloud-managers', label: 'Quản lý xác thực đám mây', icon: Cloud, path: '/cloud-managers' },
   { id: 'regions', label: 'Danh mục khu vực', icon: MapPin, path: '/regions' },
 ];
 

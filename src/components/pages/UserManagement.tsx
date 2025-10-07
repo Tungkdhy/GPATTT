@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -9,8 +9,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { AdvancedFilter, FilterOption } from '../common/AdvancedFilter';
-import { Plus, Edit, Trash2, Eye } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Switch } from '../ui/switch';
+import { toast } from 'sonner';
 import { roleService, usersService } from '../../services/api';
 import { useServerPagination } from '@/hooks/useServerPagination';
 import { useMultiSelect } from '@/hooks/useMultiSelect';
@@ -37,11 +38,6 @@ export function UserManagement() {
   });
   const {
     data: users,
-    currentPage,
-    totalPages,
-    total,
-    loading,
-    setCurrentPage,
   } = useServerPagination(
     (page, limit) => usersService.getAll(page, limit, { name: name }),
     [name,reload], // dependencies: ví dụ [searchTerm, filters]
@@ -64,19 +60,7 @@ export function UserManagement() {
 
   ];
 
-  const filteredUsers = users.filter((user: any) => {
-    // Search filter
-    // const matchesSearch = user.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    //   user.email.toLowerCase().includes(searchTerm.toLowerCase());
-
-    // // Role filter
-    // const matchesRole = !filters.role || user.role === filters.role;
-
-    // // Status filter
-    // const matchesStatus = !filters.status || user.status === filters.status;
-
-    // return matchesSearch && matchesRole && matchesStatus;
-  });
+  // Removed filteredUsers as it's not being used
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -121,12 +105,11 @@ export function UserManagement() {
 
   const handleUpdate = async () => {
     try {
-      const updatedUser = await usersService.update(selectedUser.id, {
+      await usersService.update(selectedUser.id, {
         user_name: formData.user_name,
         display_name: formData.display_name,
         role_id: formData.role_id
       });
-      // setUsers(users.map((u:any) => u.id === selectedUser.id ? updatedUser : u));
       setIsEditDialogOpen(false);
       setSelectedUser(null);
       setFormData({ user_name: '', display_name: '', role_id: '', password: '' });
@@ -153,6 +136,16 @@ export function UserManagement() {
       setReload(!reload)
     } catch (error) {
       toast.error('Lỗi khi xóa người dùng');
+    }
+  };
+
+  const handleToggleActive = async (userId: string, currentStatus: boolean) => {
+    try {
+      await usersService.toggleActive(userId, !currentStatus);
+      toast.success(`Đã ${!currentStatus ? 'kích hoạt' : 'vô hiệu hóa'} người dùng thành công!`);
+      setReload(!reload);
+    } catch (error) {
+      toast.error('Lỗi khi cập nhật trạng thái người dùng');
     }
   };
 
@@ -264,11 +257,12 @@ export function UserManagement() {
             <TableHeader>
               <TableRow>
                 <TableHead>Tên đăng nhập</TableHead>
+                <TableHead>Tên hiển thị</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Số điện thoại</TableHead>
                 <TableHead>Vai trò</TableHead>
                 <TableHead>Trạng thái</TableHead>
-                {/* <TableHead>Đăng nhập cuối</TableHead> */}
+                <TableHead>Kích hoạt</TableHead>
                 <TableHead className="text-right">Thao tác</TableHead>
               </TableRow>
             </TableHeader>
@@ -276,8 +270,9 @@ export function UserManagement() {
               {users.map((user: any, index: number) => (
                 <TableRow key={user.id} className="stagger-item" style={{ animationDelay: `${index * 0.05}s` }}>
                   <TableCell className="font-medium">{user.user_name}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.phone_number}</TableCell>
+                  <TableCell>{user.display_name}</TableCell>
+                  <TableCell>{user.email || '-'}</TableCell>
+                  <TableCell>{user.phone_number || '-'}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className={getRoleColor(user?.role?.display_name)}>
                       {user?.role?.display_name}
@@ -285,10 +280,15 @@ export function UserManagement() {
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className={getStatusColor(user.is_online)}>
-                      {user.is_online ? 'Hoạt động' : 'Không hoạt động'}
+                      {user.is_online ? 'Online' : 'Offline'}
                     </Badge>
                   </TableCell>
-                  {/* <TableCell>{user.lastLogin}</TableCell> */}
+                  <TableCell>
+                    <Switch
+                      checked={user.is_active}
+                      onCheckedChange={() => handleToggleActive(user.id, user.is_active)}
+                    />
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">
                       <Button variant="ghost" size="sm" className="scale-hover" onClick={() => handleEdit(user)}>
