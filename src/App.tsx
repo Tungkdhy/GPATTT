@@ -76,6 +76,7 @@ export default function App() {
                     <Route path="/regions" element={<RegionManagement />} />
                     <Route path="/category-type" element={<CategoryTypes />} />
                     <Route path="/cloud-managers" element={<CloudManagers />} />
+                    {/* <Route path="/script-categories" element={<ScriptCategories />} /> */}
                   </Routes>
                 </Layout>
               </ProtectedRoute>

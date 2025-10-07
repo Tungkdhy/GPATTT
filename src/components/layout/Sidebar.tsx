@@ -62,6 +62,7 @@ const menuItems: MenuItem[] = [
     ]
   },
   { id: 'scenarios', label: 'Danh mục kịch bản', icon: FileText, path: '/scenarios' },
+  // { id: 'script-categories', label: 'Danh mục kịch bản Script', icon: FileText, path: '/script-categories' },
   { id: 'response-scenarios', label: 'Kịch bản phản ứng', icon: Zap, path: '/response-scenarios' },
   { id: 'software-versions', label: 'Phiên bản phần mềm', icon: Package, path: '/software-versions' },
   {
@@ -89,6 +90,7 @@ const menuItems: MenuItem[] = [
   },
   { id: 'alert-levels', label: 'Mức cảnh báo', icon: Bell, path: '/alert-levels' },
   { id: 'error-codes', label: 'Mã lỗi', icon: AlertTriangle, path: '/error-codes' },
+  { id: 'category-type', label: 'Loại danh mục', icon: List, path: '/category-type' },
   { id: 'cloud-managers', label: 'Quản lý xác thực đám mây', icon: Cloud, path: '/cloud-managers' },
   { id: 'regions', label: 'Danh mục khu vực', icon: MapPin, path: '/regions' },
 ];

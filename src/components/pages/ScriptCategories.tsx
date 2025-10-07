@@ -1,10 +1,11 @@
-// DEVICE_TYPE
 import { useState } from 'react';
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle
 } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
+import { Badge } from '../ui/badge';
+import { Textarea } from '../ui/textarea';
 import {
   Pagination, PaginationContent, PaginationItem,
   PaginationLink, PaginationNext, PaginationPrevious
@@ -24,21 +25,22 @@ import {
 import { Label } from '../ui/label';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
-import { categoryService } from '../../services/api';
+import { scriptCategoriesService, ScriptCategory, CreateScriptCategoryDto, UpdateScriptCategoryDto } from '../../services/api/scriptCategories.service';
 import { useServerPagination } from '@/hooks/useServerPagination';
 
-export function DeviceTypes() {
+export function ScriptCategories() {
   const [reload, setReload] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [selectedItem, setSelectedItem] = useState<ScriptCategory | null>(null);
 
-  const [formData, setFormData] = useState<any>({
+  const [formData, setFormData] = useState<CreateScriptCategoryDto>({
+    category_type_id: '',
     display_name: '',
     value: '',
     description: '',
-    category_type_id: '6c14530d-7d3e-477b-a0e4-c6305d800827'
+    data: {}
   });
 
   const {
@@ -48,83 +50,130 @@ export function DeviceTypes() {
     setCurrentPage,
     total
   } = useServerPagination(
-    (page, limit) => categoryService.getAllFormat(page, limit, {scope:"DEVICE_TYPE"}),
+    (page, limit) => scriptCategoriesService.getAll(page, limit),
     [reload],
-    { pageSize: 10, initialPage: 1 },
-    {scope:"DEVICE_TYPE"}
+    { pageSize: 10, initialPage: 1 }
   );
 
   // Add
   const handleAdd = async () => {
     try {
-      await categoryService.create(formData);
+      await scriptCategoriesService.create(formData);
       setIsDialogOpen(false);
       resetForm();
-      toast.success('Thêm danh mục thành công!');
+      toast.success('Thêm danh mục kịch bản thành công!');
       setReload(!reload);
-    } catch {
-      toast.error('Lỗi khi thêm danh mục');
+    } catch (error) {
+      console.error('Error creating script category:', error);
+      toast.error('Lỗi khi thêm danh mục kịch bản');
     }
   };
-// 6c14530d-7d3e-477b-a0e4-c6305d800827
+
   // Edit
-  const handleEdit = (item: any) => {
+  const handleEdit = (item: ScriptCategory) => {
     setSelectedItem(item);
     setFormData({
+      category_type_id: item.category_type_id,
       display_name: item.display_name,
       value: item.value,
       description: item.description,
-      category_type_id: '6c14530d-7d3e-477b-a0e4-c6305d800827'
+      data: item.data || {}
     });
     setIsEditDialogOpen(true);
   };
 
   // Update
   const handleUpdate = async () => {
+    if (!selectedItem) return;
+    
     try {
-      await categoryService.update(selectedItem.id, formData);
+      const updateData: UpdateScriptCategoryDto = {
+        category_type_id: formData.category_type_id,
+        display_name: formData.display_name,
+        value: formData.value,
+        description: formData.description,
+        data: formData.data
+      };
+      
+      await scriptCategoriesService.update(selectedItem.id, updateData);
       setIsEditDialogOpen(false);
       resetForm();
       setReload(!reload);
-      toast.success('Cập nhật danh mục thành công!');
-    } catch {
-      toast.error('Lỗi khi cập nhật danh mục');
+      toast.success('Cập nhật danh mục kịch bản thành công!');
+    } catch (error) {
+      console.error('Error updating script category:', error);
+      toast.error('Lỗi khi cập nhật danh mục kịch bản');
     }
   };
 
   // Delete
-  const handleDeleteClick = (item: any) => {
+  const handleDeleteClick = (item: ScriptCategory) => {
     setSelectedItem(item);
     setIsDeleteDialogOpen(true);
   };
 
   const handleDelete = async () => {
+    if (!selectedItem) return;
+    
     try {
-      await categoryService.delete(selectedItem.id);
+      await scriptCategoriesService.delete(selectedItem.id);
       setIsDeleteDialogOpen(false);
       setSelectedItem(null);
-      toast.success('Xóa danh mục thành công!');
+      toast.success('Xóa danh mục kịch bản thành công!');
       setReload(!reload);
-    } catch {
-      toast.error('Lỗi khi xóa danh mục');
+    } catch (error) {
+      console.error('Error deleting script category:', error);
+      toast.error('Lỗi khi xóa danh mục kịch bản');
     }
   };
 
   const resetForm = () => {
     setFormData({
+      category_type_id: '',
       display_name: '',
       value: '',
       description: '',
-      category_type_id: '6c14530d-7d3e-477b-a0e4-c6305d800827'
+      data: {}
+    });
+  };
+
+  const handleDataChange = (key: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      data: {
+        ...prev.data,
+        [key]: value
+      }
+    }));
+  };
+
+  const addDataField = () => {
+    setFormData(prev => ({
+      ...prev,
+      data: {
+        ...prev.data,
+        '': ''
+      }
+    }));
+  };
+
+  const removeDataField = (key: string) => {
+    setFormData(prev => {
+      const newData = { ...prev.data };
+      delete newData[key];
+      return {
+        ...prev,
+        data: newData
+      };
     });
   };
 
   return (
     <div className="space-y-6 fade-in-up">
       <div className="slide-in-left">
-        <h1>Quản lý loại thiết bị</h1>
+        <h1>Quản lý danh mục kịch bản</h1>
         <p className="text-muted-foreground">
-          Quản lý các loại thiết bị trong hệ thống
+          Quản lý các danh mục kịch bản trong hệ thống
         </p>
       </div>
 
@@ -132,9 +181,9 @@ export function DeviceTypes() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Danh sách loại thiết bị</CardTitle>
+              <CardTitle>Danh sách danh mục kịch bản</CardTitle>
               <CardDescription>
-                Tổng cộng {total} loại thiết bị
+                Tổng cộng {total} danh mục kịch bản
               </CardDescription>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -146,12 +195,12 @@ export function DeviceTypes() {
               </DialogTrigger>
               <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Thêm loại danh mục mới</DialogTitle>
+                  <DialogTitle>Thêm danh mục kịch bản mới</DialogTitle>
                   <DialogDescription>
-                    Nhập thông tin loại danh mục
+                    Nhập thông tin danh mục kịch bản
                   </DialogDescription>
                 </DialogHeader>
-                {renderFormFields(formData, setFormData)}
+                {renderFormFields(formData, setFormData, handleDataChange, addDataField, removeDataField)}
                 <DialogFooter>
                   <Button type="submit" className="w-full" onClick={handleAdd}>
                     Tạo danh mục
@@ -166,22 +215,46 @@ export function DeviceTypes() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Tên danh mục</TableHead>
+                <TableHead>Tên hiển thị</TableHead>
                 <TableHead>Giá trị</TableHead>
                 <TableHead>Mô tả</TableHead>
-                {/* <TableHead>Loại</TableHead> */}
-                <TableHead>Người tạo</TableHead>
+                <TableHead>Loại danh mục</TableHead>
+                <TableHead>Mặc định</TableHead>
+                <TableHead>Trạng thái</TableHead>
+                <TableHead>Dữ liệu</TableHead>
                 <TableHead className="text-right">Thao tác</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {categories.map((item: any, idx: number) => (
+              {categories.map((item: ScriptCategory, idx: number) => (
                 <TableRow key={item.id} style={{ animationDelay: `${idx * 0.05}s` }}>
                   <TableCell className="font-medium">{item.display_name}</TableCell>
                   <TableCell>{item.value}</TableCell>
                   <TableCell>{item.description}</TableCell>
-                  {/* <TableCell>{item.category_type_id}</TableCell> */}
-                  <TableCell>{item.created_by_user?.display_name || "-"}</TableCell>
+                  <TableCell>{item.category_type_id}</TableCell>
+                  <TableCell>
+                    {item.is_default ? (
+                      <Badge className="bg-blue-500">Mặc định</Badge>
+                    ) : (
+                      <Badge variant="outline">Không</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {item.is_active ? (
+                      <Badge className="bg-green-500">Hoạt động</Badge>
+                    ) : (
+                      <Badge className="bg-gray-400">Không hoạt động</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {item.data ? (
+                      <div className="max-w-xs truncate">
+                        {JSON.stringify(item.data)}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">
                       <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
@@ -235,10 +308,10 @@ export function DeviceTypes() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Chỉnh sửa loại danh mục</DialogTitle>
-            <DialogDescription>Cập nhật thông tin loại danh mục</DialogDescription>
+            <DialogTitle>Chỉnh sửa danh mục kịch bản</DialogTitle>
+            <DialogDescription>Cập nhật thông tin danh mục kịch bản</DialogDescription>
           </DialogHeader>
-          {renderFormFields(formData, setFormData)}
+          {renderFormFields(formData, setFormData, handleDataChange, addDataField, removeDataField)}
           <DialogFooter>
             <Button type="submit" className="w-full" onClick={handleUpdate}>
               Cập nhật
@@ -253,7 +326,7 @@ export function DeviceTypes() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa danh mục <strong>{selectedItem?.display_name}</strong>?
+              Bạn có chắc chắn muốn xóa danh mục kịch bản <strong>{selectedItem?.display_name}</strong>?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -268,39 +341,103 @@ export function DeviceTypes() {
   );
 }
 
-function renderFormFields(formData: any, setFormData: any) {
+function renderFormFields(
+  formData: CreateScriptCategoryDto, 
+  setFormData: (data: CreateScriptCategoryDto) => void,
+  handleDataChange: (key: string, value: string) => void,
+  addDataField: () => void,
+  removeDataField: (key: string) => void
+) {
   return (
     <div className="space-y-4 py-4">
       <div className="space-y-2">
-        <Label>Tên danh mục</Label>
+        <Label>ID Loại danh mục</Label>
+        <Input
+          value={formData.category_type_id}
+          onChange={(e) => setFormData({ ...formData, category_type_id: e.target.value })}
+          placeholder="Nhập ID loại danh mục"
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <Label>Tên hiển thị</Label>
         <Input
           value={formData.display_name}
           onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
+          placeholder="Nhập tên hiển thị"
         />
       </div>
+      
       <div className="space-y-2">
         <Label>Giá trị</Label>
         <Input
           value={formData.value}
           onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+          placeholder="Nhập giá trị"
         />
       </div>
+      
       <div className="space-y-2">
         <Label>Mô tả</Label>
-        <Input
+        <Textarea
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          placeholder="Nhập mô tả"
         />
       </div>
-      {/* <div className="space-y-2">
-        <Label>Loại</Label>
-        <Input
-          value={formData.category_type_id}
-          onChange={(e) => setFormData({ ...formData, category_type_id: e.target.value })}
-        />
-      </div> */}
+      
+      <div className="space-y-2">
+        <Label>Dữ liệu bổ sung</Label>
+        <div className="space-y-2">
+          {Object.entries(formData.data || {}).map(([key, value], index) => (
+            <div key={index} className="flex space-x-2 items-center">
+              <Input
+                placeholder="Key (ví dụ: type)"
+                value={key}
+                onChange={(e) => {
+                  const newKey = e.target.value;
+                  const newData = { ...formData.data };
+                  delete newData[key];
+                  newData[newKey] = value;
+                  setFormData({ ...formData, data: newData });
+                }}
+              />
+              <Input
+                placeholder="Value (ví dụ: bruteforce)"
+                value={value}
+                onChange={(e) => {
+                  handleDataChange(key, e.target.value);
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => removeDataField(key)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+          
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={addDataField}
+            className="w-full"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Thêm trường dữ liệu
+          </Button>
+          
+          {formData.data && Object.keys(formData.data).length > 0 && (
+            <div className="text-sm text-muted-foreground p-2 bg-muted rounded">
+              <strong>Dữ liệu hiện tại:</strong> {JSON.stringify(formData.data)}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
-
-// LogTypes

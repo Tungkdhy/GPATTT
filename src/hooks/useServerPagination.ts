@@ -28,14 +28,14 @@ export function useServerPagination<T>(
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
           
   useEffect(() => {
     const fetchData = async () => {
       try {
-        
         setLoading(true);
         setError(null);
-        const result = await fetchFunction(currentPage, pageSize,param);
+        const result = await fetchFunction(currentPage, pageSize, param);
         setData(result.rows ?? result?.roles ?? result?.parameters ?? result?.data);
         setTotal(result.count);
       } catch (err) {
@@ -48,7 +48,7 @@ export function useServerPagination<T>(
     };
 
     fetchData();
-  }, [currentPage, pageSize, ...dependencies]);
+  }, [currentPage, pageSize, refreshTrigger, ...dependencies]);
 
   // Reset to page 1 when dependencies change
   useEffect(() => {
@@ -58,6 +58,11 @@ export function useServerPagination<T>(
   const totalPages = Math.ceil(total / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = Math.min(startIndex + pageSize, total);
+
+  // Function to force refresh data
+  const refresh = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
 
   return {
     data,
@@ -69,6 +74,7 @@ export function useServerPagination<T>(
     loading,
     error,
     setCurrentPage,
-    pageSize
+    pageSize,
+    refresh
   };
 }

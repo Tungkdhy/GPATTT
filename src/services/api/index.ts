@@ -7,6 +7,7 @@ export { API_ENDPOINTS } from './endpoints';
 // Export services
 export { default as usersService } from './users.service';
 export { default as devicesService } from './devices.service';
+export { default as managedDevicesService } from './managedDevices.service';
 export { default as deviceTypesService } from './deviceTypes.service';
 export { default as scenariosService } from './scenarios.service';
 export { default as softwareVersionsService } from './softwareVersions.service';
@@ -23,6 +24,7 @@ export { default as roleService } from './role.service';
 export { default as actionService } from './action.service';
 export { default as categoryService } from './category.service';
 export { default as categoryTypeService } from './categoryType.service';
+export { scriptCategoriesService } from './scriptCategories.service';
 export { default as parametersService } from './params.service';
 export { default as malwareTypesService } from './malwareTypes.service';
 export { default as managerVersionsService } from './managerVersions.service';
@@ -44,6 +46,12 @@ export {
 // Export types
 export type { User, CreateUserDto, UpdateUserDto } from './users.service';
 export type { Device, CreateDeviceDto, UpdateDeviceDto } from './devices.service';
+export type { 
+  ManagedDevice, 
+  CreateManagedDeviceDto, 
+  UpdateManagedDeviceDto,
+  ManagedDevicesResponse 
+} from './managedDevices.service';
 export type { DeviceType, CreateDeviceTypeDto, UpdateDeviceTypeDto } from './deviceTypes.service';
 export type { Scenario, CreateScenarioDto, UpdateScenarioDto } from './scenarios.service';
 export type { SoftwareVersion, CreateSoftwareVersionDto, UpdateSoftwareVersionDto } from './softwareVersions.service';
@@ -66,6 +74,12 @@ export type {
   CreateCloudManagerDto, 
   UpdateCloudManagerDto 
 } from './cloudManagers.service';
+export type { 
+  ScriptCategory, 
+  CreateScriptCategoryDto, 
+  UpdateScriptCategoryDto,
+  ScriptCategoryResponse
+} from './scriptCategories.service';
 // export type { 
 //   MalwareType, 
 //   CreateMalwareTypeDto, 

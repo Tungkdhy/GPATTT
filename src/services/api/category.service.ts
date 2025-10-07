@@ -112,36 +112,28 @@ class CategoyService {
     }
   }
 
-  // Cập nhật user
-  async update(id: number, data: any): Promise<any> {
+  // Cập nhật category
+  async update(id: string | number, data: any): Promise<any> {
     try {
-      // const response = await axiosInstance.put(API_ENDPOINTS.USERS.UPDATE(id), data);
-      // return response.data;
-
-      // Mock response
-       const res = await axiosInstance.put(`category/${id}`, {
-       ...data
-      })
-      // const response = await axiosInstance.get(API_ENDPOINTS.USERS.LIST);
-      // return response.data;
-
-      // Mock response
-      return res
+      console.log('CategoryService: Updating category with ID:', id);
+      const res = await axiosInstance.put(`category/${id}`, {
+        ...data
+      });
+      return res;
     } catch (error) {
-      console.error('Error updating user:', error);
+      console.error('Error updating category:', error);
       throw error;
     }
   }
 
-  // Xóa user
-  async delete(id: number): Promise<void> {
+  // Xóa category
+  async delete(id: string | number): Promise<any> {
     try {
-      // await axiosInstance.delete(API_ENDPOINTS.USERS.DELETE(id));
-
-      // Mock response
-       const res = await axiosInstance.delete(`category/${id}`)
+      console.log('CategoryService: Deleting category with ID:', id);
+      const res = await axiosInstance.delete(`category/${id}`);
+      return res;
     } catch (error) {
-      console.error('Error deleting user:', error);
+      console.error('Error deleting category:', error);
       throw error;
     }
   }

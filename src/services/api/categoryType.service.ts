@@ -82,7 +82,7 @@ class CategoyTypeService {
     try {
       const res = await axiosInstance.post("category-types",{
         ...data,
-       category_type_id: '4fd60a31-f06f-4ddb-ad16-4c85f0f4480a'
+      //  category_type_id: '4fd60a31-f06f-4ddb-ad16-4c85f0f4480a'
       })
       // const response = await axiosInstance.post(API_ENDPOINTS.USERS.CREATE, data);
       // return response.data;
@@ -104,7 +104,7 @@ class CategoyTypeService {
       // Mock response
         const res = await axiosInstance.put(`category-types/${id}`,{
         ...data,
-        category_type_id: '4fd60a31-f06f-4ddb-ad16-4c85f0f4480a'
+        // category_type_id: '4fd60a31-f06f-4ddb-ad16-4c85f0f4480a'
       })
       // const response = await axiosInstance.post(API_ENDPOINTS.USERS.CREATE, data);
       // return response.data;

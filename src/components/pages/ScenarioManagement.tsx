@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Badge } from '../ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -7,39 +7,44 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import { Label } from '../ui/label';
-import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { AdvancedFilter, FilterOption } from '../common/AdvancedFilter';
-import { Plus, Edit, Trash2 } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { Plus, Edit, Trash2, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
+import categoryService from '../../services/api/category.service';
+import categoryTypeService from '../../services/api/categoryType.service';
+import { useServerPagination } from '../../hooks/useServerPagination';
+import { TablePagination } from '../common/TablePagination';
 
-const mockScenarios = [
-  { id: 1, name: 'Phát hiện mã độc', description: 'Kịch bản phát hiện và xử lý mã độc', category: 'Security', priority: 'high', status: 'active', created: '2024-01-10' },
-  { id: 2, name: 'Tấn công DDoS', description: 'Phát hiện và ngăn chặn tấn công DDoS', category: 'Network', priority: 'critical', status: 'active', created: '2024-01-08' },
-  { id: 3, name: 'Login bất thường', description: 'Phát hiện hoạt động đăng nhập bất thường', category: 'Security', priority: 'medium', status: 'inactive', created: '2024-01-05' },
-  { id: 4, name: 'Sử dụng tài nguyên cao', description: 'Giám sát sử dụng CPU/RAM cao', category: 'Performance', priority: 'low', status: 'active', created: '2024-01-03' },
-  { id: 5, name: 'Truy cập trái phép', description: 'Phát hiện truy cập không được phép', category: 'Security', priority: 'high', status: 'active', created: '2024-01-01' },
-];
+// TypeScript interfaces
+interface Category {
+  id: string;
+  category_type_id: string;
+  display_name: string;
+  value: string;
+  description: string;
+  is_default: boolean;
+  is_active: boolean;
+  data: any;
+  created_by_user: string | null;
+}
 
-const getPriorityColor = (priority: string) => {
-  switch (priority) {
-    case 'critical': return 'bg-red-500/10 text-red-500 border-red-500/20';
-    case 'high': return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
-    case 'medium': return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
-    case 'low': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-    default: return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
-  }
-};
+interface CategoryType {
+  id: string;
+  name: string;
+  display_name: string;
+  description: string;
+  scope: string;
+}
 
-const getPriorityText = (priority: string) => {
-  switch (priority) {
-    case 'critical': return 'Nghiêm trọng';
-    case 'high': return 'Cao';
-    case 'medium': return 'Trung bình';
-    case 'low': return 'Thấp';
-    default: return 'Không xác định';
-  }
-};
+interface CreateCategoryDto {
+  category_type_id: string;
+  display_name: string;
+  value: string;
+  data?: any;
+}
+
+
 
 const getStatusColor = (status: string) => {
   return status === 'active' 
@@ -48,157 +53,242 @@ const getStatusColor = (status: string) => {
 };
 
 export function ScenarioManagement() {
-  const [scenarios, setScenarios] = useState(mockScenarios);
+  const [categoryTypes, setCategoryTypes] = useState<CategoryType[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<Record<string, any>>({});
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    category: '',
-    priority: ''
+  const [selectedItem, setSelectedItem] = useState<Category | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState<CreateCategoryDto>({
+    category_type_id: '72ef7742-15dd-4fab-878b-de96c9136ef5',
+    display_name: '',
+    value: '',
+    data: {}
   });
+
+  // Fetch function for useServerPagination
+  const fetchCategories = async (page: number, limit: number, params: any) => {
+    const response = await categoryService.getAllFormat(page, limit, { scope: 'SCRIPT', ...params });
+    return response;
+  };
+
+  // Use server pagination hook
+  const {
+    data: categories,
+    currentPage,
+    totalPages,
+    total,
+    loading,
+    setCurrentPage,
+    pageSize,
+    refresh
+  } = useServerPagination<Category>(
+    fetchCategories,
+    [searchTerm, filters], // dependencies
+    { pageSize: 10, initialPage: 1 },
+    { 
+      scope: 'SCRIPT', 
+      ...filters,
+     // Add search term to server params
+    }
+  );
+
+  // Fetch category types
+  const fetchCategoryTypes = async () => {
+    try {
+      const response = await categoryTypeService.getAll(1, 1000);
+      setCategoryTypes(response.rows || []);
+    } catch (error) {
+      console.error('Error fetching category types:', error);
+      toast.error('Lỗi khi tải danh sách loại danh mục');
+    }
+  };
+
+  // Load category types on component mount
+  useEffect(() => {
+    fetchCategoryTypes();
+  }, []);
 
   const filterOptions: FilterOption[] = [
     {
-      key: 'category',
-      label: 'Danh mục',
+      key: 'category_type_id',
+      label: 'Loại danh mục',
       type: 'select',
-      options: [
-        { value: 'Security', label: 'Security' },
-        { value: 'Network', label: 'Network' },
-        { value: 'Performance', label: 'Performance' },
-        { value: 'System', label: 'System' }
-      ]
+      options: categoryTypes.map(type => ({
+        value: type.id,
+        label: type.display_name
+      }))
     },
     {
-      key: 'priority',
-      label: 'Mức độ ưu tiên',
-      type: 'select',
-      options: [
-        { value: 'critical', label: 'Nghiêm trọng' },
-        { value: 'high', label: 'Cao' },
-        { value: 'medium', label: 'Trung bình' },
-        { value: 'low', label: 'Thấp' }
-      ]
-    },
-    {
-      key: 'status',
+      key: 'is_active',
       label: 'Trạng thái',
       type: 'select',
       options: [
-        { value: 'active', label: 'Hoạt động' },
-        { value: 'inactive', label: 'Không hoạt động' }
+        { value: 'true', label: 'Hoạt động' },
+        { value: 'false', label: 'Không hoạt động' }
       ]
     }
   ];
 
-  const filteredData = scenarios.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = !filters.category || item.category === filters.category;
-    const matchesPriority = !filters.priority || item.priority === filters.priority;
-    const matchesStatus = !filters.status || item.status === filters.status;
-    return matchesSearch && matchesCategory && matchesPriority && matchesStatus;
-  });
+  // Since we're using server-side pagination, we don't need client-side filtering
+  // The filtering is handled by the server through the useServerPagination hook
+  const filteredData = categories;
 
-  const handleAdd = () => {
-    const newItem = {
-      id: scenarios.length + 1,
-      ...formData,
-      status: 'active',
-      created: new Date().toISOString().slice(0, 10)
-    };
-    setScenarios([...scenarios, newItem]);
-    setIsDialogOpen(false);
-    setFormData({ name: '', description: '', category: '', priority: '' });
-    toast.success('Thêm kịch bản thành công!');
+  const handleAdd = async () => {
+    try {
+      setIsSubmitting(true);
+      await categoryService.create(formData);
+      toast.success('Thêm danh mục thành công!');
+      setIsDialogOpen(false);
+      setFormData({ category_type_id: '72ef7742-15dd-4fab-878b-de96c9136ef5', display_name: '', value: '', data: {} });
+      // Force refresh data
+      refresh();
+    } catch (error) {
+      console.error('Error creating category:', error);
+      toast.error('Lỗi khi thêm danh mục');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleEdit = (item: any) => {
+  const handleEdit = (item: Category) => {
+    if (!item.id) {
+      toast.error('Không thể chỉnh sửa: ID không hợp lệ');
+      return;
+    }
+    
+    console.log('Editing category with ID:', item.id);
     setSelectedItem(item);
     setFormData({
-      name: item.name,
-      description: item.description,
-      category: item.category,
-      priority: item.priority
+      category_type_id: "72ef7742-15dd-4fab-878b-de96c9136ef5",
+      display_name: item.display_name,
+      value: item.value,
+      data: item.data || {}
     });
     setIsEditDialogOpen(true);
   };
 
-  const handleUpdate = () => {
-    setScenarios(scenarios.map(item => item.id === selectedItem.id ? {
-      ...item,
-      ...formData
-    } : item));
-    setIsEditDialogOpen(false);
-    setSelectedItem(null);
-    setFormData({ name: '', description: '', category: '', priority: '' });
-    toast.success('Cập nhật kịch bản thành công!');
+  const handleUpdate = async () => {
+    if (!selectedItem || !selectedItem.id) {
+      toast.error('Không thể cập nhật: ID không hợp lệ');
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      console.log('Updating category with ID:', selectedItem.id);
+      await categoryService.update(selectedItem.id, formData);
+      toast.success('Cập nhật danh mục thành công!');
+      setIsEditDialogOpen(false);
+      setSelectedItem(null);
+      setFormData({ category_type_id: '72ef7742-15dd-4fab-878b-de96c9136ef5', display_name: '', value: '', data: {} });
+      // Force refresh data
+      refresh();
+    } catch (error) {
+      console.error('Error updating category:', error);
+      toast.error('Lỗi khi cập nhật danh mục');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleDeleteClick = (item: any) => {
+  const handleDeleteClick = (item: Category) => {
+    if (!item.id) {
+      toast.error('Không thể xóa: ID không hợp lệ');
+      return;
+    }
+    
+    console.log('Preparing to delete category with ID:', item.id);
     setSelectedItem(item);
     setIsDeleteDialogOpen(true);
   };
 
-  const handleDelete = () => {
-    setScenarios(scenarios.filter(item => item.id !== selectedItem.id));
-    setIsDeleteDialogOpen(false);
-    setSelectedItem(null);
-    toast.success('Xóa kịch bản thành công!');
+  const handleDelete = async () => {
+    if (!selectedItem || !selectedItem.id) {
+      toast.error('Không thể xóa: ID không hợp lệ');
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      console.log('Deleting category with ID:', selectedItem.id);
+      await categoryService.delete(selectedItem.id);
+      toast.success('Xóa danh mục thành công!');
+      setIsDeleteDialogOpen(false);
+      setSelectedItem(null);
+      // Force refresh data
+      refresh();
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      toast.error('Lỗi khi xóa danh mục');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const renderForm = (data: typeof formData, onChange: (data: typeof formData) => void) => (
     <div className="space-y-4 py-4">
+      {/* <div className="space-y-2">
+        <Label htmlFor="category-type">Loại danh mục</Label>
+        <Select 
+          value={data.category_type_id} 
+          onValueChange={(value: string) => onChange({ ...data, category_type_id: value })}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Chọn loại danh mục" />
+          </SelectTrigger>
+          <SelectContent>
+            {categoryTypes.map(type => (
+              <SelectItem key={type.id} value={type.id}>
+                {type.display_name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div> */}
       <div className="space-y-2">
-        <Label htmlFor="scenario-name">Tên kịch bản</Label>
+        <Label htmlFor="display-name">Tên hiển thị</Label>
         <Input 
-          id="scenario-name" 
-          placeholder="Nhập tên kịch bản" 
-          value={data.name}
-          onChange={(e) => onChange({ ...data, name: e.target.value })}
+          id="display-name" 
+          placeholder="Nhập tên hiển thị" 
+          value={data.display_name}
+          onChange={(e) => onChange({ ...data, display_name: e.target.value })}
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="scenario-description">Mô tả</Label>
-        <Textarea 
-          id="scenario-description" 
-          placeholder="Nhập mô tả" 
-          rows={3} 
-          value={data.description}
-          onChange={(e) => onChange({ ...data, description: e.target.value })}
+        <Label htmlFor="value">Giá trị</Label>
+        <Input 
+          id="value" 
+          placeholder="Nhập giá trị" 
+          value={data.value}
+          onChange={(e) => onChange({ ...data, value: e.target.value })}
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="scenario-category">Danh mục</Label>
-        <Select value={data.category} onValueChange={(value) => onChange({ ...data, category: value })}>
-          <SelectTrigger>
-            <SelectValue placeholder="Chọn danh mục" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Security">Security</SelectItem>
-            <SelectItem value="Network">Network</SelectItem>
-            <SelectItem value="Performance">Performance</SelectItem>
-            <SelectItem value="System">System</SelectItem>
-          </SelectContent>
-        </Select>
+        <Label htmlFor="data-type">Loại dữ liệu</Label>
+        <Input 
+          id="data-type" 
+          placeholder="Nhập loại dữ liệu (ví dụ: bruteforce)" 
+          value={data.data?.type || ''}
+          onChange={(e) => onChange({ 
+            ...data, 
+            data: { ...data.data, type: e.target.value }
+          })}
+        />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="scenario-priority">Mức độ ưu tiên</Label>
-        <Select value={data.priority} onValueChange={(value) => onChange({ ...data, priority: value })}>
-          <SelectTrigger>
-            <SelectValue placeholder="Chọn mức độ ưu tiên" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="critical">Nghiêm trọng</SelectItem>
-            <SelectItem value="high">Cao</SelectItem>
-            <SelectItem value="medium">Trung bình</SelectItem>
-            <SelectItem value="low">Thấp</SelectItem>
-          </SelectContent>
-        </Select>
+        <Label htmlFor="data-status">Trạng thái</Label>
+        <Input 
+          id="data-status" 
+          placeholder="Nhập trạng thái (ví dụ: Thấp)" 
+          value={data.data?.status || ''}
+          onChange={(e) => onChange({ 
+            ...data, 
+            data: { ...data.data, status: e.target.value }
+          })}
+        />
       </div>
     </div>
   );
@@ -208,7 +298,7 @@ export function ScenarioManagement() {
       <div className="slide-in-left">
         <h1>Danh mục kịch bản</h1>
         <p className="text-muted-foreground">
-          Quản lý các kịch bản phát hiện và xử lý sự cố bảo mật
+          Quản lý các danh mục kịch bản với scope SCRIPT
         </p>
       </div>
 
@@ -216,89 +306,162 @@ export function ScenarioManagement() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Danh sách kịch bản</CardTitle>
+              <CardTitle>Danh sách danh mục</CardTitle>
               <CardDescription>
-                Tổng cộng {scenarios.length} kịch bản
+                Tổng cộng {total} danh mục
               </CardDescription>
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="btn-animate scale-hover">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Thêm mới
-                </Button>
-              </DialogTrigger>
+            <div className="flex space-x-2">
+              <Button 
+                variant="outline" 
+                className="btn-animate scale-hover"
+                onClick={refresh}
+                disabled={loading}
+              >
+                <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                Làm mới
+              </Button>
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="btn-animate scale-hover">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Thêm mới
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Thêm kịch bản mới</DialogTitle>
+                  <DialogTitle>Thêm danh mục mới</DialogTitle>
                   <DialogDescription>
-                    Tạo kịch bản mới
+                    Tạo danh mục mới cho kịch bản
                   </DialogDescription>
                 </DialogHeader>
                 {renderForm(formData, setFormData)}
                 <DialogFooter>
-                  <Button type="submit" className="w-full" onClick={handleAdd}>Thêm</Button>
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    onClick={handleAdd}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Đang thêm...' : 'Thêm'}
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
           <div className="mb-6">
             <AdvancedFilter
-              searchPlaceholder="Tìm kiếm kịch bản..."
+              searchPlaceholder="Tìm kiếm danh mục..."
               searchValue={searchTerm}
-              onSearchChange={setSearchTerm}
+              onSearchChange={(value) => {
+                setSearchTerm(value);
+                setCurrentPage(1); // Reset to first page when searching
+              }}
               filterOptions={filterOptions}
               filters={filters}
-              onFiltersChange={setFilters}
-              onReset={() => setSearchTerm('')}
+              onFiltersChange={(newFilters) => {
+                setFilters(newFilters);
+                setCurrentPage(1); // Reset to first page when filtering
+              }}
+              onReset={() => {
+                setSearchTerm('');
+                setFilters({});
+                setCurrentPage(1);
+              }}
             />
           </div>
 
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Tên kịch bản</TableHead>
+                <TableHead>Tên hiển thị</TableHead>
+                <TableHead>Giá trị</TableHead>
                 <TableHead>Mô tả</TableHead>
-                <TableHead>Danh mục</TableHead>
-                <TableHead>Mức độ ưu tiên</TableHead>
+                <TableHead>Loại dữ liệu</TableHead>
                 <TableHead>Trạng thái</TableHead>
-                <TableHead>Ngày tạo</TableHead>
+                <TableHead>Mặc định</TableHead>
                 <TableHead className="text-right">Thao tác</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredData.map((item, index) => (
-                <TableRow key={item.id} className="stagger-item" style={{animationDelay: `${index * 0.05}s`}}>
-                  <TableCell className="font-medium">{item.name}</TableCell>
-                  <TableCell className="max-w-xs truncate">{item.description}</TableCell>
-                  <TableCell>{item.category}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={getPriorityColor(item.priority)}>
-                      {getPriorityText(item.priority)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={getStatusColor(item.status)}>
-                      {item.status === 'active' ? 'Hoạt động' : 'Không hoạt động'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{item.created}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end space-x-2">
-                      <Button variant="ghost" size="sm" className="scale-hover" onClick={() => handleEdit(item)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="scale-hover" onClick={() => handleDeleteClick(item)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8">
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                      <span className="ml-2">Đang tải...</span>
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : filteredData.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    Không có dữ liệu
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredData.map((item, index) => (
+                  <TableRow key={item.id} className="stagger-item" style={{animationDelay: `${index * 0.05}s`}}>
+                    <TableCell className="font-medium">{item.display_name}</TableCell>
+                    <TableCell>{item.value}</TableCell>
+                    <TableCell className="max-w-xs truncate">{item.description}</TableCell>
+                    <TableCell>
+                      {item.data?.type && (
+                        <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
+                          {item.data.type}
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={getStatusColor(item.is_active ? 'active' : 'inactive')}>
+                        {item.is_active ? 'Hoạt động' : 'Không hoạt động'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={item.is_default ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-gray-500/10 text-gray-500 border-gray-500/20'}>
+                        {item.is_default ? 'Mặc định' : 'Không'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end space-x-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="scale-hover" 
+                          onClick={() => handleEdit(item)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="scale-hover" 
+                          onClick={() => handleDeleteClick(item)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
+          
+          {/* Pagination */}
+          <div className="mt-4">
+            <TablePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              startIndex={(currentPage - 1) * pageSize}
+              endIndex={Math.min(currentPage * pageSize, total)}
+              totalItems={total}
+              onPageChange={setCurrentPage}
+            />
+          </div>
         </CardContent>
       </Card>
 
@@ -306,14 +469,21 @@ export function ScenarioManagement() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Chỉnh sửa kịch bản</DialogTitle>
+            <DialogTitle>Chỉnh sửa danh mục</DialogTitle>
             <DialogDescription>
-              Cập nhật thông tin kịch bản
+              Cập nhật thông tin danh mục
             </DialogDescription>
           </DialogHeader>
           {renderForm(formData, setFormData)}
           <DialogFooter>
-            <Button type="submit" className="w-full" onClick={handleUpdate}>Cập nhật</Button>
+            <Button 
+              type="submit" 
+              className="w-full" 
+              onClick={handleUpdate}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Đang cập nhật...' : 'Cập nhật'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -324,14 +494,18 @@ export function ScenarioManagement() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa kịch bản <strong>{selectedItem?.name}</strong>? 
+              Bạn có chắc chắn muốn xóa danh mục <strong>{selectedItem?.display_name}</strong> (ID: {selectedItem?.id})? 
               Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Xóa
+            <AlertDialogCancel disabled={isSubmitting}>Hủy</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete} 
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Đang xóa...' : 'Xóa'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

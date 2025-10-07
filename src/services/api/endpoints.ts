@@ -25,6 +25,15 @@ export const API_ENDPOINTS = {
     GET: (id: number) => `/devices/${id}`,
   },
 
+  // Managed Devices
+  MANAGED_DEVICES: {
+    LIST: '/managed-devices',
+    CREATE: '/managed-devices',
+    UPDATE: (id: string) => `/managed-devices/${id}`,
+    DELETE: (id: string) => `/managed-devices/${id}`,
+    GET: (id: string) => `/managed-devices/${id}`,
+  },
+
   // Device Types
   DEVICE_TYPES: {
     LIST: '/device-types',
