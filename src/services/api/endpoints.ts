@@ -178,6 +178,42 @@ export const API_ENDPOINTS = {
     GET: (id: string) => `/cloud-managers/${id}`,
   },
 
+  // Firewall Configs
+  FIREWALL_CONFIGS: {
+    LIST: '/firewall-configs',
+    CREATE: '/firewall-configs',
+    UPDATE: (id: string) => `/firewall-configs/${id}`,
+    DELETE: (id: string) => `/firewall-configs/${id}`,
+    GET: (id: string) => `/firewall-configs/${id}`,
+  },
+
+  // ACL Rules
+  ACL_RULES: {
+    LIST: '/firewall-configs/acl',
+    CREATE: '/firewall-configs/acl',
+    UPDATE: (id: string) => `/firewall-configs/${id}`,
+    DELETE: (id: string) => `/firewall-configs/${id}`,
+    GET: (id: string) => `/firewall-configs/acl/${id}`,
+  },
+
+  // IPSec Tunnels
+  IPSEC_TUNNELS: {
+    LIST: '/firewall-configs/ipsec',
+    CREATE: '/firewall-configs/ipsec',
+    UPDATE: (id: string) => `/firewall-configs/${id}`,
+    DELETE: (id: string) => `/firewall-configs/${id}`,
+    GET: (id: string) => `/firewall-configs/ipsec/${id}`,
+  },
+
+  // IP Aliases
+  IP_ALIASES: {
+    LIST: '/firewall-configs/alias',
+    CREATE: '/firewall-configs/alias',
+    UPDATE: (id: string) => `/firewall-configs/${id}`,
+    DELETE: (id: string) => `/firewall-configs/${id}`,
+    GET: (id: string) => `/firewall-configs/alias/${id}`,
+  },
+
   // Dashboard
   DASHBOARD: {
     STATS: '/dashboard/stats',

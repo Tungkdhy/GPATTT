@@ -1,179 +1,130 @@
+// LOG_CLASSIFICATION
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import {
+  Card, CardContent, CardDescription, CardHeader, CardTitle
+} from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { Badge } from '../ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
-import { Label } from '../ui/label';
-import { Textarea } from '../ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { AdvancedFilter, FilterOption } from '../common/AdvancedFilter';
-import { Plus, Edit, Trash2, Bell } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import {
+  Pagination, PaginationContent, PaginationItem,
+  PaginationLink, PaginationNext, PaginationPrevious
+} from "../ui/pagination";
 
-const mockAlertLevels = [
-  { id: 1, level: 'low', name: 'Thấp', color: '#10b981', threshold: 20, action: 'Log only', status: 'active' },
-  { id: 2, level: 'medium', name: 'Trung bình', color: '#f59e0b', threshold: 50, action: 'Send notification', status: 'active' },
-  { id: 3, level: 'high', name: 'Cao', color: '#ef4444', threshold: 75, action: 'Send alert + Email', status: 'active' },
-  { id: 4, level: 'critical', name: 'Nghiêm trọng', color: '#dc2626', threshold: 90, action: 'Immediate response', status: 'active' },
-];
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow
+} from '../ui/table';
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter,
+  DialogHeader, DialogTitle, DialogTrigger
+} from '../ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
+} from '../ui/alert-dialog';
+import { Label } from '../ui/label';
+import { Plus, Edit, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { categoryService } from '../../services/api';
+import { useServerPagination } from '@/hooks/useServerPagination';
 
 export function AlertLevels() {
-  const [alertLevels, setAlertLevels] = useState(mockAlertLevels);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState<Record<string, any>>({});
+  const [reload, setReload] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedLevel, setSelectedLevel] = useState<any>(null);
-  const [formData, setFormData] = useState({
-    level: '',
-    name: '',
-    color: '#10b981',
-    threshold: '',
-    action: ''
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+
+  const [formData, setFormData] = useState<any>({
+    display_name: '',
+    value: '',
+    description: '',
+    category_type_id: 'd1c6d966-0ba4-4eec-b5f8-d887dd9c96f2'
   });
 
-  const filterOptions: FilterOption[] = [
-    {
-      key: 'level',
-      label: 'Mức độ',
-      type: 'select',
-      options: [
-        { value: 'low', label: 'Thấp' },
-        { value: 'medium', label: 'Trung bình' },
-        { value: 'high', label: 'Cao' },
-        { value: 'critical', label: 'Nghiêm trọng' }
-      ]
-    }
-  ];
+  const {
+    data: categories,
+    currentPage,
+    totalPages,
+    setCurrentPage,
+    total
+  } = useServerPagination(
+    (page, limit) => categoryService.getAllFormat(page, limit, {scope:"WARNING_LEVEL"}),
+    [reload],
+    { pageSize: 10, initialPage: 1 },
+    {scope:"WARNING_LEVEL"}
+  );
 
-  const filteredLevels = alertLevels.filter(level => {
-    const matchesSearch = level.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesLevel = !filters.level || level.level === filters.level;
-    return matchesSearch && matchesLevel;
-  });
-
-  const getLevelColor = (level: string) => {
-    switch (level) {
-      case 'low': return 'bg-green-500/10 text-green-500 border-green-500/20';
-      case 'medium': return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
-      case 'high': return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
-      case 'critical': return 'bg-red-500/10 text-red-500 border-red-500/20';
-      default: return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
+  // Add
+  const handleAdd = async () => {
+    try {
+      await categoryService.create(formData);
+      setIsDialogOpen(false);
+      resetForm();
+      toast.success('Thêm danh mục thành công!');
+      setReload(!reload);
+    } catch {
+      toast.error('Lỗi khi thêm danh mục');
     }
   };
-
-  const handleAdd = () => {
-    const newLevel = {
-      id: alertLevels.length + 1,
-      level: formData.level,
-      name: formData.name,
-      color: formData.color,
-      threshold: parseInt(formData.threshold),
-      action: formData.action,
-      status: 'active'
-    };
-    setAlertLevels([...alertLevels, newLevel]);
-    setIsDialogOpen(false);
-    setFormData({ level: '', name: '', color: '#10b981', threshold: '', action: '' });
-    toast.success('Thêm mức cảnh báo thành công!');
-  };
-
-  const handleEdit = (level: any) => {
-    setSelectedLevel(level);
+// d1c6d966-0ba4-4eec-b5f8-d887dd9c96f2
+  // Edit
+  const handleEdit = (item: any) => {
+    setSelectedItem(item);
     setFormData({
-      level: level.level,
-      name: level.name,
-      color: level.color,
-      threshold: level.threshold.toString(),
-      action: level.action
+      display_name: item.display_name,
+      value: item.value,
+      description: item.description,
+      category_type_id: 'd1c6d966-0ba4-4eec-b5f8-d887dd9c96f2'
     });
     setIsEditDialogOpen(true);
   };
 
-  const handleUpdate = () => {
-    setAlertLevels(alertLevels.map(l => l.id === selectedLevel.id ? {
-      ...l,
-      level: formData.level,
-      name: formData.name,
-      color: formData.color,
-      threshold: parseInt(formData.threshold),
-      action: formData.action
-    } : l));
-    setIsEditDialogOpen(false);
-    setSelectedLevel(null);
-    setFormData({ level: '', name: '', color: '#10b981', threshold: '', action: '' });
-    toast.success('Cập nhật mức cảnh báo thành công!');
+  // Update
+  const handleUpdate = async () => {
+    try {
+      await categoryService.update(selectedItem.id, formData);
+      setIsEditDialogOpen(false);
+      resetForm();
+      setReload(!reload);
+      toast.success('Cập nhật danh mục thành công!');
+    } catch {
+      toast.error('Lỗi khi cập nhật danh mục');
+    }
   };
 
-  const handleDeleteClick = (level: any) => {
-    setSelectedLevel(level);
+  // Delete
+  const handleDeleteClick = (item: any) => {
+    setSelectedItem(item);
     setIsDeleteDialogOpen(true);
   };
 
-  const handleDelete = () => {
-    setAlertLevels(alertLevels.filter(l => l.id !== selectedLevel.id));
-    setIsDeleteDialogOpen(false);
-    setSelectedLevel(null);
-    toast.success('Xóa mức cảnh báo thành công!');
+  const handleDelete = async () => {
+    try {
+      await categoryService.delete(selectedItem.id);
+      setIsDeleteDialogOpen(false);
+      setSelectedItem(null);
+      toast.success('Xóa danh mục thành công!');
+      setReload(!reload);
+    } catch {
+      toast.error('Lỗi khi xóa danh mục');
+    }
   };
 
-  const AlertLevelForm = () => (
-    <div className="space-y-4 py-4">
-      <div className="space-y-2">
-        <Label htmlFor="level">Mức độ</Label>
-        <Select value={formData.level} onValueChange={(value:any) => setFormData({ ...formData, level: value })}>
-          <SelectTrigger>
-            <SelectValue placeholder="Chọn mức độ" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="low">Thấp</SelectItem>
-            <SelectItem value="medium">Trung bình</SelectItem>
-            <SelectItem value="high">Cao</SelectItem>
-            <SelectItem value="critical">Nghiêm trọng</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="name">Tên</Label>
-        <Input 
-          id="name" 
-          placeholder="Nhập tên mức cảnh báo" 
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="threshold">Ngưỡng (%)</Label>
-        <Input 
-          id="threshold" 
-          type="number"
-          placeholder="VD: 50" 
-          value={formData.threshold}
-          onChange={(e) => setFormData({ ...formData, threshold: e.target.value })}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="action">Hành động</Label>
-        <Textarea 
-          id="action" 
-          placeholder="Nhập hành động khi đạt ngưỡng" 
-          value={formData.action}
-          onChange={(e) => setFormData({ ...formData, action: e.target.value })}
-        />
-      </div>
-    </div>
-  );
+  const resetForm = () => {
+    setFormData({
+      display_name: '',
+      value: '',
+      description: '',
+      category_type_id: 'd1c6d966-0ba4-4eec-b5f8-d887dd9c96f2'
+    });
+  };
 
   return (
     <div className="space-y-6 fade-in-up">
       <div className="slide-in-left">
-        <h1>Danh mục mức cảnh báo</h1>
+        <h1>Quản lý loại log</h1>
         <p className="text-muted-foreground">
-          Quản lý các mức độ cảnh báo trong hệ thống
+          Quản lý các loại log trong hệ thống
         </p>
       </div>
 
@@ -181,73 +132,62 @@ export function AlertLevels() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Danh sách mức cảnh báo</CardTitle>
+              <CardTitle>Danh sách loại log</CardTitle>
               <CardDescription>
-                Tổng cộng {alertLevels.length} mức cảnh báo
+                Tổng cộng {total} loại log
               </CardDescription>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="btn-animate scale-hover">
                   <Plus className="mr-2 h-4 w-4" />
-                  Thêm mức cảnh báo
+                  Thêm danh mục
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
+              <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Thêm mức cảnh báo mới</DialogTitle>
+                  <DialogTitle>Thêm loại danh mục mới</DialogTitle>
                   <DialogDescription>
-                    Tạo mức cảnh báo mới cho hệ thống
+                    Nhập thông tin loại danh mục
                   </DialogDescription>
                 </DialogHeader>
-                <AlertLevelForm />
+                {renderFormFields(formData, setFormData)}
                 <DialogFooter>
-                  <Button type="submit" className="w-full" onClick={handleAdd}>Thêm mức cảnh báo</Button>
+                  <Button type="submit" className="w-full" onClick={handleAdd}>
+                    Tạo danh mục
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="mb-6">
-            <AdvancedFilter
-              searchPlaceholder="Tìm kiếm mức cảnh báo..."
-              searchValue={searchTerm}
-              onSearchChange={setSearchTerm}
-              filterOptions={filterOptions}
-              filters={filters}
-              onFiltersChange={setFilters}
-              onReset={() => setSearchTerm('')}
-            />
-          </div>
 
+        <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Mức độ</TableHead>
-                <TableHead>Tên</TableHead>
-                <TableHead>Ngưỡng</TableHead>
-                <TableHead>Hành động</TableHead>
+                <TableHead>Tên danh mục</TableHead>
+                <TableHead>Giá trị</TableHead>
+                <TableHead>Mô tả</TableHead>
+                {/* <TableHead>Loại</TableHead> */}
+                <TableHead>Người tạo</TableHead>
                 <TableHead className="text-right">Thao tác</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredLevels.map((level, index) => (
-                <TableRow key={level.id} className="stagger-item" style={{animationDelay: `${index * 0.05}s`}}>
-                  <TableCell>
-                    <Badge variant="outline" className={getLevelColor(level.level)}>
-                      {level.name}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="font-medium">{level.name}</TableCell>
-                  <TableCell>{level.threshold}%</TableCell>
-                  <TableCell>{level.action}</TableCell>
+              {categories.map((item: any, idx: number) => (
+                <TableRow key={item.id} style={{ animationDelay: `${idx * 0.05}s` }}>
+                  <TableCell className="font-medium">{item.display_name}</TableCell>
+                  <TableCell>{item.value}</TableCell>
+                  <TableCell>{item.description}</TableCell>
+                  {/* <TableCell>{item.category_type_id}</TableCell> */}
+                  <TableCell>{item.created_by_user?.display_name || "-"}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">
-                      <Button variant="ghost" size="sm" className="scale-hover" onClick={() => handleEdit(level)}>
+                      <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" className="scale-hover" onClick={() => handleDeleteClick(level)}>
+                      <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(item)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
@@ -256,36 +196,129 @@ export function AlertLevels() {
               ))}
             </TableBody>
           </Table>
+
+          {/* Pagination */}
+          <div className="flex justify-end mt-4">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+
+                {(() => {
+                  const maxVisiblePages = 5;
+                  const pages = [];
+                  
+                  // Always show first page
+                  pages.push(
+                    <PaginationItem key={1}>
+                      <PaginationLink
+                        isActive={currentPage === 1}
+                        onClick={() => setCurrentPage(1)}
+                      >
+                        1
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                  
+                  // Calculate range for middle pages
+                  const startPage = Math.max(2, currentPage - 1);
+                  const endPage = Math.min(totalPages - 1, currentPage + 1);
+                  
+                  // Add ellipsis after first page if needed
+                  if (startPage > 2) {
+                    pages.push(
+                      <PaginationItem key="ellipsis1">
+                        <span className="px-3 py-2 text-sm text-muted-foreground">...</span>
+                      </PaginationItem>
+                    );
+                  }
+                  
+                  // Add middle pages
+                  for (let i = startPage; i <= endPage; i++) {
+                    if (i !== 1 && i !== totalPages) {
+                      pages.push(
+                        <PaginationItem key={i}>
+                          <PaginationLink
+                            isActive={currentPage === i}
+                            onClick={() => setCurrentPage(i)}
+                          >
+                            {i}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    }
+                  }
+                  
+                  // Add ellipsis before last page if needed
+                  if (endPage < totalPages - 1) {
+                    pages.push(
+                      <PaginationItem key="ellipsis2">
+                        <span className="px-3 py-2 text-sm text-muted-foreground">...</span>
+                      </PaginationItem>
+                    );
+                  }
+                  
+                  // Always show last page (if more than 1 page)
+                  if (totalPages > 1) {
+                    pages.push(
+                      <PaginationItem key={totalPages}>
+                        <PaginationLink
+                          isActive={currentPage === totalPages}
+                          onClick={() => setCurrentPage(totalPages)}
+                        >
+                          {totalPages}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  }
+                  
+                  return pages;
+                })()}
+
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
         </CardContent>
       </Card>
 
+      {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Chỉnh sửa mức cảnh báo</DialogTitle>
-            <DialogDescription>
-              Cập nhật thông tin mức cảnh báo
-            </DialogDescription>
+            <DialogTitle>Chỉnh sửa loại danh mục</DialogTitle>
+            <DialogDescription>Cập nhật thông tin loại danh mục</DialogDescription>
           </DialogHeader>
-          <AlertLevelForm />
+          {renderFormFields(formData, setFormData)}
           <DialogFooter>
-            <Button type="submit" className="w-full" onClick={handleUpdate}>Cập nhật</Button>
+            <Button type="submit" className="w-full" onClick={handleUpdate}>
+              Cập nhật
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
+      {/* Delete Confirmation */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa mức cảnh báo <strong>{selectedLevel?.name}</strong>? 
-              Hành động này không thể hoàn tác.
+              Bạn có chắc chắn muốn xóa danh mục <strong>{selectedItem?.display_name}</strong>?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-white">
               Xóa
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -294,3 +327,40 @@ export function AlertLevels() {
     </div>
   );
 }
+
+function renderFormFields(formData: any, setFormData: any) {
+  return (
+    <div className="space-y-4 py-4">
+      <div className="space-y-2">
+        <Label>Tên danh mục</Label>
+        <Input
+          value={formData.display_name}
+          onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Giá trị</Label>
+        <Input
+          value={formData.value}
+          onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Mô tả</Label>
+        <Input
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+        />
+      </div>
+      {/* <div className="space-y-2">
+        <Label>Loại</Label>
+        <Input
+          value={formData.category_type_id}
+          onChange={(e) => setFormData({ ...formData, category_type_id: e.target.value })}
+        />
+      </div> */}
+    </div>
+  );
+}
+
+// LogTypes

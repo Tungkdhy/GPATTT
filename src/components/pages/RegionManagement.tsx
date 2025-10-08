@@ -207,16 +207,76 @@ export function RegionManagement() {
                   />
                 </PaginationItem>
 
-                {[...Array(totalPages)].map((_, idx) => (
-                  <PaginationItem key={idx}>
-                    <PaginationLink
-                      isActive={currentPage === idx + 1}
-                      onClick={() => setCurrentPage(idx + 1)}
-                    >
-                      {idx + 1}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
+                {(() => {
+                  const maxVisiblePages = 5;
+                  const pages = [];
+                  
+                  // Always show first page
+                  pages.push(
+                    <PaginationItem key={1}>
+                      <PaginationLink
+                        isActive={currentPage === 1}
+                        onClick={() => setCurrentPage(1)}
+                      >
+                        1
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                  
+                  // Calculate range for middle pages
+                  const startPage = Math.max(2, currentPage - 1);
+                  const endPage = Math.min(totalPages - 1, currentPage + 1);
+                  
+                  // Add ellipsis after first page if needed
+                  if (startPage > 2) {
+                    pages.push(
+                      <PaginationItem key="ellipsis1">
+                        <span className="px-3 py-2 text-sm text-muted-foreground">...</span>
+                      </PaginationItem>
+                    );
+                  }
+                  
+                  // Add middle pages
+                  for (let i = startPage; i <= endPage; i++) {
+                    if (i !== 1 && i !== totalPages) {
+                      pages.push(
+                        <PaginationItem key={i}>
+                          <PaginationLink
+                            isActive={currentPage === i}
+                            onClick={() => setCurrentPage(i)}
+                          >
+                            {i}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    }
+                  }
+                  
+                  // Add ellipsis before last page if needed
+                  if (endPage < totalPages - 1) {
+                    pages.push(
+                      <PaginationItem key="ellipsis2">
+                        <span className="px-3 py-2 text-sm text-muted-foreground">...</span>
+                      </PaginationItem>
+                    );
+                  }
+                  
+                  // Always show last page (if more than 1 page)
+                  if (totalPages > 1) {
+                    pages.push(
+                      <PaginationItem key={totalPages}>
+                        <PaginationLink
+                          isActive={currentPage === totalPages}
+                          onClick={() => setCurrentPage(totalPages)}
+                        >
+                          {totalPages}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  }
+                  
+                  return pages;
+                })()}
 
                 <PaginationItem>
                   <PaginationNext

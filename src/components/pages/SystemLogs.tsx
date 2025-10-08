@@ -46,7 +46,7 @@ export function SystemLogs() {
     };
 
     if (searchTerm) {
-      queryParams.search = searchTerm;
+      queryParams.name = searchTerm;
     }
 
     if (filters.logType) {

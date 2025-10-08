@@ -16,6 +16,7 @@ import { ScenarioManagement } from './components/pages/ScenarioManagement';
 import { ResponseScenarios } from './components/pages/ResponseScenarios';
 import { SoftwareVersions } from './components/pages/SoftwareVersions';
 import { FirewallConfigs } from './components/pages/FirewallConfigs';
+import { FirewallConfigTypes } from './components/pages/FirewallConfigTypes';
 import { LogTypes } from './components/pages/LogTypes';
 import { LogList } from './components/pages/LogList';
 import { ScenarioLogs } from './components/pages/ScenarioLogs';
@@ -64,6 +65,7 @@ export default function App() {
                     <Route path="/response-scenarios" element={<ResponseScenarios />} />
                     <Route path="/software-versions" element={<SoftwareVersions />} />
                     <Route path="/firewall-configs" element={<FirewallConfigs />} />
+                    <Route path="/firewall-config-types" element={<FirewallConfigTypes />} />
                     <Route path="/log-types" element={<LogTypes />} />
                     <Route path="/log-list" element={<LogList />} />
                     <Route path="/scenario-logs" element={<ScenarioLogs />} />

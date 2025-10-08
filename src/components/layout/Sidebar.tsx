@@ -12,7 +12,6 @@ import {
   AlertTriangle,
   Cpu,
   MapPin,
-  LogOut,
   ChevronDown,
   ChevronRight,
   ShieldAlert,
@@ -28,7 +27,6 @@ import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../auth/AuthContext';
 
 interface MenuItem {
   id: string;
@@ -39,32 +37,63 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
+  // === TRANG CHỦ ===
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-  { id: 'users', label: 'Quản lý người dùng', icon: Users, path: '/users' },
-  { id: 'account-permissions', label: 'Quyền tài khoản', icon: Key, path: '#', children: [
-      { id: 'account-permissions', label: 'Danh sách quyền', icon: ShieldAlert, path: '/account-permissions' },
-      { id: 'action', label: 'Danh sách Hành động', icon: ShieldCheck, path: '/action' },
-      // { id: 'firewall-configs', label: 'Cấu hình tường lửa', icon: Shield, path: '/firewall-configs' },
-    ] },
-  { id: 'system-params', label: 'Tham số hệ thống', icon: Settings, path: '/system-params' },
-  { id: 'devices', label: 'Quản lý thiết bị', icon: Monitor, path: '/devices' },
-  { id: 'insecure-devices', label: 'Thiết bị mất an toàn', icon: ShieldAlert, path: '/insecure-devices' },
-  { id: 'device-types', label: 'Loại thiết bị', icon: Cpu, path: '/device-types' },
+
+  // === QUẢN LÝ NGƯỜI DÙNG & PHÂN QUYỀN ===
+  {
+    id: 'user-management',
+    label: 'Quản lý người dùng',
+    icon: Users,
+    path: '#',
+    children: [
+      { id: 'users', label: 'Danh sách người dùng', icon: Users, path: '/users' },
+      { id: 'account-permissions', label: 'Quyền tài khoản', icon: Key, path: '/account-permissions' },
+      { id: 'action', label: 'Danh sách hành động', icon: ShieldCheck, path: '/action' },
+    ]
+  },
+
+  // === QUẢN LÝ THIẾT BỊ ===
+  {
+    id: 'device-management',
+    label: 'Quản lý thiết bị',
+    icon: Monitor,
+    path: '#',
+    children: [
+      { id: 'devices', label: 'Danh sách thiết bị', icon: Monitor, path: '/devices' },
+      { id: 'device-types', label: 'Loại thiết bị', icon: Cpu, path: '/device-types' },
+      { id: 'insecure-devices', label: 'Thiết bị mất an toàn', icon: ShieldAlert, path: '/insecure-devices' },
+    ]
+  },
+
+  // === BẢO MẬT & TƯỜNG LỬA ===
   {
     id: 'security-management',
-    label: 'Quản lý bảo mật',
+    label: 'Bảo mật & Tường lửa',
     icon: Shield,
     path: '#',
     children: [
+      { id: 'firewall-configs', label: 'Cấu hình tường lửa', icon: Shield, path: '/firewall-configs' },
+      { id: 'firewall-config-types', label: 'Loại cấu hình tường lửa', icon: Shield, path: '/firewall-config-types' },
       { id: 'blacklist-ips', label: 'Danh sách IP đen', icon: ShieldAlert, path: '/blacklist-ips' },
       { id: 'whitelist-ips', label: 'Danh sách IP trắng', icon: ShieldCheck, path: '/whitelist-ips' },
-      { id: 'firewall-configs', label: 'Cấu hình tường lửa', icon: Shield, path: '/firewall-configs' },
+      { id: 'cloud-managers', label: 'Quản lý địa chỉ lưu log', icon: Cloud, path: '/cloud-managers' },
     ]
   },
-  { id: 'scenarios', label: 'Danh mục kịch bản', icon: FileText, path: '/scenarios' },
-  // { id: 'script-categories', label: 'Danh mục kịch bản Script', icon: FileText, path: '/script-categories' },
-  { id: 'response-scenarios', label: 'Kịch bản phản ứng', icon: Zap, path: '/response-scenarios' },
-  { id: 'software-versions', label: 'Phiên bản phần mềm', icon: Package, path: '/software-versions' },
+
+  // === QUẢN LÝ KỊCH BẢN ===
+  {
+    id: 'scenario-management',
+    label: 'Quản lý kịch bản',
+    icon: FileText,
+    path: '#',
+    children: [
+      { id: 'scenarios', label: 'Danh mục kịch bản', icon: FileText, path: '/scenarios' },
+      { id: 'response-scenarios', label: 'Kịch bản phản ứng', icon: Zap, path: '/response-scenarios' },
+    ]
+  },
+
+  // === QUẢN LÝ LOG ===
   {
     id: 'log-management',
     label: 'Quản lý Log',
@@ -78,6 +107,8 @@ const menuItems: MenuItem[] = [
       { id: 'log-addresses', label: 'Địa chỉ lưu log', icon: Server, path: '/log-addresses' },
     ]
   },
+
+  // === QUẢN LÝ MÃ ĐỘC ===
   {
     id: 'malware-management',
     label: 'Quản lý mã độc',
@@ -88,18 +119,38 @@ const menuItems: MenuItem[] = [
       { id: 'malware-types', label: 'Loại mã độc', icon: Bug, path: '/malware-types' },
     ]
   },
-  { id: 'alert-levels', label: 'Mức cảnh báo', icon: Bell, path: '/alert-levels' },
-  { id: 'error-codes', label: 'Mã lỗi', icon: AlertTriangle, path: '/error-codes' },
-  { id: 'category-type', label: 'Loại danh mục', icon: List, path: '/category-type' },
-  { id: 'cloud-managers', label: 'Quản lý xác thực đám mây', icon: Cloud, path: '/cloud-managers' },
-  { id: 'regions', label: 'Danh mục khu vực', icon: MapPin, path: '/regions' },
+
+  // === QUẢN LÝ CẢNH BÁO ===
+  {
+    id: 'alert-management',
+    label: 'Quản lý cảnh báo',
+    icon: Bell,
+    path: '#',
+    children: [
+      { id: 'alert-levels', label: 'Mức cảnh báo', icon: Bell, path: '/alert-levels' },
+      { id: 'error-codes', label: 'Mã lỗi', icon: AlertTriangle, path: '/error-codes' },
+    ]
+  },
+
+  // === CẤU HÌNH HỆ THỐNG ===
+  {
+    id: 'system-config',
+    label: 'Cấu hình hệ thống',
+    icon: Settings,
+    path: '#',
+    children: [
+      { id: 'system-params', label: 'Tham số hệ thống', icon: Settings, path: '/system-params' },
+      { id: 'software-versions', label: 'Phiên bản phần mềm', icon: Package, path: '/software-versions' },
+      { id: 'category-type', label: 'Loại danh mục', icon: List, path: '/category-type' },
+      { id: 'regions', label: 'Danh mục khu vực', icon: MapPin, path: '/regions' },
+    ]
+  },
 ];
 
 export function Sidebar() {
-  const [expandedMenus, setExpandedMenus] = useState<string[]>(['security-management', 'log-management', 'malware-management']);
+  const [expandedMenus, setExpandedMenus] = useState<string[]>(['security-management', 'log-management']);
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout } = useAuth();
 
   const toggleMenu = (menuId: string) => {
     setExpandedMenus(prev =>
@@ -129,7 +180,9 @@ export function Sidebar() {
           }}
         >
           <Icon className="mr-3 h-4 w-4 shrink-0" />
-          <span className="text-sm truncate flex-1 text-left">{item.label}</span>
+          <span className="text-sm flex-1 text-left overflow-hidden whitespace-nowrap text-ellipsis">
+            {item.label}
+          </span>
           {hasChildren && (
             isExpanded ? (
               <ChevronDown className="h-4 w-4 shrink-0" />
@@ -150,7 +203,7 @@ export function Sidebar() {
 
   return (
     <div>
-      <div   className="flex h-16 items-center border-b border-sidebar-border px-6 bg-sidebar">
+      <div className="flex h-16 items-center border-b border-sidebar-border px-6 bg-sidebar">
         <Shield className="h-8 w-8 text-sidebar-primary" />
         <span className="ml-2 text-lg font-semibold text-sidebar-foreground truncate">
           Hệ thống quản trị
@@ -165,10 +218,7 @@ export function Sidebar() {
             {menuItems.map((item) => renderMenuItem(item))}
           </div>
         </ScrollArea>
-
-
       </div>
     </div>
-
   );
 }

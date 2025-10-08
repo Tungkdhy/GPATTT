@@ -25,12 +25,14 @@ interface DataTableProps {
   description: string;
   data: any[];
   columns: Column[];
-  onAdd?: () => void;
-  onEdit?: (record: any) => void;
+  onAdd?: (formData?: any) => void;
+  onEdit?: (record: any, formData?: any) => void;
   onDelete?: (record: any) => void;
   onView?: (record: any) => void;
   searchKey?: string;
-  renderForm?: () => React.ReactNode;
+  renderForm?: (formData: any, setFormData: (data: any) => void) => React.ReactNode;
+  renderEditForm?: (record: any, formData: any, setFormData: (data: any) => void) => React.ReactNode;
+  renderViewForm?: (record: any) => React.ReactNode;
 }
 
 export function DataTable({
@@ -43,16 +45,24 @@ export function DataTable({
   onDelete,
   onView,
   searchKey = 'name',
-  renderForm
+  renderForm,
+  renderEditForm,
+  renderViewForm
 }: DataTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<any>(null);
+  const [viewingRecord, setViewingRecord] = useState<any>(null);
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
+  const [formData, setFormData] = useState<any>({});
+  const [editFormData, setEditFormData] = useState<any>({});
 
   // Prevent body scroll when dialog is open
   useEffect(() => {
-    if (isDialogOpen) {
+    if (isDialogOpen || isEditDialogOpen || isViewDialogOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -61,7 +71,7 @@ export function DataTable({
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isDialogOpen]);
+  }, [isDialogOpen, isEditDialogOpen, isViewDialogOpen]);
 
   const updateFilter = (key: string, value: string) => {
     setFilters(prev => ({
@@ -73,6 +83,38 @@ export function DataTable({
   const clearFilters = () => {
     setFilters({});
     setSearchTerm('');
+  };
+
+  const handleEditClick = (record: any) => {
+    setEditingRecord(record);
+    // Pre-fill edit form with record data
+    setEditFormData({
+      name: record.name || '',
+      description: record.description || '',
+      note: record.note || '',
+      enable: record.enable !== undefined ? record.enable : true,
+      config_type: record.config_type || 'acl',
+      // ACL fields
+      action: record.action || 'allow',
+      action_direction: record.action_direction || 'inbound',
+      protocol: record.protocol || 'tcp',
+      from_ip: record.from_ip || '',
+      to_ip: record.to_ip || '',
+      from_ip_prefix: record.from_ip_prefix || '',
+      to_ip_prefix: record.to_ip_prefix || '',
+      from_ports: record.from_ports || '',
+      to_ports: record.to_ports || '',
+      priority: record.priority || '',
+      // Alias fields
+      alias_type: record.alias_type || '',
+      ip: record.ip || ''
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleViewClick = (record: any) => {
+    setViewingRecord(record);
+    setIsViewDialogOpen(true);
   };
 
   const getFilteredData = () => {
@@ -131,18 +173,78 @@ export function DataTable({
                       Tạo bản ghi mới
                     </DialogDescription>
                   </DialogHeader>
-                  {renderForm && renderForm()}
+                  {renderForm && renderForm(formData, setFormData)}
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                    <Button variant="outline" onClick={() => {
+                      setIsDialogOpen(false);
+                      setFormData({});
+                    }}>
                       Hủy
                     </Button>
-                    <Button type="submit">Tạo</Button>
+                    <Button type="submit" onClick={() => {
+                      onAdd?.(formData);
+                      setIsDialogOpen(false);
+                      setFormData({});
+                    }}>Tạo</Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
             )}
           </div>
         </CardHeader>
+        
+        {/* Edit Dialog */}
+        {renderEditForm && (
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Chỉnh sửa</DialogTitle>
+                <DialogDescription>
+                  Cập nhật thông tin bản ghi
+                </DialogDescription>
+              </DialogHeader>
+              {renderEditForm(editingRecord, editFormData, setEditFormData)}
+              <DialogFooter>
+                <Button variant="outline" onClick={() => {
+                  setIsEditDialogOpen(false);
+                  setEditFormData({});
+                  setEditingRecord(null);
+                }}>
+                  Hủy
+                </Button>
+                <Button type="submit" onClick={() => {
+                  onEdit?.(editingRecord, editFormData);
+                  setIsEditDialogOpen(false);
+                  setEditFormData({});
+                  setEditingRecord(null);
+                }}>Cập nhật</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+        
+        {/* View Dialog */}
+        {renderViewForm && (
+          <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Chi tiết cấu hình</DialogTitle>
+                <DialogDescription>
+                  Thông tin chi tiết của bản ghi
+                </DialogDescription>
+              </DialogHeader>
+              {renderViewForm(viewingRecord)}
+              <DialogFooter>
+                <Button variant="outline" onClick={() => {
+                  setIsViewDialogOpen(false);
+                  setViewingRecord(null);
+                }}>
+                  Đóng
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
         <CardContent>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
@@ -250,12 +352,12 @@ export function DataTable({
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">
                       {onView && (
-                        <Button variant="ghost" size="sm" className="scale-hover" onClick={() => onView(record)}>
+                        <Button variant="ghost" size="sm" className="scale-hover" onClick={() => handleViewClick(record)}>
                           <Eye className="h-4 w-4" />
                         </Button>
                       )}
                       {onEdit && (
-                        <Button variant="ghost" size="sm" className="scale-hover" onClick={() => onEdit(record)}>
+                        <Button variant="ghost" size="sm" className="scale-hover" onClick={() => handleEditClick(record)}>
                           <Edit className="h-4 w-4" />
                         </Button>
                       )}
