@@ -11,7 +11,7 @@ import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { AdvancedFilter, FilterOption } from '../common/AdvancedFilter';
 import { TablePagination } from '../common/TablePagination';
-import { Plus, Edit, Trash2, Shield, MapPin, Server } from 'lucide-react';
+import { Plus, Edit, Trash2, Shield, MapPin, Server, AlertTriangle, Trash } from 'lucide-react';
 import { toast } from 'sonner';
 import { blacklistIPsService } from '../../services/api';
 import { useServerPagination } from '../../hooks/useServerPagination';
@@ -23,6 +23,9 @@ export function BlacklistIPs() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
+  const [isConfirmDeleteAllDialogOpen, setIsConfirmDeleteAllDialogOpen] = useState(false);
+  const [deleteAllConfirmText, setDeleteAllConfirmText] = useState('');
   const [selectedIP, setSelectedIP] = useState<any>(null);
   const [reload, setReload] = useState(false);
   const [formData, setFormData] = useState({
@@ -41,7 +44,7 @@ export function BlacklistIPs() {
     };
 
     if (searchTerm) {
-      queryParams.search = searchTerm;
+      queryParams.ip_public = searchTerm;
     }
 
     if (filters.type) {
@@ -56,7 +59,7 @@ export function BlacklistIPs() {
       queryParams.location = filters.location;
     }
 
-    const response = await blacklistIPsService.getAll(page, limit, queryParams);
+    const response = await blacklistIPsService.getAll(page, limit, {...queryParams,ip_type:"blacklist"});
     return response;
   };
 
@@ -164,7 +167,7 @@ export function BlacklistIPs() {
     }
 
     try {
-      await blacklistIPsService.create(formData);
+      await blacklistIPsService.create({...formData,ip_type:"blacklist"});
       setIsDialogOpen(false);
       setFormData({ ip_public: '', ip_local: '', type: '', description: '', location: '', status: 'active' });
       toast.success('Thêm IP manager thành công!');
@@ -221,7 +224,7 @@ export function BlacklistIPs() {
     }
 
     try {
-      await blacklistIPsService.update(selectedIP.id, formData);
+      await blacklistIPsService.update(selectedIP.id, {...formData,ip_type:"blacklist"});
       setIsEditDialogOpen(false);
       setSelectedIP(null);
       setFormData({ ip_public: '', ip_local: '', type: '', description: '', location: '', status: 'active' });
@@ -249,26 +252,54 @@ export function BlacklistIPs() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="space-y-6 fade-in-up">
-        <div className="slide-in-left">
-          <h1>Quản lý IP Manager</h1>
-          <p className="text-muted-foreground">
-            Quản lý danh sách địa chỉ IP manager trong hệ thống
-          </p>
-        </div>
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-              <p className="mt-2 text-muted-foreground">Đang tải dữ liệu...</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // Delete all blacklist IPs
+  const handleDeleteAllClick = () => {
+    setIsDeleteAllDialogOpen(true);
+  };
+
+  const handleDeleteAllConfirm = () => {
+    setIsDeleteAllDialogOpen(false);
+    setIsConfirmDeleteAllDialogOpen(true);
+    setDeleteAllConfirmText('');
+  };
+
+  const handleDeleteAll = async () => {
+    if (deleteAllConfirmText !== 'XÓA TẤT CẢ BLACKLIST') {
+      toast.error('Vui lòng nhập chính xác "XÓA TẤT CẢ BLACKLIST"');
+      return;
+    }
+    
+    try {
+      await blacklistIPsService.deleteAllBlacklist();
+      setIsConfirmDeleteAllDialogOpen(false);
+      setDeleteAllConfirmText('');
+      toast.success('Xóa tất cả IP blacklist thành công!');
+      setReload(!reload);
+    } catch (error: any) {
+      toast.error(error.message || 'Lỗi khi xóa tất cả IP blacklist');
+    }
+  };
+
+  // if (loading) {
+  //   return (
+  //     <div className="space-y-6 fade-in-up">
+  //       <div className="slide-in-left">
+  //         <h1>Quản lý IP Manager</h1>
+  //         <p className="text-muted-foreground">
+  //           Quản lý danh sách địa chỉ IP trong hệ thống
+  //         </p>
+  //       </div>
+  //       <Card>
+  //         <CardContent className="p-6">
+  //           <div className="text-center">
+  //             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+  //             <p className="mt-2 text-muted-foreground">Đang tải dữ liệu...</p>
+  //           </div>
+  //         </CardContent>
+  //       </Card>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="space-y-6 fade-in-up">
@@ -288,13 +319,23 @@ export function BlacklistIPs() {
                 Tổng cộng {total} IP manager trong hệ thống
               </CardDescription>
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="btn-animate scale-hover">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Thêm IP Manager
-                </Button>
-              </DialogTrigger>
+            <div className="flex space-x-2">
+              <Button 
+                variant="destructive"
+                className="btn-animate scale-hover"
+                onClick={handleDeleteAllClick}
+                disabled={total === 0}
+              >
+                <Trash className="mr-2 h-4 w-4" />
+                Xóa tất cả
+              </Button>
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="btn-animate scale-hover">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Thêm IP Manager
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                   <DialogTitle>Thêm IP Manager mới</DialogTitle>
@@ -349,7 +390,7 @@ export function BlacklistIPs() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="status">Trạng thái *</Label>
-                    <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                    <Select value={formData.status} onValueChange={(value:any) => setFormData({ ...formData, status: value })}>
                       <SelectTrigger>
                         <SelectValue placeholder="Chọn trạng thái" />
                       </SelectTrigger>
@@ -373,7 +414,8 @@ export function BlacklistIPs() {
                   <Button type="submit" className="w-full" onClick={handleAdd}>Thêm IP Manager</Button>
                 </DialogFooter>
               </DialogContent>
-            </Dialog>
+              </Dialog>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -391,7 +433,9 @@ export function BlacklistIPs() {
               }}
             />
           </div>
-
+            {
+              !loading && <>
+              
           <Table>
             <TableHeader>
               <TableRow>
@@ -461,7 +505,8 @@ export function BlacklistIPs() {
               endIndex={(currentPage)*pageSize}
               onPageChange={setCurrentPage}
             />
-          </div>
+          </div></>
+            }
         </CardContent>
       </Card>
 
@@ -546,6 +591,95 @@ export function BlacklistIPs() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete All Warning Dialog */}
+      <AlertDialog open={isDeleteAllDialogOpen} onOpenChange={setIsDeleteAllDialogOpen}>
+        <AlertDialogContent className="max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center text-red-600">
+              <AlertTriangle className="mr-2 h-5 w-5" />
+              CẢNH BÁO NGUY HIỂM
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <h4 className="font-semibold text-red-800 mb-2">⚠️ XÓA TẤT CẢ IP BLACKLIST</h4>
+                <p className="text-red-700">
+                  Bạn sắp thực hiện thao tác <strong>XÓA TẤT CẢ {total} IP BLACKLIST</strong>.
+                  Điều này sẽ:
+                </p>
+                <ul className="list-disc list-inside text-red-700 mt-2 space-y-1">
+                  <li>Xóa tất cả {total} IP trong danh sách đen</li>
+                  <li>Xóa toàn bộ cấu hình và thiết lập liên quan</li>
+                  <li>Không thể khôi phục sau khi thực hiện</li>
+                  <li>Có thể ảnh hưởng đến bảo mật hệ thống</li>
+                </ul>
+              </div>
+              <p className="text-gray-700">
+                <strong>Chỉ thực hiện khi:</strong>
+              </p>
+              <ul className="list-disc list-inside text-gray-700 space-y-1">
+                <li>Bạn có quyền quản trị viên</li>
+                <li>Đã sao lưu danh sách IP quan trọng</li>
+                <li>Đã thông báo cho team</li>
+                <li>Đã hiểu rõ tác động đến hệ thống</li>
+              </ul>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy bỏ</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteAllConfirm}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              <AlertTriangle className="mr-2 h-4 w-4" />
+              Tôi hiểu rủi ro, tiếp tục
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete All Final Confirmation Dialog */}
+      <AlertDialog open={isConfirmDeleteAllDialogOpen} onOpenChange={setIsConfirmDeleteAllDialogOpen}>
+        <AlertDialogContent className="max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center text-red-600">
+              <AlertTriangle className="mr-2 h-5 w-5" />
+              XÁC NHẬN CUỐI CÙNG
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-4">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-red-700 font-medium">
+                  Để xác nhận xóa tất cả {total} IP blacklist, 
+                  vui lòng nhập chính xác: <strong>"XÓA TẤT CẢ BLACKLIST"</strong>
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-delete-all-text">Nhập xác nhận:</Label>
+                <Input
+                  id="confirm-delete-all-text"
+                  value={deleteAllConfirmText}
+                  onChange={(e) => setDeleteAllConfirmText(e.target.value)}
+                  placeholder="XÓA TẤT CẢ BLACKLIST"
+                  className="font-mono"
+                />
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeleteAllConfirmText('')}>
+              Hủy bỏ
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteAll}
+              disabled={deleteAllConfirmText !== 'XÓA TẤT CẢ BLACKLIST'}
+              className="bg-red-600 hover:bg-red-700 text-white disabled:opacity-50"
+            >
+              <Trash className="mr-2 h-4 w-4" />
+              XÓA TẤT CẢ
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

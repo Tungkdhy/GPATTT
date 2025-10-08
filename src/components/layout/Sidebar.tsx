@@ -21,7 +21,8 @@ import {
   Activity,
   Zap,
   ShieldCheck,
-  Cloud
+  Cloud,
+  Database
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
@@ -77,7 +78,7 @@ const menuItems: MenuItem[] = [
       { id: 'firewall-config-types', label: 'Loại cấu hình tường lửa', icon: Shield, path: '/firewall-config-types' },
       { id: 'blacklist-ips', label: 'Danh sách IP đen', icon: ShieldAlert, path: '/blacklist-ips' },
       { id: 'whitelist-ips', label: 'Danh sách IP trắng', icon: ShieldCheck, path: '/whitelist-ips' },
-      { id: 'cloud-managers', label: 'Quản lý địa chỉ lưu log', icon: Cloud, path: '/cloud-managers' },
+     
     ]
   },
 
@@ -104,7 +105,8 @@ const menuItems: MenuItem[] = [
       { id: 'log-list', label: 'Danh sách log', icon: FileText, path: '/log-list' },
       { id: 'scenario-logs', label: 'Log kịch bản', icon: Activity, path: '/scenario-logs' },
       { id: 'system-logs', label: 'Nhật ký hệ thống', icon: Activity, path: '/system-logs' },
-      { id: 'log-addresses', label: 'Địa chỉ lưu log', icon: Server, path: '/log-addresses' },
+      { id: 'log-addresses', label: 'Địa chỉ lưu log', icon: Server, path: '/cloud-managers' },
+      // { id: 'cloud-managers', label: 'Quản lý địa chỉ lưu log', icon: Cloud, path: '/cloud-managers' },
     ]
   },
 
@@ -143,6 +145,7 @@ const menuItems: MenuItem[] = [
       { id: 'software-versions', label: 'Phiên bản phần mềm', icon: Package, path: '/software-versions' },
       { id: 'category-type', label: 'Loại danh mục', icon: List, path: '/category-type' },
       { id: 'regions', label: 'Danh mục khu vực', icon: MapPin, path: '/regions' },
+      { id: 'system-backup', label: 'Sao lưu & Phục hồi', icon: Database, path: '/system-backup' },
     ]
   },
 ];

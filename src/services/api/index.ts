@@ -29,6 +29,7 @@ export { default as parametersService } from './params.service';
 export { default as malwareTypesService } from './malwareTypes.service';
 export { default as managerVersionsService } from './managerVersions.service';
 export { default as cloudManagersService } from './cloudManagers.service';
+export { systemBackupService } from './systemBackup.service';
 // parametersService
 // Export all services from allServices.ts
 export {
@@ -74,6 +75,12 @@ export type {
   CreateCloudManagerDto, 
   UpdateCloudManagerDto 
 } from './cloudManagers.service';
+export type {
+  SystemBackup,
+  SystemBackupResponse,
+  RestoreBackupParams,
+  UpdateBackupDto
+} from './systemBackup.service';
 export type { 
   ScriptCategory, 
   CreateScriptCategoryDto, 

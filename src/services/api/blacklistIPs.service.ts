@@ -28,6 +28,7 @@ export interface CreateBlacklistIPDto {
   type: string;
   description: string;
   location: string;
+  ip_type: string;
 }
 
 export interface UpdateBlacklistIPDto {
@@ -37,6 +38,7 @@ export interface UpdateBlacklistIPDto {
   description?: string;
   location?: string;
   status?: string;
+  ip_type?: string;
 }
 
 class BlacklistIPsService {
@@ -98,6 +100,54 @@ class BlacklistIPsService {
       console.error('Error deleting blacklist IP:', error);
       // Extract error message from API response
       const errorMessage = error.response?.data?.message || error.message || 'Có lỗi xảy ra khi xóa IP manager';
+      throw new Error(errorMessage);
+    }
+  }
+
+  async exportWhitelistCSV(): Promise<Blob> {
+    try {
+      const response = await axiosInstance.get('/manager-ips/export/whitelist/csv', {
+        responseType: 'blob'
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Error exporting whitelist CSV:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Có lỗi xảy ra khi xuất file CSV';
+      throw new Error(errorMessage);
+    }
+  }
+
+  async exportBlacklistCSV(): Promise<Blob> {
+    try {
+      const response = await axiosInstance.get('/manager-ips/export/blacklist/csv', {
+        responseType: 'blob'
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Error exporting blacklist CSV:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Có lỗi xảy ra khi xuất file CSV';
+      throw new Error(errorMessage);
+    }
+  }
+
+  async deleteAllBlacklist(): Promise<any> {
+    try {
+      const response = await axiosInstance.delete('manager-ips/blacklist/all');
+      return response.data;
+    } catch (error: any) {
+      console.error('Error deleting all blacklist IPs:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Có lỗi xảy ra khi xóa tất cả IP blacklist';
+      throw new Error(errorMessage);
+    }
+  }
+
+  async deleteAllWhitelist(): Promise<any> {
+    try {
+      const response = await axiosInstance.delete('manager-ips/whitelist/all');
+      return response.data;
+    } catch (error: any) {
+      console.error('Error deleting all whitelist IPs:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Có lỗi xảy ra khi xóa tất cả IP whitelist';
       throw new Error(errorMessage);
     }
   }

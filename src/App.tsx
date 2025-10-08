@@ -32,6 +32,7 @@ import { AuthProvider } from './components/auth/AuthContext';
 import { Action } from './components/pages/Action';
 import { CategoryTypes } from './components/pages/CategoryType';
 import { CloudManagers } from './components/pages/CloudManagers';
+import { SystemBackup } from './components/pages/SystemBackup';
 
 export default function App() {
   // Set dark theme on mount
@@ -78,6 +79,7 @@ export default function App() {
                     <Route path="/regions" element={<RegionManagement />} />
                     <Route path="/category-type" element={<CategoryTypes />} />
                     <Route path="/cloud-managers" element={<CloudManagers />} />
+                    <Route path="/system-backup" element={<SystemBackup />} />
                     {/* <Route path="/script-categories" element={<ScriptCategories />} /> */}
                   </Routes>
                 </Layout>
