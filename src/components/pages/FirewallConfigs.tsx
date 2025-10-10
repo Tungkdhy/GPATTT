@@ -570,9 +570,6 @@ const renderForm = (formData: any, setFormData: (data: any) => void, selectedCon
 };
 
 const renderEditForm = (record: FirewallConfig, formData: any, setFormData: (data: any) => void, aliasTypes: any[] = []) => {
-  console.log('Rendering edit form for record:', record);
-  console.log('Current form data:', formData);
-  
   const updateFormData = (field: string, value: any) => {
     setFormData((prev: any) => ({
       ...prev,
@@ -1410,6 +1407,27 @@ export function FirewallConfigs() {
     // TODO: Implement view functionality
   };
 
+  const handleDuplicate = async (record: FirewallConfig) => {
+    try {
+      const copiedName = `${record.name} (Copy)`;
+      await firewallConfigsService.duplicate(record.id, copiedName);
+      
+      toast.success('Sao chép cấu hình thành công!', {
+        description: `Đã tạo bản sao của ${record.name}.`
+      });
+      
+      // Reload the list
+      await reloadConfigs();
+    } catch (err) {
+      console.error('Error duplicating firewall config:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Có lỗi xảy ra khi sao chép cấu hình';
+      
+      toast.error('Lỗi khi sao chép cấu hình', {
+        description: errorMessage
+      });
+    }
+  };
+
   const handleExportJson = async () => {
     try {
       setIsExporting(true);
@@ -1471,6 +1489,7 @@ export function FirewallConfigs() {
         onEdit={handleEdit}
         onDelete={handleDeleteClick}
         onView={handleView}
+        onDuplicate={handleDuplicate}
         renderForm={(formData, setFormData) => renderForm(formData, setFormData, selectedConfigType, setSelectedConfigType, aliasTypes)}
         renderEditForm={(record, formData, setFormData) => renderEditForm(record, formData, setFormData, aliasTypes)}
         renderViewForm={renderViewForm}

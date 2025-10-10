@@ -186,6 +186,7 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/firewall-configs/${id}`,
     GET: (id: string) => `/firewall-configs/${id}`,
     EXPORT_JSON: (configType: string) => `/firewall-configs/export/json?config_type=${configType}`,
+    DUPLICATE: (id: string) => `/firewall-configs/${id}/duplicate`,
   },
 
   // ACL Rules

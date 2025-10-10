@@ -319,6 +319,14 @@ class FirewallConfigsService {
       throw error;
     }
   }
+
+  // Duplicate firewall config
+  async duplicate(id: string, name?: string): Promise<FirewallConfig> {
+    const response = await axiosInstance.post(API_ENDPOINTS.FIREWALL_CONFIGS.DUPLICATE(id), {
+      name: name || 'Copied Configuration'
+    });
+    return response.data.data;
+  }
 }
 
 export const firewallConfigsService = new FirewallConfigsService();

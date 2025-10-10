@@ -9,7 +9,7 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Separator } from '../ui/separator';
-import { Plus, Search, Edit, Trash2, Eye, Filter, X, ChevronDown } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Eye, Filter, X, ChevronDown, Copy } from 'lucide-react';
 
 interface Column {
   key: string;
@@ -29,6 +29,7 @@ interface DataTableProps {
   onEdit?: (record: any, formData?: any) => void;
   onDelete?: (record: any) => void;
   onView?: (record: any) => void;
+  onDuplicate?: (record: any) => void;
   searchKey?: string;
   renderForm?: (formData: any, setFormData: (data: any) => void) => React.ReactNode;
   renderEditForm?: (record: any, formData: any, setFormData: (data: any) => void) => React.ReactNode;
@@ -45,6 +46,7 @@ export function DataTable({
   onEdit,
   onDelete,
   onView,
+  onDuplicate,
   searchKey = 'name',
   renderForm,
   renderEditForm,
@@ -359,6 +361,11 @@ export function DataTable({
                       {onView && (
                         <Button variant="ghost" size="sm" className="scale-hover" onClick={() => handleViewClick(record)}>
                           <Eye className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {onDuplicate && (
+                        <Button variant="ghost" size="sm" className="scale-hover" onClick={() => onDuplicate(record)}>
+                          <Copy className="h-4 w-4" />
                         </Button>
                       )}
                       {onEdit && (
