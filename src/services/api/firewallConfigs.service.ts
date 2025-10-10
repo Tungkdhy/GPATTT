@@ -287,6 +287,38 @@ class FirewallConfigsService {
         throw new Error(`Unknown config type: ${configType}`);
     }
   }
+
+  // Export to JSON
+  async exportToJson(configType: 'acl' | 'ipsec' | 'alias'): Promise<void> {
+    try {
+      const response = await axiosInstance.get(API_ENDPOINTS.FIREWALL_CONFIGS.EXPORT_JSON(configType), {
+        responseType: 'blob'
+      });
+      
+      // Create blob from response
+      const blob = new Blob([response.data], { type: 'application/json' });
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Set filename based on config type and current date
+      const timestamp = new Date().toISOString().split('T')[0];
+      link.download = `firewall_configs_${configType}_${timestamp}.json`;
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting firewall configs to JSON:', error);
+      throw error;
+    }
+  }
 }
 
 export const firewallConfigsService = new FirewallConfigsService();

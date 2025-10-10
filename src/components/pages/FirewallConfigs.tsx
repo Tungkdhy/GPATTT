@@ -5,13 +5,18 @@ import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Switch } from '../ui/switch';
+import { Button } from '../ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import { 
   firewallConfigsService, 
   FirewallConfig, 
   IpAlias
 } from '../../services/api/firewallConfigs.service';
+import categoryService from '../../services/api/category.service';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { Download } from 'lucide-react';
 
 // Type guard function
 const isIpAlias = (config: FirewallConfig): config is IpAlias => config.config_type === 'alias';
@@ -154,7 +159,7 @@ const columns = [
   }
 ];
 
-const renderForm = (formData: any, setFormData: (data: any) => void, selectedConfigType?: string, onConfigTypeChange?: (type: string) => void) => {
+const renderForm = (formData: any, setFormData: (data: any) => void, selectedConfigType?: string, onConfigTypeChange?: (type: string) => void, aliasTypes: any[] = []) => {
   console.log('Rendering form with selectedConfigType:', selectedConfigType);
   console.log('Current form data:', formData);
   
@@ -529,12 +534,21 @@ const renderForm = (formData: any, setFormData: (data: any) => void, selectedCon
             <Label htmlFor="alias-type">
               Loại Alias *
             </Label>
-            <Input 
-              id="alias-type" 
-              placeholder="a0927a81-708e-4693-a43d-37e376365562"
+            <Select 
               value={formData.alias_type || ''}
-              onChange={(e) => updateFormData('alias_type', e.target.value)}
-            />
+              onValueChange={(value: string) => updateFormData('alias_type', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Chọn loại alias" />
+              </SelectTrigger>
+              <SelectContent>
+                {aliasTypes.map((aliasType) => (
+                  <SelectItem key={aliasType.id} value={aliasType.id}>
+                    {aliasType.display_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2 mt-4">
@@ -555,7 +569,7 @@ const renderForm = (formData: any, setFormData: (data: any) => void, selectedCon
   );
 };
 
-const renderEditForm = (record: FirewallConfig, formData: any, setFormData: (data: any) => void) => {
+const renderEditForm = (record: FirewallConfig, formData: any, setFormData: (data: any) => void, aliasTypes: any[] = []) => {
   console.log('Rendering edit form for record:', record);
   console.log('Current form data:', formData);
   
@@ -927,12 +941,21 @@ const renderEditForm = (record: FirewallConfig, formData: any, setFormData: (dat
               <Label htmlFor="edit-alias-type">
                 Loại Alias *
               </Label>
-              <Input 
-                id="edit-alias-type" 
-                placeholder="a0927a81-708e-4693-a43d-37e376365562"
+              <Select 
                 value={formData.alias_type || ''}
-                onChange={(e) => updateFormData('alias_type', e.target.value)}
-              />
+                onValueChange={(value: string) => updateFormData('alias_type', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Chọn loại alias" />
+                </SelectTrigger>
+                <SelectContent>
+                  {aliasTypes.map((aliasType) => (
+                    <SelectItem key={aliasType.id} value={aliasType.id}>
+                      {aliasType.display_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2 mt-4">
@@ -1143,6 +1166,12 @@ export function FirewallConfigs() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedConfigType, setSelectedConfigType] = useState<string>('acl');
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportConfigType, setExportConfigType] = useState<'acl' | 'ipsec' | 'alias'>('acl');
+  const [isExporting, setIsExporting] = useState(false);
+  const [aliasTypes, setAliasTypes] = useState<any[]>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [recordToDelete, setRecordToDelete] = useState<FirewallConfig | null>(null);
 
   const fetchConfigs = async () => {
     try {
@@ -1158,8 +1187,35 @@ export function FirewallConfigs() {
     }
   };
 
+  // Reload configs without showing loading screen
+  const reloadConfigs = async () => {
+    try {
+      const configs = await firewallConfigsService.getAll(10, 1);
+      setConfigs(configs);
+    } catch (err) {
+      console.error('Error reloading firewall configs:', err);
+      toast.error('Lỗi khi tải lại dữ liệu', {
+        description: err instanceof Error ? err.message : 'Có lỗi xảy ra'
+      });
+    }
+  };
+
+  const fetchAliasTypes = async () => {
+    try {
+      const response = await categoryService.getAll(1, 10, { scope: 'LOAI_ALIAS' });
+      setAliasTypes(response);
+      console.log('Alias types loaded:', response);
+    } catch (err) {
+      console.error('Error fetching alias types:', err);
+      toast.error('Lỗi khi tải danh sách loại alias', {
+        description: err instanceof Error ? err.message : 'Có lỗi xảy ra'
+      });
+    }
+  };
+
   useEffect(() => {
     fetchConfigs();
+    fetchAliasTypes();
   }, []);
 
   const handleAdd = async (formData: any) => {
@@ -1212,7 +1268,7 @@ export function FirewallConfigs() {
         case 'alias':
           const aliasData = {
             name: formData.name || 'IP Alias',
-            alias_type: formData.alias_type || 'a0927a81-708e-4693-a43d-37e376365562',
+            alias_type: formData.alias_type || (aliasTypes.length > 0 ? aliasTypes[0].id : ''),
             description: formData.description || '',
             ip: formData.ip || '192.168.1.10',
             note: formData.note || '',
@@ -1233,7 +1289,7 @@ export function FirewallConfigs() {
       });
       
       // Refresh the list
-      await fetchConfigs();
+      await reloadConfigs();
       console.log('Config list refreshed');
     } catch (err) {
       console.error('Error creating firewall config:', err);
@@ -1299,7 +1355,7 @@ export function FirewallConfigs() {
         await firewallConfigsService.updateIpAlias(record?.id, updateData);
       }
       
-      await fetchConfigs(); // Refresh the list
+      await reloadConfigs(); // Refresh the list
       console.log('Firewall config updated successfully');
       
       // Show success toast
@@ -1318,20 +1374,29 @@ export function FirewallConfigs() {
     }
   };
 
-  const handleDelete = async (record: FirewallConfig) => {
+  const handleDeleteClick = (record: FirewallConfig) => {
+    setRecordToDelete(record);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!recordToDelete) return;
+
     try {
-      await firewallConfigsService.delete(record?.id, record?.config_type);
-      await fetchConfigs(); // Refresh the list
+      await firewallConfigsService.delete(recordToDelete.id, recordToDelete.config_type);
+      await reloadConfigs(); // Refresh the list
       console.log('Firewall config deleted successfully');
       
       // Show success toast
       toast.success('Xóa cấu hình thành công!', {
-        description: `Đã xóa ${record?.config_type === 'acl' ? 'ACL Rule' : record?.config_type === 'ipsec' ? 'IPSec Tunnel' : 'IP Alias'}.`
+        description: `Đã xóa ${recordToDelete.config_type === 'acl' ? 'ACL Rule' : recordToDelete.config_type === 'ipsec' ? 'IPSec Tunnel' : 'IP Alias'}.`
       });
+      
+      setDeleteDialogOpen(false);
+      setRecordToDelete(null);
     } catch (err) {
       console.error('Error deleting firewall config:', err);
       const errorMessage = err instanceof Error ? err.message : 'Có lỗi xảy ra khi xóa cấu hình';
-      setError(errorMessage);
       
       // Show error toast
       toast.error('Lỗi khi xóa cấu hình', {
@@ -1343,6 +1408,28 @@ export function FirewallConfigs() {
   const handleView = (record: FirewallConfig) => {
     console.log('View firewall config:', record);
     // TODO: Implement view functionality
+  };
+
+  const handleExportJson = async () => {
+    try {
+      setIsExporting(true);
+      await firewallConfigsService.exportToJson(exportConfigType);
+      
+      toast.success('Xuất file JSON thành công!', {
+        description: `Đã xuất cấu hình ${exportConfigType === 'acl' ? 'ACL Rule' : exportConfigType === 'ipsec' ? 'IPSec Tunnel' : 'IP Alias'} sang file JSON.`
+      });
+      
+      setExportDialogOpen(false);
+    } catch (err) {
+      console.error('Error exporting firewall configs to JSON:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Có lỗi xảy ra khi xuất file JSON';
+      
+      toast.error('Lỗi khi xuất file JSON', {
+        description: errorMessage
+      });
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   if (loading) {
@@ -1373,19 +1460,118 @@ export function FirewallConfigs() {
   }
 
   return (
-    <DataTable
-      title="Quản lý cấu hình tường lửa"
-      description="Quản lý các cấu hình và quy tắc tường lửa bao gồm ACL, IPSec và IP Alias"
-      data={configs}
-      columns={columns}
-      searchKey="name"
-      onAdd={handleAdd}
-      onEdit={handleEdit}
-      onDelete={handleDelete}
-      onView={handleView}
-      renderForm={(formData, setFormData) => renderForm(formData, setFormData, selectedConfigType, setSelectedConfigType)}
-      renderEditForm={renderEditForm}
-      renderViewForm={renderViewForm}
-    />
+    <>
+      <DataTable
+        title="Quản lý cấu hình tường lửa"
+        description="Quản lý các cấu hình và quy tắc tường lửa bao gồm ACL, IPSec và IP Alias"
+        data={configs}
+        columns={columns}
+        searchKey="name"
+        onAdd={handleAdd}
+        onEdit={handleEdit}
+        onDelete={handleDeleteClick}
+        onView={handleView}
+        renderForm={(formData, setFormData) => renderForm(formData, setFormData, selectedConfigType, setSelectedConfigType, aliasTypes)}
+        renderEditForm={(record, formData, setFormData) => renderEditForm(record, formData, setFormData, aliasTypes)}
+        renderViewForm={renderViewForm}
+        headerActions={
+          <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <Download className="h-4 w-4" />
+                Xuất JSON
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Xuất cấu hình tường lửa</DialogTitle>
+                <DialogDescription>
+                  Chọn loại cấu hình bạn muốn xuất sang file JSON
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="export-config-type">
+                    Loại cấu hình *
+                  </Label>
+                  <Select 
+                    value={exportConfigType} 
+                    onValueChange={(value: 'acl' | 'ipsec' | 'alias') => setExportConfigType(value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Chọn loại cấu hình" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="acl">ACL Rule</SelectItem>
+                      <SelectItem value="ipsec">IPSec Tunnel</SelectItem>
+                      <SelectItem value="alias">IP Alias</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="text-sm text-gray-500">
+                  File JSON sẽ được tải xuống với tên: <br />
+                  <code className="text-xs bg-gray-100 px-2 py-1 rounded mt-1 inline-block">
+                    firewall_configs_{exportConfigType}_{new Date().toISOString().split('T')[0]}.json
+                  </code>
+                </div>
+              </div>
+              
+              <DialogFooter>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setExportDialogOpen(false)}
+                  disabled={isExporting}
+                >
+                  Hủy
+                </Button>
+                <Button 
+                  onClick={handleExportJson}
+                  disabled={isExporting}
+                  className="gap-2"
+                >
+                  {isExporting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Đang xuất...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4" />
+                      Xuất file
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        }
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa cấu hình <strong>{recordToDelete?.name}</strong> không? 
+              Hành động này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setDeleteDialogOpen(false);
+              setRecordToDelete(null);
+            }}>
+              Hủy
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm}>
+              Xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

@@ -23,7 +23,7 @@ import {
 } from '../ui/alert-dialog';
 import { Label } from '../ui/label';
 import { Plus, Edit, Trash2 } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { categoryService } from '../../services/api';
 import { useServerPagination } from '@/hooks/useServerPagination';
 
@@ -38,7 +38,7 @@ export function FirewallConfigTypes() {
     display_name: '',
     value: '',
     description: '',
-    category_type_id: '6c14530d-7d3e-477b-a0e4-c6305d800827'
+    category_type_id: 'cfb6851e-35f7-4d4d-b9f2-409c8bc1a71a'
   });
 
   const {
@@ -48,10 +48,10 @@ export function FirewallConfigTypes() {
     setCurrentPage,
     total
   } = useServerPagination(
-    (page, limit) => categoryService.getAllFormat(page, limit, {scope:"FIREWALL_CONFIG_TYPE"}),
+    (page, limit) => categoryService.getAllFormat(page, limit, {scope:"LOAI_ALIAS"}),
     [reload],
     { pageSize: 10, initialPage: 1 },
-    {scope:"FIREWALL_CONFIG_TYPE"}
+    {scope:"LOAI_ALIAS"}
   );
 
   // Add
@@ -74,7 +74,7 @@ export function FirewallConfigTypes() {
       display_name: item.display_name,
       value: item.value,
       description: item.description,
-      category_type_id: '6c14530d-7d3e-477b-a0e4-c6305d800827'
+      category_type_id: 'cfb6851e-35f7-4d4d-b9f2-409c8bc1a71a'
     });
     setIsEditDialogOpen(true);
   };
@@ -115,7 +115,7 @@ export function FirewallConfigTypes() {
       display_name: '',
       value: '',
       description: '',
-      category_type_id: '6c14530d-7d3e-477b-a0e4-c6305d800827'
+      category_type_id: 'cfb6851e-35f7-4d4d-b9f2-409c8bc1a71a'
     });
   };
 

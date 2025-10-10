@@ -33,6 +33,7 @@ interface DataTableProps {
   renderForm?: (formData: any, setFormData: (data: any) => void) => React.ReactNode;
   renderEditForm?: (record: any, formData: any, setFormData: (data: any) => void) => React.ReactNode;
   renderViewForm?: (record: any) => React.ReactNode;
+  headerActions?: React.ReactNode;
 }
 
 export function DataTable({
@@ -47,7 +48,8 @@ export function DataTable({
   searchKey = 'name',
   renderForm,
   renderEditForm,
-  renderViewForm
+  renderViewForm,
+  headerActions
 }: DataTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -158,38 +160,41 @@ export function DataTable({
                 Tổng cộng {data.length} bản ghi
               </CardDescription>
             </div>
-            {onAdd && (
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="btn-animate scale-hover">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Thêm mới
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Thêm mới</DialogTitle>
-                    <DialogDescription>
-                      Tạo bản ghi mới
-                    </DialogDescription>
-                  </DialogHeader>
-                  {renderForm && renderForm(formData, setFormData)}
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => {
-                      setIsDialogOpen(false);
-                      setFormData({});
-                    }}>
-                      Hủy
+            <div className="flex items-center gap-2">
+              {headerActions}
+              {onAdd && (
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="btn-animate scale-hover">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Thêm mới
                     </Button>
-                    <Button type="submit" onClick={() => {
-                      onAdd?.(formData);
-                      setIsDialogOpen(false);
-                      setFormData({});
-                    }}>Tạo</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            )}
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Thêm mới</DialogTitle>
+                      <DialogDescription>
+                        Tạo bản ghi mới
+                      </DialogDescription>
+                    </DialogHeader>
+                    {renderForm && renderForm(formData, setFormData)}
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => {
+                        setIsDialogOpen(false);
+                        setFormData({});
+                      }}>
+                        Hủy
+                      </Button>
+                      <Button type="submit" onClick={() => {
+                        onAdd?.(formData);
+                        setIsDialogOpen(false);
+                        setFormData({});
+                      }}>Tạo</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )}
+            </div>
           </div>
         </CardHeader>
         
