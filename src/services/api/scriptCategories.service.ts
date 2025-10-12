@@ -44,7 +44,7 @@ class ScriptCategoriesService {
 
   async getAll(page: number = 1, limit: number = 10, params: any = {}): Promise<ScriptCategoryResponse> {
     const queryParams = {
-      scope: 'SCRIPT',
+      scope: 'SCRIPT_TYPE',
       pageSize: limit,
       pageIndex: page,
       ...params

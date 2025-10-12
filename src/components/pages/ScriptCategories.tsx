@@ -24,7 +24,7 @@ import {
 } from '../ui/alert-dialog';
 import { Label } from '../ui/label';
 import { Plus, Edit, Trash2 } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { scriptCategoriesService, ScriptCategory, CreateScriptCategoryDto, UpdateScriptCategoryDto } from '../../services/api/scriptCategories.service';
 import { useServerPagination } from '@/hooks/useServerPagination';
 
