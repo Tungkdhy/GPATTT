@@ -153,10 +153,10 @@ const columns = [
       return '-';
     }
   },
-  {
-    key: 'description',
-    title: 'Mô tả'
-  }
+  // {
+  //   key: 'description',
+  //   title: 'Mô tả'
+  // }
 ];
 
 const renderForm = (formData: any, setFormData: (data: any) => void, selectedConfigType?: string, onConfigTypeChange?: (type: string) => void, aliasTypes: any[] = []) => {

@@ -7,7 +7,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import { Label } from '../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { AdvancedFilter, FilterOption } from '../common/AdvancedFilter';
 import { Plus, Edit, Trash2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
@@ -279,7 +278,7 @@ export function ScenarioManagement() {
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="data-status">Trạng thái</Label>
+        <Label htmlFor="data-status">Mức độ</Label>
         <Input 
           id="data-status" 
           placeholder="Nhập trạng thái (ví dụ: Thấp)" 
@@ -321,7 +320,18 @@ export function ScenarioManagement() {
                 <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                 Làm mới
               </Button>
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <Dialog open={isDialogOpen} onOpenChange={(open: boolean) => {
+                setIsDialogOpen(open);
+                if (open) {
+                  // Clear form when opening dialog
+                  setFormData({ 
+                    category_type_id: '72ef7742-15dd-4fab-878b-de96c9136ef5', 
+                    display_name: '', 
+                    value: '', 
+                    data: {} 
+                  });
+                }
+              }}>
                 <DialogTrigger asChild>
                   <Button className="btn-animate scale-hover">
                     <Plus className="mr-2 h-4 w-4" />
@@ -381,6 +391,7 @@ export function ScenarioManagement() {
                 <TableHead>Giá trị</TableHead>
                 <TableHead>Mô tả</TableHead>
                 <TableHead>Loại dữ liệu</TableHead>
+                <TableHead>Mức độ</TableHead>
                 <TableHead>Trạng thái</TableHead>
                 <TableHead>Mặc định</TableHead>
                 <TableHead className="text-right">Thao tác</TableHead>
@@ -389,7 +400,7 @@ export function ScenarioManagement() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
+                  <TableCell colSpan={8} className="text-center py-8">
                     <div className="flex items-center justify-center">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                       <span className="ml-2">Đang tải...</span>
@@ -398,7 +409,7 @@ export function ScenarioManagement() {
                 </TableRow>
               ) : filteredData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     Không có dữ liệu
                   </TableCell>
                 </TableRow>
@@ -413,6 +424,15 @@ export function ScenarioManagement() {
                         <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
                           {item.data.type}
                         </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {item.data?.status ? (
+                        <Badge variant="outline" className="bg-orange-500/10 text-orange-500 border-orange-500/20">
+                          {item.data.status}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
                       )}
                     </TableCell>
                     <TableCell>
