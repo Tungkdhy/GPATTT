@@ -50,9 +50,10 @@ export function ScriptCategories() {
     setCurrentPage,
     total
   } = useServerPagination(
-    (page, limit) => scriptCategoriesService.getAll(page, limit),
+    (page, limit) => scriptCategoriesService.getAll(page, limit,{scope:"SCRIPT_TYPE"}),
     [reload],
-    { pageSize: 10, initialPage: 1 }
+    { pageSize: 10, initialPage: 1 },
+    {scope:"SCRIPT_TYPE"}
   );
 
   // Add

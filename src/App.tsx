@@ -33,6 +33,8 @@ import { Action } from './components/pages/Action';
 import { CategoryTypes } from './components/pages/CategoryType';
 import { CloudManagers } from './components/pages/CloudManagers';
 import { SystemBackup } from './components/pages/SystemBackup';
+import { Scripts } from './components/pages/Scripts';
+import { Alerts } from './components/pages/Alerts';
 
 export default function App() {
   // Set dark theme on mount
@@ -74,6 +76,8 @@ export default function App() {
                     <Route path="/log-addresses" element={<LogAddresses />} />
                     <Route path="/malware-hashes" element={<MalwareHashes />} />
                     <Route path="/malware-types" element={<MalwareTypes />} />
+                    <Route path="/scripts" element={<Scripts />} />
+                    <Route path="/alerts" element={<Alerts />} />
                     <Route path="/alert-levels" element={<AlertLevels />} />
                     <Route path="/error-codes" element={<ErrorCodes />} />
                     <Route path="/regions" element={<RegionManagement />} />

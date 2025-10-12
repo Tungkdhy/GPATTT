@@ -21,7 +21,6 @@ import {
   Activity,
   Zap,
   ShieldCheck,
-  Cloud,
   Database
 } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -119,6 +118,7 @@ const menuItems: MenuItem[] = [
     children: [
       { id: 'malware-hashes', label: 'Mã hash mã độc', icon: Hash, path: '/malware-hashes' },
       { id: 'malware-types', label: 'Loại mã độc', icon: Bug, path: '/malware-types' },
+      // { id: 'scripts', label: 'Kịch bản YARA', icon: FileText, path: '/scripts' },
     ]
   },
 
@@ -129,6 +129,7 @@ const menuItems: MenuItem[] = [
     icon: Bell,
     path: '#',
     children: [
+      { id: 'alerts', label: 'Danh sách cảnh báo', icon: AlertTriangle, path: '/alerts' },
       { id: 'alert-levels', label: 'Mức cảnh báo', icon: Bell, path: '/alert-levels' },
       { id: 'error-codes', label: 'Mã lỗi', icon: AlertTriangle, path: '/error-codes' },
     ]

@@ -33,12 +33,20 @@ axiosInstance.interceptors.response.use(
     return response;
   },
   (error) => {
-    // Xử lý lỗi 401 - Unauthorized
-    if (error.response?.status === 401) {
+    // Xử lý khi token expired
+    if (error.response?.data?.message === 'Token is expired') {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user');
       window.location.href = '/login';
+      return Promise.reject(error);
     }
+
+    // Xử lý lỗi 401 - Unauthorized
+    // if (error.response?.status === 401) {
+    //   localStorage.removeItem('auth_token');
+    //   localStorage.removeItem('user');
+    //   window.location.href = '/login';
+    // }       
 
     // Xử lý lỗi 403 - Forbidden
     if (error.response?.status === 403) {

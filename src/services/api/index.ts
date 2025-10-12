@@ -25,11 +25,15 @@ export { default as actionService } from './action.service';
 export { default as categoryService } from './category.service';
 export { default as categoryTypeService } from './categoryType.service';
 export { scriptCategoriesService } from './scriptCategories.service';
+export { scriptsService } from './scripts.service';
+export { scriptHistoriesService } from './scriptHistories.service';
 export { default as parametersService } from './params.service';
 export { default as malwareTypesService } from './malwareTypes.service';
 export { default as managerVersionsService } from './managerVersions.service';
 export { default as cloudManagersService } from './cloudManagers.service';
 export { systemBackupService } from './systemBackup.service';
+export { unsafeDevicesService } from './unsafeDevices.service';
+export { alertsService } from './alerts.service';
 // parametersService
 // Export all services from allServices.ts
 export {
@@ -81,12 +85,39 @@ export type {
   RestoreBackupParams,
   UpdateBackupDto
 } from './systemBackup.service';
+export type {
+  UnsafeDevice,
+  CreateUnsafeDeviceDto,
+  UpdateUnsafeDeviceDto,
+  UnsafeDevicesParams,
+  UnsafeDevicesResponse
+} from './unsafeDevices.service';
+export type {
+  Alert,
+  CreateAlertDto,
+  UpdateAlertDto,
+  AlertsParams,
+  AlertsResponse,
+  AlertStats,
+  AlertStatsResponse
+} from './alerts.service';
 export type { 
   ScriptCategory, 
   CreateScriptCategoryDto, 
   UpdateScriptCategoryDto,
   ScriptCategoryResponse
 } from './scriptCategories.service';
+export type {
+  Script,
+  CreateScriptDto,
+  UpdateScriptDto,
+  ScriptResponse
+} from './scripts.service';
+export type {
+  ScriptHistory,
+  ScriptHistoryResponse,
+  ScriptHistoryFilters
+} from './scriptHistories.service';
 // export type { 
 //   MalwareType, 
 //   CreateMalwareTypeDto, 

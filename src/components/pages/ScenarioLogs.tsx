@@ -1,77 +1,132 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 import { AdvancedFilter, FilterOption } from '../common/AdvancedFilter';
-import { Eye, Download, Filter } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
-
-const mockScenarioLogs = [
-  { id: 1, timestamp: '2024-01-15 10:30:25', scenarioName: 'DDoS Protection', status: 'executed', result: 'success', blockedIPs: 25, duration: '2.5s' },
-  { id: 2, timestamp: '2024-01-15 10:28:13', scenarioName: 'Firewall Rule Update', status: 'executed', result: 'success', blockedIPs: 0, duration: '1.2s' },
-  { id: 3, timestamp: '2024-01-15 10:25:45', scenarioName: 'Malware Scan', status: 'executing', result: 'pending', blockedIPs: 5, duration: '45.3s' },
-  { id: 4, timestamp: '2024-01-15 10:20:11', scenarioName: 'Port Scan Detection', status: 'executed', result: 'failed', blockedIPs: 3, duration: '3.1s' },
-  { id: 5, timestamp: '2024-01-15 10:15:33', scenarioName: 'Intrusion Prevention', status: 'executed', result: 'success', blockedIPs: 12, duration: '5.8s' },
-];
+import { TablePagination } from '../common/TablePagination';
+import { LoadingSkeleton } from '../common/LoadingSkeleton';
+import { Eye, Download, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import { useServerPagination } from '@/hooks/useServerPagination';
+import { scriptHistoriesService, ScriptHistory, usersService } from '@/services/api';
+import categoryService from '@/services/api/category.service';
+import { format } from 'date-fns';
 
 export function ScenarioLogs() {
-  const [logs] = useState(mockScenarioLogs);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState<Record<string, any>>({});
-  const [selectedLog, setSelectedLog] = useState<any>(null);
+  const [filters, setFilters] = useState<Record<string, any>>({
+    script_id: '__all__',
+    action: '__all__',
+    changed_by: '__all__'
+  });
+  const [selectedLog, setSelectedLog] = useState<ScriptHistory | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [scripts, setScripts] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
+
+  // Load scripts and users for filter dropdowns
+  useEffect(() => {
+    const loadFilterOptions = async () => {
+      try {
+        // Load scripts from category API with scope=SCRIPT
+        const scriptsResponse = await categoryService.getAll(1, 10000, { scope: 'SCRIPT' });
+        setScripts(scriptsResponse || []);
+        
+        // Load users
+        const usersResponse = await usersService.getAll(1, 10000, {});
+        setUsers(usersResponse?.rows || []);
+      } catch (error) {
+        console.error('Error loading filter options:', error);
+        toast.error('Lỗi khi tải dữ liệu filter');
+      }
+    };
+
+    loadFilterOptions();
+  }, []);
+
+  const {
+    data: logs,
+    currentPage,
+    totalPages,
+    startIndex,
+    endIndex,
+    total,
+    loading,
+    error,
+    setCurrentPage,
+    pageSize,
+  } = useServerPagination<ScriptHistory>(
+    async (page, limit) => {
+      const response = await scriptHistoriesService.getAll(page, limit, {
+        script_id: filters.script_id === '__all__' ? '' : (filters.script_id || searchTerm),
+        action: filters.action === '__all__' ? '' : filters.action,
+        changed_by: filters.changed_by === '__all__' ? '' : filters.changed_by,
+      });
+      return response.data;
+    },
+    [searchTerm, filters]
+  );
 
   const filterOptions: FilterOption[] = [
     {
-      key: 'status',
-      label: 'Trạng thái',
+      key: 'script_id',
+      label: 'Kịch bản',
+      type: 'select',
+      options: scripts.map(script => ({
+        value: script.id,
+        label: script.display_name || script.value || script.name
+      }))
+    },
+    {
+      key: 'action',
+      label: 'Hành động',
       type: 'select',
       options: [
-        { value: 'executed', label: 'Đã thực thi' },
-        { value: 'executing', label: 'Đang thực thi' },
-        { value: 'failed', label: 'Thất bại' }
+        { value: 'CREATE', label: 'Tạo mới' },
+        { value: 'UPDATE', label: 'Cập nhật' },
+        { value: 'DELETE', label: 'Xóa' }
       ]
     },
     {
-      key: 'result',
-      label: 'Kết quả',
+      key: 'changed_by',
+      label: 'Người thực hiện',
       type: 'select',
-      options: [
-        { value: 'success', label: 'Thành công' },
-        { value: 'failed', label: 'Thất bại' },
-        { value: 'pending', label: 'Đang chờ' }
-      ]
+      options: users.map(user => ({
+        value: user.id,
+        label: user.display_name || user.user_name
+      }))
     }
   ];
 
-  const filteredLogs = logs.filter(log => {
-    const matchesSearch = log.scenarioName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = !filters.status || log.status === filters.status;
-    const matchesResult = !filters.result || log.result === filters.result;
-    return matchesSearch && matchesStatus && matchesResult;
-  });
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'executed': return 'bg-green-500/10 text-green-500 border-green-500/20';
-      case 'executing': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-      case 'failed': return 'bg-red-500/10 text-red-500 border-red-500/20';
+  const getActionColor = (action: string) => {
+    switch (action) {
+      case 'CREATE': return 'bg-green-500/10 text-green-500 border-green-500/20';
+      case 'UPDATE': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+      case 'DELETE': return 'bg-red-500/10 text-red-500 border-red-500/20';
       default: return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
     }
   };
 
-  const getResultColor = (result: string) => {
-    switch (result) {
-      case 'success': return 'bg-green-500/10 text-green-500 border-green-500/20';
-      case 'failed': return 'bg-red-500/10 text-red-500 border-red-500/20';
-      case 'pending': return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
-      default: return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
+  const getActionLabel = (action: string) => {
+    switch (action) {
+      case 'CREATE': return 'Tạo mới';
+      case 'UPDATE': return 'Cập nhật';
+      case 'DELETE': return 'Xóa';
+      default: return action;
     }
   };
 
-  const handleViewDetail = (log: any) => {
+  const formatDateTime = (dateString: string) => {
+    try {
+      return format(new Date(dateString), 'dd/MM/yyyy HH:mm:ss');
+    } catch {
+      return dateString;
+    }
+  };
+
+  const handleViewDetail = (log: ScriptHistory) => {
     setSelectedLog(log);
     setIsDetailOpen(true);
   };
@@ -80,12 +135,45 @@ export function ScenarioLogs() {
     toast.success('Đang xuất dữ liệu log kịch bản...');
   };
 
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setFilters({
+      script_id: '__all__',
+      action: '__all__',
+      changed_by: '__all__'
+    });
+  };
+
+  if (error) {
+    return (
+      <div className="space-y-6 fade-in-up">
+        <div className="slide-in-left">
+          <h1>Lịch sử thay đổi kịch bản</h1>
+          <p className="text-muted-foreground">
+            Theo dõi và phân tích lịch sử thay đổi các kịch bản
+          </p>
+        </div>
+        <Card>
+          <CardContent className="py-8">
+            <div className="flex flex-col items-center justify-center text-center">
+              <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Không thể tải dữ liệu</h3>
+              <p className="text-sm text-muted-foreground">
+                {error.message || 'Đã xảy ra lỗi khi tải dữ liệu'}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 fade-in-up">
       <div className="slide-in-left">
-        <h1>Hiển thị log kịch bản</h1>
+        <h1>Lịch sử thay đổi kịch bản</h1>
         <p className="text-muted-foreground">
-          Theo dõi và phân tích log thực thi các kịch bản bảo mật
+          Theo dõi và phân tích lịch sử thay đổi các kịch bản
         </p>
       </div>
 
@@ -93,9 +181,9 @@ export function ScenarioLogs() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Log kịch bản</CardTitle>
+              <CardTitle>Lịch sử thay đổi</CardTitle>
               <CardDescription>
-                Hiển thị {filteredLogs.length}/{logs.length} bản ghi
+                Hiển thị {startIndex + 1}-{endIndex} trong tổng số {total} bản ghi
               </CardDescription>
             </div>
             <Button className="btn-animate scale-hover" onClick={handleExport}>
@@ -107,103 +195,143 @@ export function ScenarioLogs() {
         <CardContent>
           <div className="mb-6">
             <AdvancedFilter
-              searchPlaceholder="Tìm kiếm kịch bản..."
+              searchPlaceholder="Tìm kiếm theo tên kịch bản..."
               searchValue={searchTerm}
               onSearchChange={setSearchTerm}
               filterOptions={filterOptions}
               filters={filters}
               onFiltersChange={setFilters}
-              onReset={() => setSearchTerm('')}
+              onReset={handleResetFilters}
             />
           </div>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Thời gian</TableHead>
-                <TableHead>Tên kịch bản</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Kết quả</TableHead>
-                <TableHead>IP bị chặn</TableHead>
-                <TableHead>Thời gian thực thi</TableHead>
-                <TableHead className="text-right">Thao tác</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredLogs.map((log, index) => (
-                <TableRow key={log.id} className="stagger-item" style={{animationDelay: `${index * 0.05}s`}}>
-                  <TableCell className="font-medium font-mono text-sm">{log.timestamp}</TableCell>
-                  <TableCell className="font-medium">{log.scenarioName}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={getStatusColor(log.status)}>
-                      {log.status === 'executed' ? 'Đã thực thi' : 
-                       log.status === 'executing' ? 'Đang thực thi' : 'Thất bại'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={getResultColor(log.result)}>
-                      {log.result === 'success' ? 'Thành công' : 
-                       log.result === 'failed' ? 'Thất bại' : 'Đang chờ'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{log.blockedIPs}</TableCell>
-                  <TableCell className="font-mono">{log.duration}</TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" className="scale-hover" onClick={() => handleViewDetail(log)}>
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          {loading ? (
+            <LoadingSkeleton rows={pageSize} />
+          ) : logs.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">Không tìm thấy dữ liệu</p>
+            </div>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Thời gian</TableHead>
+                    <TableHead>Tên kịch bản</TableHead>
+                    <TableHead>Hành động</TableHead>
+                    <TableHead>Người thực hiện</TableHead>
+                    <TableHead>Địa chỉ IP</TableHead>
+                    <TableHead>Loại kịch bản</TableHead>
+                    <TableHead className="text-right">Thao tác</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {logs.map((log, index) => (
+                    <TableRow key={log.id} className="stagger-item" style={{animationDelay: `${index * 0.05}s`}}>
+                      <TableCell className="font-medium font-mono text-sm">
+                        {formatDateTime(log.changed_at)}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {log.new_values?.script_name || 'N/A'}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={getActionColor(log.action)}>
+                          {getActionLabel(log.action)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{log.changed_by_name}</TableCell>
+                      <TableCell className="font-mono text-sm">{log.ip_address}</TableCell>
+                      <TableCell>{log.new_values?.script_type_name || 'N/A'}</TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm" className="scale-hover" onClick={() => handleViewDetail(log)}>
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              <div className="mt-4">
+                <TablePagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  startIndex={startIndex}
+                  endIndex={endIndex}
+                  totalItems={total}
+                />
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg max-h-[70vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Chi tiết log kịch bản</DialogTitle>
+            <DialogTitle>Chi tiết lịch sử thay đổi</DialogTitle>
             <DialogDescription>
-              Thông tin chi tiết về thực thi kịch bản
+              Thông tin chi tiết về thay đổi kịch bản
             </DialogDescription>
           </DialogHeader>
           {selectedLog && (
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-3 gap-2">
-                <div className="text-sm text-muted-foreground">Thời gian:</div>
-                <div className="col-span-2 text-sm font-mono">{selectedLog.timestamp}</div>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="text-sm text-muted-foreground">Kịch bản:</div>
-                <div className="col-span-2 text-sm font-medium">{selectedLog.scenarioName}</div>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="text-sm text-muted-foreground">Trạng thái:</div>
-                <div className="col-span-2">
-                  <Badge variant="outline" className={getStatusColor(selectedLog.status)}>
-                    {selectedLog.status === 'executed' ? 'Đã thực thi' : 
-                     selectedLog.status === 'executing' ? 'Đang thực thi' : 'Thất bại'}
-                  </Badge>
+            <div className="space-y-6 py-4">
+              <div className="space-y-4">
+                <h3 className="font-semibold text-sm">Thông tin chung</h3>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="text-sm text-muted-foreground">Thời gian:</div>
+                  <div className="col-span-2 text-sm font-mono">{formatDateTime(selectedLog.changed_at)}</div>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="text-sm text-muted-foreground">Hành động:</div>
+                  <div className="col-span-2">
+                    <Badge variant="outline" className={getActionColor(selectedLog.action)}>
+                      {getActionLabel(selectedLog.action)}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="text-sm text-muted-foreground">Người thực hiện:</div>
+                  <div className="col-span-2 text-sm font-medium">{selectedLog.changed_by_name}</div>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="text-sm text-muted-foreground">Địa chỉ IP:</div>
+                  <div className="col-span-2 text-sm font-mono">{selectedLog.ip_address}</div>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="text-sm text-muted-foreground">User Agent:</div>
+                  <div className="col-span-2 text-sm break-all">{selectedLog.user_agent}</div>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="text-sm text-muted-foreground">Kết quả:</div>
-                <div className="col-span-2">
-                  <Badge variant="outline" className={getResultColor(selectedLog.result)}>
-                    {selectedLog.result === 'success' ? 'Thành công' : 
-                     selectedLog.result === 'failed' ? 'Thất bại' : 'Đang chờ'}
-                  </Badge>
+
+              {selectedLog.old_values && (
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-sm">Giá trị cũ</h3>
+                  <div className="bg-muted p-4 rounded-md">
+                    <div className="space-y-2 text-sm">
+                      <div><span className="font-medium">Tên:</span> {selectedLog.old_values.script_name}</div>
+                      <div><span className="font-medium">File:</span> {selectedLog.old_values.rule_file_name}</div>
+                      <div><span className="font-medium">Loại:</span> {selectedLog.old_values.script_type_name}</div>
+                      <div><span className="font-medium">Trạng thái:</span> {selectedLog.old_values.is_published ? 'Đã xuất bản' : 'Chưa xuất bản'}</div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="text-sm text-muted-foreground">IP bị chặn:</div>
-                <div className="col-span-2 text-sm">{selectedLog.blockedIPs} địa chỉ</div>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="text-sm text-muted-foreground">Thời gian:</div>
-                <div className="col-span-2 text-sm font-mono">{selectedLog.duration}</div>
-              </div>
+              )}
+
+              {selectedLog.new_values && (
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-sm">Giá trị mới</h3>
+                  <div className="bg-muted p-4 rounded-md">
+                    <div className="space-y-2 text-sm">
+                      <div><span className="font-medium">Tên:</span> {selectedLog.new_values.script_name}</div>
+                      <div><span className="font-medium">File:</span> {selectedLog.new_values.rule_file_name}</div>
+                      <div><span className="font-medium">Loại:</span> {selectedLog.new_values.script_type_name}</div>
+                      <div><span className="font-medium">Trạng thái:</span> {selectedLog.new_values.is_published ? 'Đã xuất bản' : 'Chưa xuất bản'}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
@@ -211,3 +339,4 @@ export function ScenarioLogs() {
     </div>
   );
 }
+

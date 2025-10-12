@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Plus, Edit, Trash2, Search, Filter, X, ChevronDown, Eye, FileCode, Upload, XCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Filter, X, ChevronDown, Eye, FileCode } from 'lucide-react';
 import { toast } from 'sonner';
 import scriptsService, { Script, CreateScriptDto } from '../../services/api/scripts.service';
 import scriptCategoriesService, { ScriptCategory } from '../../services/api/scriptCategories.service';
@@ -17,10 +17,8 @@ import { useServerPagination } from '@/hooks/useServerPagination';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Separator } from '../ui/separator';
 import { Switch } from '../ui/switch';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
-import { TablePagination } from '../common/TablePagination';
 
-export function ResponseScenarios() {
+export function Scripts() {
   const [reload, setReload] = useState(false);
   const [filters, setFilters] = useState<any>({
     script_name: '',
@@ -67,8 +65,6 @@ export function ResponseScenarios() {
     data: scripts,
     currentPage,
     totalPages,
-    startIndex,
-    endIndex,
     total,
     loading,
     setCurrentPage,
@@ -177,23 +173,6 @@ export function ResponseScenarios() {
     setIsViewDialogOpen(true);
   };
 
-  const handleTogglePublish = async (script: Script) => {
-    try {
-      const newPublishState = !script.is_published;
-      await scriptsService.publish(script.id, newPublishState);
-      
-      toast.success(
-        newPublishState 
-          ? 'Đã xuất bản kịch bản thành công!' 
-          : 'Đã hủy xuất bản kịch bản!'
-      );
-      setReload(!reload);
-    } catch (error) {
-      console.error('Error toggling publish state:', error);
-      toast.error('Lỗi khi thay đổi trạng thái xuất bản');
-    }
-  };
-
   const resetForm = () => {
     setFormData({
       content: '',
@@ -229,7 +208,7 @@ export function ResponseScenarios() {
   return (
     <div className="space-y-6 fade-in-up">
       <div className="slide-in-left">
-        <h1>Quản lý Kịch bản</h1>
+        <h1>Quản lý Scripts</h1>
         <p className="text-muted-foreground">
           Quản lý các kịch bản YARA rule và script trong hệ thống
         </p>
@@ -239,22 +218,22 @@ export function ResponseScenarios() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Danh sách Kịch bản</CardTitle>
+              <CardTitle>Danh sách Scripts</CardTitle>
               <CardDescription>
-                Tổng cộng {total} kịch bản trong hệ thống
+                Tổng cộng {total} scripts trong hệ thống
               </CardDescription>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="btn-animate scale-hover">
                   <Plus className="mr-2 h-4 w-4" />
-                  Thêm Kịch bản
+                  Thêm Script
                 </Button>
               </DialogTrigger>
               <DialogContent className="overflow-hidden p-0" style={{ maxWidth: '900px', maxHeight: '90vh' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '90vh' }}>
                   <DialogHeader className="px-6 pt-6 pb-4 border-b">
-                    <DialogTitle>Thêm kịch bản mới</DialogTitle>
+                    <DialogTitle>Thêm Script mới</DialogTitle>
                     <DialogDescription>
                       Thêm kịch bản YARA rule hoặc script mới vào hệ thống
                     </DialogDescription>
@@ -338,7 +317,7 @@ export function ResponseScenarios() {
                       Hủy
                     </Button>
                     <Button type="submit" onClick={handleAdd}>
-                      Thêm kịch bản
+                      Thêm Script
                     </Button>
                   </DialogFooter>
                 </div>
@@ -514,91 +493,35 @@ export function ResponseScenarios() {
                       {script.created_at ? new Date(script.created_at).toLocaleDateString('vi-VN') : 'N/A'}
                     </TableCell>
                     <TableCell className="text-right">
-                      <TooltipProvider>
-                        <div className="flex items-center justify-end space-x-2">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="scale-hover" 
-                                onClick={() => handleViewDetails(script)}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Xem chi tiết</p>
-                            </TooltipContent>
-                          </Tooltip>
-
-                          {script.is_published ? (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="scale-hover" 
-                                  onClick={() => handleTogglePublish(script)}
-                                >
-                                  <XCircle className="h-4 w-4 text-orange-500" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Hủy xuất bản</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          ) : (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="scale-hover" 
-                                  onClick={() => handleTogglePublish(script)}
-                                >
-                                  <Upload className="h-4 w-4 text-green-500" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Xuất bản kịch bản</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
-
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="scale-hover" 
-                                onClick={() => handleEdit(script)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Chỉnh sửa</p>
-                            </TooltipContent>
-                          </Tooltip>
-
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="scale-hover" 
-                                onClick={() => handleDeleteClick(script)}
-                              >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Xóa kịch bản</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </div>
-                      </TooltipProvider>
+                      <div className="flex items-center justify-end space-x-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="scale-hover" 
+                          onClick={() => handleViewDetails(script)}
+                          title="Xem chi tiết"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="scale-hover" 
+                          onClick={() => handleEdit(script)}
+                          title="Chỉnh sửa"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="scale-hover" 
+                          onClick={() => handleDeleteClick(script)}
+                          title="Xóa"
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -607,14 +530,57 @@ export function ResponseScenarios() {
           </Table>
 
           {/* Pagination */}
-          <TablePagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-            startIndex={startIndex}
-            endIndex={endIndex}
-            totalItems={total}
-          />
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4">
+              <div className="text-sm text-muted-foreground">
+                Hiển thị {((currentPage - 1) * 10) + 1} - {Math.min(currentPage * 10, total)} trong tổng số {total} bản ghi
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  Trước
+                </Button>
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNumber;
+                    if (totalPages <= 5) {
+                      pageNumber = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNumber = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNumber = totalPages - 4 + i;
+                    } else {
+                      pageNumber = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <Button
+                        key={pageNumber}
+                        variant={currentPage === pageNumber ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(pageNumber)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {pageNumber}
+                      </Button>
+                    );
+                  })}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Sau
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -623,7 +589,7 @@ export function ResponseScenarios() {
         <DialogContent className="overflow-hidden p-0" style={{ maxWidth: '900px', maxHeight: '90vh' }}>
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '90vh' }}>
             <DialogHeader className="px-6 pt-6 pb-4 border-b">
-              <DialogTitle>Chỉnh sửa Kịch bản</DialogTitle>
+              <DialogTitle>Chỉnh sửa Script</DialogTitle>
               <DialogDescription>Cập nhật thông tin kịch bản</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4 px-6 scroll-bar-1" style={{ overflowY: 'auto', flex: 1 }}>
@@ -717,7 +683,7 @@ export function ResponseScenarios() {
         <DialogContent className="overflow-hidden p-0" style={{ maxWidth: '900px', maxHeight: '80vh' }}>
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '80vh' }}>
             <DialogHeader className="px-6 pt-6 pb-4 border-b">
-              <DialogTitle>Chi tiết Kịch bản</DialogTitle>
+              <DialogTitle>Chi tiết Script</DialogTitle>
               <DialogDescription>Xem thông tin chi tiết của kịch bản</DialogDescription>
             </DialogHeader>
             
@@ -777,26 +743,17 @@ export function ResponseScenarios() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label className="text-muted-foreground text-sm font-semibold">Nội dung kịch bản</Label>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="h-7 px-2"
-                            onClick={() => {
-                              navigator.clipboard.writeText(selectedScript.content);
-                              toast.success('Đã copy nội dung!');
-                            }}
-                          >
-                            Copy
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Copy nội dung kịch bản</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-7 px-2"
+                      onClick={() => {
+                        navigator.clipboard.writeText(selectedScript.content);
+                        toast.success('Đã copy nội dung!');
+                      }}
+                    >
+                      Copy
+                    </Button>
                   </div>
                   <div className="bg-slate-950 rounded-md border border-slate-800 p-4">
                     <pre className="text-xs font-mono text-green-400 whitespace-pre-wrap">

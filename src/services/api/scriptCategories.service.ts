@@ -40,7 +40,7 @@ export interface ScriptCategoryResponse {
 }
 
 class ScriptCategoriesService {
-  private baseUrl = '/api/v1/category';
+  private baseUrl = 'category';
 
   async getAll(page: number = 1, limit: number = 10, params: any = {}): Promise<ScriptCategoryResponse> {
     const queryParams = {

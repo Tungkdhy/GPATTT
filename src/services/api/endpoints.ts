@@ -151,6 +151,31 @@ export const API_ENDPOINTS = {
     GET: (id: number) => `/insecure-devices/${id}`,
   },
 
+  // Unsafe Devices
+  UNSAFE_DEVICES: {
+    LIST: '/unsafe-devices',
+    CREATE: '/unsafe-devices',
+    UPDATE: (id: string) => `/unsafe-devices/${id}`,
+    DELETE: (id: string) => `/unsafe-devices/${id}`,
+    DELETE_MULTIPLE: '/unsafe-devices/bulk-delete',
+    GET: (id: string) => `/unsafe-devices/${id}`,
+    EXPORT_CSV: '/unsafe-devices/export/csv',
+  },
+
+  // Alerts
+  ALERTS: {
+    LIST: '/alerts',
+    CREATE: '/alerts',
+    UPDATE: (id: string) => `/alerts/${id}`,
+    DELETE: (id: string) => `/alerts/${id}`,
+    DELETE_MULTIPLE: '/alerts/bulk-delete',
+    MARK_PROCESSED: (id: string) => `/alerts/${id}`,
+    BULK_PROCESS: '/alerts/bulk-process',
+    GET: (id: string) => `/alerts/${id}`,
+    EXPORT_CSV: '/alerts/export/csv',
+    STATS: '/alerts/stats',
+  },
+
   // System Logs
   SYSTEM_LOGS: {
     LIST: '/system-logs',
@@ -167,6 +192,22 @@ export const API_ENDPOINTS = {
     UPDATE: (id: number) => `/response-scenarios/${id}`,
     DELETE: (id: number) => `/response-scenarios/${id}`,
     GET: (id: number) => `/response-scenarios/${id}`,
+  },
+
+  // Scripts
+  SCRIPTS: {
+    LIST: '/scripts',
+    CREATE: '/scripts',
+    UPDATE: (id: string) => `/scripts/${id}`,
+    DELETE: (id: string) => `/scripts/${id}`,
+    GET: (id: string) => `/scripts/${id}`,
+    PUBLISH: (id: string) => `/scripts/${id}/publish`,
+  },
+
+  // Script Histories
+  SCRIPT_HISTORIES: {
+    LIST: '/script-histories',
+    GET: (id: string) => `/script-histories/${id}`,
   },
 
   // Cloud Managers

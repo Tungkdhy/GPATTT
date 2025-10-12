@@ -17,7 +17,7 @@ import { LoadingSkeleton } from '../common/LoadingSkeleton';
 import { Checkbox } from '../ui/checkbox';
 import { Textarea } from '../ui/textarea';
 
-export function LogList() {
+export function Alerts() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<AlertsParams>({});
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
@@ -317,9 +317,9 @@ export function LogList() {
     <div className="space-y-6 fade-in-up">
       <div className="slide-in-left flex justify-between items-center">
         <div>
-          <h1>Danh sách Log</h1>
+          <h1>Danh sách cảnh báo</h1>
           <p className="text-muted-foreground">
-            Theo dõi và quản lý các Log bảo mật
+            Theo dõi và quản lý các cảnh báo bảo mật
           </p>
         </div>
         <div className="flex gap-2">
@@ -359,7 +359,7 @@ export function LogList() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card className="stagger-item">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm">Tổng Log</CardTitle>
+            <CardTitle className="text-sm">Tổng cảnh báo</CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -403,15 +403,15 @@ export function LogList() {
 
       <Card className="card-hover">
         <CardHeader>
-          <CardTitle>Log bảo mật</CardTitle>
+          <CardTitle>Cảnh báo bảo mật</CardTitle>
           <CardDescription>
-            Hiển thị {alerts.length} Log trên trang {currentPage} / {totalPages}
+            Hiển thị {alerts.length} cảnh báo trên trang {currentPage} / {totalPages}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="mb-6">
             <AdvancedFilter
-              searchPlaceholder="Tìm kiếm Log..."
+              searchPlaceholder="Tìm kiếm cảnh báo..."
               searchValue={searchTerm}
               onSearchChange={setSearchTerm}
               filterOptions={filterOptions}
@@ -441,7 +441,7 @@ export function LogList() {
                     <TableHead>Loại</TableHead>
                     <TableHead>Mức độ</TableHead>
                     <TableHead>Hostname</TableHead>
-                    <TableHead className="w-[180px]">Nguồn</TableHead>
+                    <TableHead>Nguồn</TableHead>
                     <TableHead>Tóm tắt</TableHead>
                     <TableHead>Thời gian</TableHead>
                     <TableHead>Trạng thái</TableHead>
@@ -470,7 +470,7 @@ export function LogList() {
                         </Badge>
                       </TableCell>
                       <TableCell className="font-medium">{alert.hostname}</TableCell>
-                      <TableCell className="max-w-xs truncate">{alert.source}</TableCell>
+                      <TableCell className="font-mono text-xs">{alert.source}</TableCell>
                       <TableCell className="max-w-xs truncate">{alert.summary}</TableCell>
                       <TableCell className="text-sm">{formatTimestamp(alert.ts)}</TableCell>
                       <TableCell>
@@ -531,9 +531,9 @@ export function LogList() {
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Chi tiết Log</DialogTitle>
+            <DialogTitle>Chi tiết cảnh báo</DialogTitle>
             <DialogDescription>
-              Thông tin chi tiết về Log bảo mật
+              Thông tin chi tiết về cảnh báo bảo mật
             </DialogDescription>
           </DialogHeader>
           {selectedAlert && (
@@ -631,9 +631,9 @@ export function LogList() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-xs">
           <DialogHeader>
-            <DialogTitle>Chỉnh sửa Log</DialogTitle>
+            <DialogTitle>Chỉnh sửa cảnh báo</DialogTitle>
             <DialogDescription>
-              Cập nhật thông tin Log
+              Cập nhật thông tin cảnh báo
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -724,7 +724,7 @@ export function LogList() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa Log này? Hành động này không thể hoàn tác.
+              Bạn có chắc chắn muốn xóa cảnh báo này? Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -742,7 +742,7 @@ export function LogList() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa nhiều</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa <strong>{selectedAlerts.size}</strong> Log đã chọn? Hành động này không thể hoàn tác.
+              Bạn có chắc chắn muốn xóa <strong>{selectedAlerts.size}</strong> cảnh báo đã chọn? Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
