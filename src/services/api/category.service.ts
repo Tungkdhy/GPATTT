@@ -57,6 +57,7 @@ class CategoyService {
     try {
       const res = await axiosInstance.get("category", {
         params: {
+          // scope:"LOAI_ALIAS",
           pageSize: size,
           pageIndex: page,
           ...params
