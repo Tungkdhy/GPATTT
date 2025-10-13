@@ -14,7 +14,7 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { TablePagination } from '../common/TablePagination';
 import { LoadingSkeleton } from '../common/LoadingSkeleton';
-import { Checkbox } from '../ui/checkbox';
+// import { Checkbox } from '../ui/checkbox';
 import { Textarea } from '../ui/textarea';
 
 export function LogList() {
@@ -24,12 +24,12 @@ export function LogList() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isDeleteMultipleDialogOpen, setIsDeleteMultipleDialogOpen] = useState(false);
+  // const [isDeleteMultipleDialogOpen, setIsDeleteMultipleDialogOpen] = useState(false);
   const [reload, setReload] = useState(false);
   
   // Multi-select state
-  const [selectedAlerts, setSelectedAlerts] = useState<Set<string>>(new Set());
-  const [selectAll, setSelectAll] = useState(false);
+  // const [selectedAlerts, setSelectedAlerts] = useState<Set<string>>(new Set());
+  // const [selectAll, setSelectAll] = useState(false);
   
   // Data state
   const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -65,8 +65,8 @@ export function LogList() {
       setAlerts(response.data.alerts);
       setTotal(response.data.pagination.total);
       setTotalPages(response.data.pagination.pages);
-      setSelectedAlerts(new Set());
-      setSelectAll(false);
+      // setSelectedAlerts(new Set());
+      // setSelectAll(false);
     } catch (error: any) {
       const errorMsg = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi tải dữ liệu';
       toast.error(errorMsg);
@@ -219,42 +219,42 @@ export function LogList() {
   };
 
   // Multi-select handlers
-  const handleSelectAll = (checked: boolean) => {
-    setSelectAll(checked);
-    if (checked) {
-      const allIds = new Set(alerts.map(a => a.id));
-      setSelectedAlerts(allIds);
-    } else {
-      setSelectedAlerts(new Set());
-    }
-  };
+  // const handleSelectAll = (checked: boolean) => {
+  //   setSelectAll(checked);
+  //   if (checked) {
+  //     const allIds = new Set(alerts.map(a => a.id));
+  //     setSelectedAlerts(allIds);
+  //   } else {
+  //     setSelectedAlerts(new Set());
+  //   }
+  // };
 
-  const handleSelectAlert = (id: string, checked: boolean) => {
-    const newSelected = new Set(selectedAlerts);
-    if (checked) {
-      newSelected.add(id);
-    } else {
-      newSelected.delete(id);
-    }
-    setSelectedAlerts(newSelected);
-    setSelectAll(newSelected.size === alerts.length);
-  };
+  // const handleSelectAlert = (id: string, checked: boolean) => {
+  //   const newSelected = new Set(selectedAlerts);
+  //   if (checked) {
+  //     newSelected.add(id);
+  //   } else {
+  //     newSelected.delete(id);
+  //   }
+  //   setSelectedAlerts(newSelected);
+  //   setSelectAll(newSelected.size === alerts.length);
+  // };
 
-  const handleDeleteMultiple = async () => {
-    try {
-      const ids = Array.from(selectedAlerts);
-      await alertsService.deleteMultiple(ids);
-      toast.success(`Đã xóa ${ids.length} cảnh báo thành công!`);
-      setIsDeleteMultipleDialogOpen(false);
-      setSelectedAlerts(new Set());
-      setSelectAll(false);
-      setReload(!reload);
-      fetchStats();
-    } catch (error: any) {
-      const errorMsg = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi xóa cảnh báo';
-      toast.error(errorMsg);
-    }
-  };
+  // const handleDeleteMultiple = async () => {
+  //   try {
+  //     const ids = Array.from(selectedAlerts);
+  //     await alertsService.deleteMultiple(ids);
+  //     toast.success(`Đã xóa ${ids.length} cảnh báo thành công!`);
+  //     setIsDeleteMultipleDialogOpen(false);
+  //     setSelectedAlerts(new Set());
+  //     setSelectAll(false);
+  //     setReload(!reload);
+  //     fetchStats();
+  //   } catch (error: any) {
+  //     const errorMsg = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi xóa cảnh báo';
+  //     toast.error(errorMsg);
+  //   }
+  // };
 
   const handleMarkAsProcessed = async (id: string) => {
     try {
@@ -268,20 +268,20 @@ export function LogList() {
     }
   };
 
-  const handleMarkMultipleAsProcessed = async () => {
-    try {
-      const ids = Array.from(selectedAlerts);
-      await alertsService.markMultipleAsProcessed(ids);
-      toast.success(`Đã đánh dấu ${ids.length} cảnh báo là đã xử lý!`);
-      setSelectedAlerts(new Set());
-      setSelectAll(false);
-      setReload(!reload);
-      fetchStats();
-    } catch (error: any) {
-      const errorMsg = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra';
-      toast.error(errorMsg);
-    }
-  };
+  // const handleMarkMultipleAsProcessed = async () => {
+  //   try {
+  //     const ids = Array.from(selectedAlerts);
+  //     await alertsService.markMultipleAsProcessed(ids);
+  //     toast.success(`Đã đánh dấu ${ids.length} cảnh báo là đã xử lý!`);
+  //     setSelectedAlerts(new Set());
+  //     setSelectAll(false);
+  //     setReload(!reload);
+  //     fetchStats();
+  //   } catch (error: any) {
+  //     const errorMsg = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra';
+  //     toast.error(errorMsg);
+  //   }
+  // };
 
   const handleExportCSV = async () => {
     try {
@@ -323,7 +323,7 @@ export function LogList() {
           </p>
         </div>
         <div className="flex gap-2">
-          {selectedAlerts.size > 0 && (
+          {/* {selectedAlerts.size > 0 && (
             <>
               <Button 
                 variant="outline" 
@@ -344,7 +344,7 @@ export function LogList() {
                 Xóa ({selectedAlerts.size})
               </Button>
             </>
-          )}
+          )} */}
           <Button variant="outline" size="sm" onClick={handleExportCSV} className="scale-hover">
             <Download className="h-4 w-4 mr-2" />
             Export CSV
@@ -432,12 +432,12 @@ export function LogList() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[50px]">
+                    {/* <TableHead className="w-[50px]">
                       <Checkbox
                         checked={selectAll}
                         onCheckedChange={handleSelectAll}
                       />
-                    </TableHead>
+                    </TableHead> */}
                     <TableHead>Loại</TableHead>
                     <TableHead>Mức độ</TableHead>
                     <TableHead>Hostname</TableHead>
@@ -451,12 +451,12 @@ export function LogList() {
                 <TableBody>
                   {alerts.map((alert, index) => (
                     <TableRow key={alert.id} className="stagger-item" style={{animationDelay: `${index * 0.05}s`}}>
-                      <TableCell>
+                      {/* <TableCell>
                         <Checkbox
                           checked={selectedAlerts.has(alert.id)}
                           onCheckedChange={(checked: boolean) => handleSelectAlert(alert.id, checked)}
                         />
-                      </TableCell>
+                      </TableCell> */}
                       <TableCell>
                         <Badge variant="outline" className={getTypeColor(alert.type)}>
                           {alert.type}
@@ -629,7 +629,7 @@ export function LogList() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-xs">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Chỉnh sửa Log</DialogTitle>
             <DialogDescription>
@@ -737,7 +737,7 @@ export function LogList() {
       </AlertDialog>
 
       {/* Delete Multiple Dialog */}
-      <AlertDialog open={isDeleteMultipleDialogOpen} onOpenChange={setIsDeleteMultipleDialogOpen}>
+      {/* <AlertDialog open={isDeleteMultipleDialogOpen} onOpenChange={setIsDeleteMultipleDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa nhiều</AlertDialogTitle>
@@ -752,7 +752,7 @@ export function LogList() {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+      </AlertDialog> */}
     </div>
   );
 }

@@ -34,6 +34,7 @@ export { default as cloudManagersService } from './cloudManagers.service';
 export { systemBackupService } from './systemBackup.service';
 export { unsafeDevicesService } from './unsafeDevices.service';
 export { alertsService } from './alerts.service';
+export { default as warningService } from './warning.service';
 // parametersService
 // Export all services from allServices.ts
 export {
@@ -101,6 +102,11 @@ export type {
   AlertStats,
   AlertStatsResponse
 } from './alerts.service';
+export type {
+  Warning,
+  WarningParams,
+  WarningResponse
+} from './warning.service';
 export type { 
   ScriptCategory, 
   CreateScriptCategoryDto, 

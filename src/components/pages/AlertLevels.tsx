@@ -38,7 +38,7 @@ export function AlertLevels() {
     display_name: '',
     value: '',
     description: '',
-    category_type_id: 'd1c6d966-0ba4-4eec-b5f8-d887dd9c96f2'
+    category_type_id: '720ba835-c79b-4c18-bff8-032ad131ad26'
   });
 
   const {
@@ -66,7 +66,7 @@ export function AlertLevels() {
       toast.error('Lỗi khi thêm danh mục');
     }
   };
-// d1c6d966-0ba4-4eec-b5f8-d887dd9c96f2
+// 720ba835-c79b-4c18-bff8-032ad131ad26
   // Edit
   const handleEdit = (item: any) => {
     setSelectedItem(item);
@@ -74,7 +74,7 @@ export function AlertLevels() {
       display_name: item.display_name,
       value: item.value,
       description: item.description,
-      category_type_id: 'd1c6d966-0ba4-4eec-b5f8-d887dd9c96f2'
+      category_type_id: '720ba835-c79b-4c18-bff8-032ad131ad26'
     });
     setIsEditDialogOpen(true);
   };
@@ -115,16 +115,16 @@ export function AlertLevels() {
       display_name: '',
       value: '',
       description: '',
-      category_type_id: 'd1c6d966-0ba4-4eec-b5f8-d887dd9c96f2'
+      category_type_id: '720ba835-c79b-4c18-bff8-032ad131ad26'
     });
   };
 
   return (
     <div className="space-y-6 fade-in-up">
       <div className="slide-in-left">
-        <h1>Quản lý loại log</h1>
+        <h1>Quản lý mức cảnh báo</h1>
         <p className="text-muted-foreground">
-          Quản lý các loại log trong hệ thống
+          Quản lý các mức cảnh báo trong hệ thống
         </p>
       </div>
 
@@ -132,9 +132,9 @@ export function AlertLevels() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Danh sách loại log</CardTitle>
+              <CardTitle>Danh mục mức cảnh báo</CardTitle>
               <CardDescription>
-                Tổng cộng {total} loại log
+                Tổng cộng {total} loại mức cảnh báo
               </CardDescription>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -146,9 +146,9 @@ export function AlertLevels() {
               </DialogTrigger>
               <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Thêm loại danh mục mới</DialogTitle>
+                  <DialogTitle>Thêm mức cảnh báo mới</DialogTitle>
                   <DialogDescription>
-                    Nhập thông tin loại danh mục
+                    Nhập thông tin mức cảnh báo
                   </DialogDescription>
                 </DialogHeader>
                 {renderFormFields(formData, setFormData)}

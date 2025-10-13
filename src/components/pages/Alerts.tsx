@@ -3,69 +3,51 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import { AdvancedFilter, FilterOption } from '../common/AdvancedFilter';
-import { Eye, AlertTriangle, Edit, Trash2, RefreshCw, Download, CheckCircle } from 'lucide-react';
+import { Eye, AlertTriangle, Trash2, RefreshCw, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { alertsService, Alert, UpdateAlertDto, AlertsParams, AlertStats } from '@/services/api';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { warningService, Warning, WarningParams } from '@/services/api';
 import { TablePagination } from '../common/TablePagination';
 import { LoadingSkeleton } from '../common/LoadingSkeleton';
 import { Checkbox } from '../ui/checkbox';
-import { Textarea } from '../ui/textarea';
 
 export function Alerts() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState<AlertsParams>({});
-  const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
+  const [filters, setFilters] = useState<WarningParams>({});
+  const [selectedWarning, setSelectedWarning] = useState<Warning | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleteMultipleDialogOpen, setIsDeleteMultipleDialogOpen] = useState(false);
   const [reload, setReload] = useState(false);
   
   // Multi-select state
-  const [selectedAlerts, setSelectedAlerts] = useState<Set<string>>(new Set());
+  const [selectedWarnings, setSelectedWarnings] = useState<Set<string>>(new Set());
   const [selectAll, setSelectAll] = useState(false);
   
   // Data state
-  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [warnings, setWarnings] = useState<Warning[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
-  const [pageSize] = useState(20);
-  
-  // Stats state
-  const [stats, setStats] = useState<AlertStats | null>(null);
-
-  // Form data for edit
-  const [editFormData, setEditFormData] = useState<UpdateAlertDto>({
-    hostname: '',
-    type: '',
-    severity: '',
-    source: '',
-    summary: '',
-    is_processed: 0
-  });
+  const [pageSize] = useState(10);
 
   // Fetch data
-  const fetchAlerts = async () => {
+  const fetchWarnings = async () => {
     setLoading(true);
     try {
-      const params: AlertsParams = {
+      const params: WarningParams = {
         search: searchTerm || undefined,
         ...filters
       };
       
-      const response = await alertsService.getAll(currentPage, pageSize, params);
-      setAlerts(response.data.alerts);
-      setTotal(response.data.pagination.total);
-      setTotalPages(response.data.pagination.pages);
-      setSelectedAlerts(new Set());
+      const response = await warningService.getAll(currentPage, pageSize, params);
+      setWarnings(response.data.rows);
+      setTotal(response.data.count);
+      setTotalPages(Math.ceil(response.data.count / pageSize));
+      setSelectedWarnings(new Set());
       setSelectAll(false);
     } catch (error: any) {
       const errorMsg = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi tải dữ liệu';
@@ -75,46 +57,21 @@ export function Alerts() {
     }
   };
 
-  // Fetch stats
-  const fetchStats = async () => {
-    try {
-      const statsData = await alertsService.getStats();
-      setStats(statsData);
-    } catch (error: any) {
-      console.error('Error fetching stats:', error);
-    }
-  };
-
   useEffect(() => {
-    fetchAlerts();
+    fetchWarnings();
   }, [currentPage, searchTerm, filters, reload]);
-
-  useEffect(() => {
-    fetchStats();
-  }, [reload]);
 
   const startIndex = (currentPage - 1) * pageSize + 1;
   const endIndex = Math.min(currentPage * pageSize, total);
 
   const filterOptions: FilterOption[] = [
     {
-      key: 'severity',
-      label: 'Mức độ nghiêm trọng',
-      type: 'select',
-      options: [
-        { value: 'low', label: 'Thấp' },
-        { value: 'medium', label: 'Trung bình' },
-        { value: 'high', label: 'Cao' },
-        { value: 'critical', label: 'Nghiêm trọng' }
-      ]
-    },
-    {
-      key: 'is_processed',
+      key: 'is_process',
       label: 'Trạng thái xử lý',
       type: 'select',
       options: [
-        { value: '0', label: 'Chưa xử lý' },
-        { value: '1', label: 'Đã xử lý' }
+        { value: 'false', label: 'Chưa xử lý' },
+        { value: 'true', label: 'Đã xử lý' }
       ]
     },
     {
@@ -122,9 +79,8 @@ export function Alerts() {
       label: 'Sắp xếp theo',
       type: 'select',
       options: [
-        { value: 'ts', label: 'Thời gian' },
-        { value: 'severity', label: 'Mức độ nghiêm trọng' },
-        { value: 'type', label: 'Loại cảnh báo' },
+        { value: 'display_name', label: 'Tên' },
+        { value: 'usage', label: 'Sử dụng' },
         { value: 'created_at', label: 'Ngày tạo' }
       ]
     },
@@ -139,73 +95,38 @@ export function Alerts() {
     }
   ];
 
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'low': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-      case 'medium': return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
-      case 'high': return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
-      case 'critical': return 'bg-red-500/10 text-red-500 border-red-500/20';
-      default: return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
-    }
+  const getUsagePercentage = (usage: number, total: number) => {
+    if (total === 0) return 0;
+    return ((usage / total) * 100).toFixed(1);
   };
 
-  const getTypeColor = (type: string) => {
-    const colors: Record<string, string> = {
-      'SYN_SCAN': 'bg-purple-500/10 text-purple-500 border-purple-500/20',
-      'TCP_CONNECT_SCAN': 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20',
-      'AI_MALWARE_DETECT': 'bg-red-500/10 text-red-500 border-red-500/20',
-    };
-    return colors[type] || 'bg-gray-500/10 text-gray-500 border-gray-500/20';
+  const getUsageColor = (usage: number, total: number) => {
+    const percentage = (usage / total) * 100;
+    if (percentage >= 90) return 'bg-red-500/10 text-red-500 border-red-500/20';
+    if (percentage >= 75) return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
+    if (percentage >= 50) return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
+    return 'bg-green-500/10 text-green-500 border-green-500/20';
   };
 
-  const handleViewDetail = (alert: Alert) => {
-    setSelectedAlert(alert);
+  const handleViewDetail = (warning: Warning) => {
+    setSelectedWarning(warning);
     setIsDetailOpen(true);
   };
 
-  const handleEditClick = (alert: Alert) => {
-    setSelectedAlert(alert);
-    setEditFormData({
-      hostname: alert.hostname,
-      type: alert.type,
-      severity: alert.severity,
-      source: alert.source,
-      summary: alert.summary,
-      is_processed: alert.is_processed
-    });
-    setIsEditDialogOpen(true);
-  };
-
-  const handleEdit = async () => {
-    if (!selectedAlert) return;
-    
-    try {
-      await alertsService.update(selectedAlert.id, editFormData);
-      toast.success('Đã cập nhật cảnh báo thành công!');
-      setIsEditDialogOpen(false);
-      setSelectedAlert(null);
-      setReload(!reload);
-    } catch (error: any) {
-      const errorMsg = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi cập nhật cảnh báo';
-      toast.error(errorMsg);
-    }
-  };
-
-  const handleDeleteClick = (alert: Alert) => {
-    setSelectedAlert(alert);
+  const handleDeleteClick = (warning: Warning) => {
+    setSelectedWarning(warning);
     setIsDeleteDialogOpen(true);
   };
 
   const handleDelete = async () => {
-    if (!selectedAlert) return;
+    if (!selectedWarning) return;
     
     try {
-      await alertsService.delete(selectedAlert.id);
+      await warningService.delete(selectedWarning.id);
       toast.success('Đã xóa cảnh báo thành công!');
       setIsDeleteDialogOpen(false);
-      setSelectedAlert(null);
+      setSelectedWarning(null);
       setReload(!reload);
-      fetchStats();
     } catch (error: any) {
       const errorMsg = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi xóa cảnh báo';
       toast.error(errorMsg);
@@ -214,7 +135,6 @@ export function Alerts() {
 
   const handleRefresh = () => {
     setReload(!reload);
-    fetchStats();
     toast.success('Đã làm mới dữ liệu!');
   };
 
@@ -222,34 +142,33 @@ export function Alerts() {
   const handleSelectAll = (checked: boolean) => {
     setSelectAll(checked);
     if (checked) {
-      const allIds = new Set(alerts.map(a => a.id));
-      setSelectedAlerts(allIds);
+      const allIds = new Set(warnings.map(w => w.id));
+      setSelectedWarnings(allIds);
     } else {
-      setSelectedAlerts(new Set());
+      setSelectedWarnings(new Set());
     }
   };
 
-  const handleSelectAlert = (id: string, checked: boolean) => {
-    const newSelected = new Set(selectedAlerts);
+  const handleSelectWarning = (id: string, checked: boolean) => {
+    const newSelected = new Set(selectedWarnings);
     if (checked) {
       newSelected.add(id);
     } else {
       newSelected.delete(id);
     }
-    setSelectedAlerts(newSelected);
-    setSelectAll(newSelected.size === alerts.length);
+    setSelectedWarnings(newSelected);
+    setSelectAll(newSelected.size === warnings.length);
   };
 
   const handleDeleteMultiple = async () => {
     try {
-      const ids = Array.from(selectedAlerts);
-      await alertsService.deleteMultiple(ids);
+      const ids = Array.from(selectedWarnings);
+      await warningService.deleteMultiple(ids);
       toast.success(`Đã xóa ${ids.length} cảnh báo thành công!`);
       setIsDeleteMultipleDialogOpen(false);
-      setSelectedAlerts(new Set());
+      setSelectedWarnings(new Set());
       setSelectAll(false);
       setReload(!reload);
-      fetchStats();
     } catch (error: any) {
       const errorMsg = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi xóa cảnh báo';
       toast.error(errorMsg);
@@ -258,10 +177,9 @@ export function Alerts() {
 
   const handleMarkAsProcessed = async (id: string) => {
     try {
-      await alertsService.markAsProcessed(id);
+      await warningService.markAsProcessed(id);
       toast.success('Đã đánh dấu đã xử lý!');
       setReload(!reload);
-      fetchStats();
     } catch (error: any) {
       const errorMsg = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra';
       toast.error(errorMsg);
@@ -270,60 +188,33 @@ export function Alerts() {
 
   const handleMarkMultipleAsProcessed = async () => {
     try {
-      const ids = Array.from(selectedAlerts);
-      await alertsService.markMultipleAsProcessed(ids);
+      const ids = Array.from(selectedWarnings);
+      await warningService.markMultipleAsProcessed(ids);
       toast.success(`Đã đánh dấu ${ids.length} cảnh báo là đã xử lý!`);
-      setSelectedAlerts(new Set());
+      setSelectedWarnings(new Set());
       setSelectAll(false);
       setReload(!reload);
-      fetchStats();
     } catch (error: any) {
       const errorMsg = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra';
       toast.error(errorMsg);
     }
   };
 
-  const handleExportCSV = async () => {
-    try {
-      toast.info('Đang xuất dữ liệu...');
-      const params: AlertsParams = {
-        search: searchTerm || undefined,
-        ...filters
-      };
-      
-      const blob = await alertsService.exportCSV(params, 1000);
-      
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `alerts-${new Date().toISOString().slice(0, 10)}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      
-      toast.success('Đã xuất file CSV thành công!');
-    } catch (error: any) {
-      const errorMsg = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi xuất dữ liệu';
-      toast.error(errorMsg);
-    }
-  };
-
-  const formatTimestamp = (ts: number) => {
-    return new Date(ts * 1000).toLocaleString('vi-VN');
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString('vi-VN');
   };
 
   return (
     <div className="space-y-6 fade-in-up">
       <div className="slide-in-left flex justify-between items-center">
         <div>
-          <h1>Danh sách cảnh báo</h1>
+          <h1>Danh sách cảnh báo tài nguyên</h1>
           <p className="text-muted-foreground">
-            Theo dõi và quản lý các cảnh báo bảo mật
+            Theo dõi và quản lý các cảnh báo về tài nguyên hệ thống
           </p>
         </div>
         <div className="flex gap-2">
-          {selectedAlerts.size > 0 && (
+          {selectedWarnings.size > 0 && (
             <>
               <Button 
                 variant="outline" 
@@ -332,7 +223,7 @@ export function Alerts() {
                 className="scale-hover"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
-                Đánh dấu đã xử lý ({selectedAlerts.size})
+                Đánh dấu đã xử lý ({selectedWarnings.size})
               </Button>
               <Button 
                 variant="destructive" 
@@ -341,14 +232,10 @@ export function Alerts() {
                 className="scale-hover"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
-                Xóa ({selectedAlerts.size})
+                Xóa ({selectedWarnings.size})
               </Button>
             </>
           )}
-          <Button variant="outline" size="sm" onClick={handleExportCSV} className="scale-hover">
-            <Download className="h-4 w-4 mr-2" />
-            Export CSV
-          </Button>
           <Button variant="outline" size="sm" onClick={handleRefresh} className="scale-hover">
             <RefreshCw className="h-4 w-4 mr-2" />
             Làm mới
@@ -356,14 +243,14 @@ export function Alerts() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      {/* <div className="grid gap-4 md:grid-cols-3">
         <Card className="stagger-item">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm">Tổng cảnh báo</CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.total || 0}</div>
+            <div className="text-2xl font-bold">{total}</div>
           </CardContent>
         </Card>
         <Card className="stagger-item" style={{animationDelay: '0.1s'}}>
@@ -373,43 +260,32 @@ export function Alerts() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-500">
-              {stats?.byStatus.unprocessed || 0}
+              {warnings.filter(w => !w.is_process).length}
             </div>
           </CardContent>
         </Card>
         <Card className="stagger-item" style={{animationDelay: '0.2s'}}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm">Mức cao</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-orange-500" />
+            <CardTitle className="text-sm">Đã xử lý</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-500">
-              {stats?.bySeverity.high || 0}
+            <div className="text-2xl font-bold text-green-500">
+              {warnings.filter(w => w.is_process).length}
             </div>
           </CardContent>
         </Card>
-        <Card className="stagger-item" style={{animationDelay: '0.3s'}}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm">Nghiêm trọng</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-500">
-              {stats?.bySeverity.critical || 0}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      </div> */}
 
       <Card className="card-hover">
         <CardHeader>
-          <CardTitle>Cảnh báo bảo mật</CardTitle>
+          <CardTitle>Cảnh báo tài nguyên</CardTitle>
           <CardDescription>
-            Hiển thị {alerts.length} cảnh báo trên trang {currentPage} / {totalPages}
+            Hiển thị {warnings.length} cảnh báo trên trang {currentPage} / {totalPages}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-6">
+          {/* <div className="mb-6">
             <AdvancedFilter
               searchPlaceholder="Tìm kiếm cảnh báo..."
               searchValue={searchTerm}
@@ -419,11 +295,11 @@ export function Alerts() {
               onFiltersChange={setFilters}
               onReset={() => setSearchTerm('')}
             />
-          </div>
+          </div> */}
 
           {loading ? (
             <LoadingSkeleton />
-          ) : alerts.length === 0 ? (
+          ) : warnings.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               Không có dữ liệu
             </div>
@@ -438,43 +314,37 @@ export function Alerts() {
                         onCheckedChange={handleSelectAll}
                       />
                     </TableHead>
-                    <TableHead>Loại</TableHead>
-                    <TableHead>Mức độ</TableHead>
-                    <TableHead>Hostname</TableHead>
-                    <TableHead>Nguồn</TableHead>
-                    <TableHead>Tóm tắt</TableHead>
-                    <TableHead>Thời gian</TableHead>
+                    <TableHead>Tên hiển thị</TableHead>
+                    <TableHead>Sử dụng</TableHead>
+                    <TableHead>Tổng</TableHead>
+                    <TableHead>Tỷ lệ</TableHead>
+                    <TableHead>Người tạo</TableHead>
+                    <TableHead>Ngày tạo</TableHead>
                     <TableHead>Trạng thái</TableHead>
                     <TableHead className="text-right">Thao tác</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {alerts.map((alert, index) => (
-                    <TableRow key={alert.id} className="stagger-item" style={{animationDelay: `${index * 0.05}s`}}>
+                  {warnings.map((warning, index) => (
+                    <TableRow key={warning.id} className="stagger-item" style={{animationDelay: `${index * 0.05}s`}}>
                       <TableCell>
                         <Checkbox
-                          checked={selectedAlerts.has(alert.id)}
-                          onCheckedChange={(checked: boolean) => handleSelectAlert(alert.id, checked)}
+                          checked={selectedWarnings.has(warning.id)}
+                          onCheckedChange={(checked: boolean) => handleSelectWarning(warning.id, checked)}
                         />
                       </TableCell>
+                      <TableCell className="font-medium">{warning.display_name}</TableCell>
+                      <TableCell>{warning.usage.toFixed(2)} GB</TableCell>
+                      <TableCell>{warning.total.toFixed(2)} GB</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={getTypeColor(alert.type)}>
-                          {alert.type}
+                        <Badge variant="outline" className={getUsageColor(warning.usage, warning.total)}>
+                          {getUsagePercentage(warning.usage, warning.total)}%
                         </Badge>
                       </TableCell>
+                      <TableCell>{warning.created_by_user?.display_name || 'N/A'}</TableCell>
+                      <TableCell className="text-sm">{formatDate(warning.created_at)}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={getSeverityColor(alert.severity)}>
-                          {alert.severity === 'low' ? 'Thấp' :
-                           alert.severity === 'medium' ? 'TB' :
-                           alert.severity === 'high' ? 'Cao' : 'NT'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-medium">{alert.hostname}</TableCell>
-                      <TableCell className="font-mono text-xs">{alert.source}</TableCell>
-                      <TableCell className="max-w-xs truncate">{alert.summary}</TableCell>
-                      <TableCell className="text-sm">{formatTimestamp(alert.ts)}</TableCell>
-                      <TableCell>
-                        {alert.is_processed === 1 ? (
+                        {warning.is_process ? (
                           <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
                             Đã xử lý
                           </Badge>
@@ -486,23 +356,20 @@ export function Alerts() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end space-x-2">
-                          {alert.is_processed === 0 && (
+                          {!warning.is_process && (
                             <Button 
                               variant="ghost" 
                               size="sm" 
                               className="scale-hover text-green-500" 
-                              onClick={() => handleMarkAsProcessed(alert.id)}
+                              onClick={() => handleMarkAsProcessed(warning.id)}
                             >
                               <CheckCircle className="h-4 w-4" />
                             </Button>
                           )}
-                          <Button variant="ghost" size="sm" className="scale-hover" onClick={() => handleViewDetail(alert)}>
+                          <Button variant="ghost" size="sm" className="scale-hover" onClick={() => handleViewDetail(warning)}>
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" className="scale-hover" onClick={() => handleEditClick(alert)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="scale-hover text-red-500" onClick={() => handleDeleteClick(alert)}>
+                          <Button variant="ghost" size="sm" className="scale-hover text-red-500" onClick={() => handleDeleteClick(warning)}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
@@ -533,55 +400,43 @@ export function Alerts() {
           <DialogHeader>
             <DialogTitle>Chi tiết cảnh báo</DialogTitle>
             <DialogDescription>
-              Thông tin chi tiết về cảnh báo bảo mật
+              Thông tin chi tiết về cảnh báo tài nguyên
             </DialogDescription>
           </DialogHeader>
-          {selectedAlert && (
+          {selectedWarning && (
             <div className="space-y-3 py-4 max-h-[60vh] overflow-y-auto">
               <div className="grid grid-cols-3 gap-2">
                 <div className="text-sm text-muted-foreground">ID:</div>
-                <div className="col-span-2 text-sm font-mono text-xs">{selectedAlert.id}</div>
+                <div className="col-span-2 text-sm font-mono text-xs">{selectedWarning.id}</div>
               </div>
               <div className="grid grid-cols-3 gap-2">
-                <div className="text-sm text-muted-foreground">Loại:</div>
+                <div className="text-sm text-muted-foreground">Tên:</div>
+                <div className="col-span-2 text-sm font-medium">{selectedWarning.display_name}</div>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="text-sm text-muted-foreground">Sử dụng:</div>
+                <div className="col-span-2 text-sm">{selectedWarning.usage.toFixed(2)} GB</div>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="text-sm text-muted-foreground">Tổng:</div>
+                <div className="col-span-2 text-sm">{selectedWarning.total.toFixed(2)} GB</div>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="text-sm text-muted-foreground">Tỷ lệ:</div>
                 <div className="col-span-2">
-                  <Badge variant="outline" className={getTypeColor(selectedAlert.type)}>
-                    {selectedAlert.type}
+                  <Badge variant="outline" className={getUsageColor(selectedWarning.usage, selectedWarning.total)}>
+                    {getUsagePercentage(selectedWarning.usage, selectedWarning.total)}%
                   </Badge>
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-2">
-                <div className="text-sm text-muted-foreground">Mức độ:</div>
-                <div className="col-span-2">
-                  <Badge variant="outline" className={getSeverityColor(selectedAlert.severity)}>
-                    {selectedAlert.severity}
-                  </Badge>
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="text-sm text-muted-foreground">Hostname:</div>
-                <div className="col-span-2 text-sm font-medium">{selectedAlert.hostname}</div>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="text-sm text-muted-foreground">Agent ID:</div>
-                <div className="col-span-2 text-sm font-mono text-xs">{selectedAlert.agent_id}</div>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="text-sm text-muted-foreground">Nguồn:</div>
-                <div className="col-span-2 text-sm font-mono">{selectedAlert.source}</div>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="text-sm text-muted-foreground">Tóm tắt:</div>
-                <div className="col-span-2 text-sm">{selectedAlert.summary}</div>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="text-sm text-muted-foreground">Thời gian:</div>
-                <div className="col-span-2 text-sm">{formatTimestamp(selectedAlert.ts)}</div>
+                <div className="text-sm text-muted-foreground">Người tạo:</div>
+                <div className="col-span-2 text-sm">{selectedWarning.created_by_user?.display_name || 'N/A'}</div>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div className="text-sm text-muted-foreground">Trạng thái:</div>
                 <div className="col-span-2">
-                  {selectedAlert.is_processed === 1 ? (
+                  {selectedWarning.is_process ? (
                     <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
                       Đã xử lý
                     </Badge>
@@ -592,129 +447,16 @@ export function Alerts() {
                   )}
                 </div>
               </div>
-              {selectedAlert.file_path && (
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="text-sm text-muted-foreground">File path:</div>
-                  <div className="col-span-2 text-sm font-mono text-xs break-all">{selectedAlert.file_path}</div>
-                </div>
-              )}
-              {selectedAlert.file_hash && (
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="text-sm text-muted-foreground">File hash:</div>
-                  <div className="col-span-2 text-sm font-mono text-xs break-all">{selectedAlert.file_hash}</div>
-                </div>
-              )}
-              {selectedAlert.yara_rule && (
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="text-sm text-muted-foreground">YARA Rule:</div>
-                  <div className="col-span-2 text-sm font-mono text-xs">{selectedAlert.yara_rule}</div>
-                </div>
-              )}
-              <div className="grid grid-cols-3 gap-2">
-                <div className="text-sm text-muted-foreground">Thiết bị:</div>
-                <div className="col-span-2 text-sm">{selectedAlert.agent.device_name}</div>
-              </div>
               <div className="grid grid-cols-3 gap-2">
                 <div className="text-sm text-muted-foreground">Ngày tạo:</div>
-                <div className="col-span-2 text-sm">{new Date(selectedAlert.created_at).toLocaleString('vi-VN')}</div>
+                <div className="col-span-2 text-sm">{formatDate(selectedWarning.created_at)}</div>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div className="text-sm text-muted-foreground">Cập nhật:</div>
-                <div className="col-span-2 text-sm">{new Date(selectedAlert.updated_at).toLocaleString('vi-VN')}</div>
+                <div className="col-span-2 text-sm">{formatDate(selectedWarning.updated_at)}</div>
               </div>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-xs">
-          <DialogHeader>
-            <DialogTitle>Chỉnh sửa cảnh báo</DialogTitle>
-            <DialogDescription>
-              Cập nhật thông tin cảnh báo
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit_hostname">Hostname</Label>
-              <Input
-                id="edit_hostname"
-                value={editFormData.hostname}
-                onChange={(e) => setEditFormData({ ...editFormData, hostname: e.target.value })}
-                placeholder="Nhập hostname"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit_type">Loại cảnh báo</Label>
-              <Input
-                id="edit_type"
-                value={editFormData.type}
-                onChange={(e) => setEditFormData({ ...editFormData, type: e.target.value })}
-                placeholder="Nhập loại cảnh báo"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit_severity">Mức độ</Label>
-              <Select
-                value={editFormData.severity}
-                onValueChange={(value: string) => setEditFormData({ ...editFormData, severity: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Thấp</SelectItem>
-                  <SelectItem value="medium">Trung bình</SelectItem>
-                  <SelectItem value="high">Cao</SelectItem>
-                  <SelectItem value="critical">Nghiêm trọng</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit_source">Nguồn</Label>
-              <Input
-                id="edit_source"
-                value={editFormData.source}
-                onChange={(e) => setEditFormData({ ...editFormData, source: e.target.value })}
-                placeholder="Nhập nguồn"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit_summary">Tóm tắt</Label>
-              <Textarea
-                id="edit_summary"
-                value={editFormData.summary}
-                onChange={(e) => setEditFormData({ ...editFormData, summary: e.target.value })}
-                placeholder="Nhập tóm tắt"
-                rows={3}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit_is_processed">Trạng thái xử lý</Label>
-              <Select
-                value={editFormData.is_processed?.toString()}
-                onValueChange={(value: string) => setEditFormData({ ...editFormData, is_processed: Number(value) })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">Chưa xử lý</SelectItem>
-                  <SelectItem value="1">Đã xử lý</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Hủy
-            </Button>
-            <Button onClick={handleEdit}>
-              Cập nhật
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -742,7 +484,7 @@ export function Alerts() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa nhiều</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa <strong>{selectedAlerts.size}</strong> cảnh báo đã chọn? Hành động này không thể hoàn tác.
+              Bạn có chắc chắn muốn xóa <strong>{selectedWarnings.size}</strong> cảnh báo đã chọn? Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
