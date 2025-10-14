@@ -61,8 +61,9 @@ export function PeripheralDevices() {
       resetForm();
       toast.success('Thêm thiết bị ngoại vi thành công!');
       setReload(!reload);
-    } catch {
-      toast.error('Lỗi khi thêm thiết bị ngoại vi');
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi thêm thiết bị ngoại vi';
+      toast.error(errorMessage);
     }
   };
 
@@ -86,8 +87,9 @@ export function PeripheralDevices() {
       resetForm();
       setReload(!reload);
       toast.success('Cập nhật thiết bị ngoại vi thành công!');
-    } catch {
-      toast.error('Lỗi khi cập nhật thiết bị ngoại vi');
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi cập nhật thiết bị ngoại vi';
+      toast.error(errorMessage);
     }
   };
 
@@ -104,8 +106,9 @@ export function PeripheralDevices() {
       setSelectedItem(null);
       toast.success('Xóa thiết bị ngoại vi thành công!');
       setReload(!reload);
-    } catch {
-      toast.error('Lỗi khi xóa thiết bị ngoại vi');
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi xóa thiết bị ngoại vi';
+      toast.error(errorMessage);
     }
   };
 

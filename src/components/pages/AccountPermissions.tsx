@@ -90,9 +90,10 @@ export function AccountPermissions() {
       setReload(!reload)
       setIsDialogOpen(false)
     }
-    catch (e) {
+    catch (e: any) {
       console.log(e);
-
+      const errorMessage = e?.response?.data?.message || e?.message || 'Lỗi khi thêm quyền';
+      toast.error(errorMessage);
     }
 
   };
@@ -111,15 +112,20 @@ export function AccountPermissions() {
   };
 
   const handleUpdate =  async() => {
-    const res = await roleService.update(id,formData)
-    const res2 = await roleService.updateRoleAction(id,{
-      id:id,
-      actionIds:actionSelect
-    })
-    setIsEditDialogOpen(false);
-    setSelectedPermission(null);
-    setFormData({ description: '', display_name: '' });
-    toast.success('Cập nhật quyền thành công!');
+    try {
+      const res = await roleService.update(id,formData)
+      const res2 = await roleService.updateRoleAction(id,{
+        id:id,
+        actionIds:actionSelect
+      })
+      setIsEditDialogOpen(false);
+      setSelectedPermission(null);
+      setFormData({ description: '', display_name: '' });
+      toast.success('Cập nhật quyền thành công!');
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi cập nhật quyền';
+      toast.error(errorMessage);
+    }
   };
 
   const handleDeleteClick = (perm: any) => {
@@ -128,11 +134,16 @@ export function AccountPermissions() {
   };
 
   const handleDelete = async() => {
-    await roleService.delete(selectedPermission.id)
-    setIsDeleteDialogOpen(false);
-    setSelectedPermission(null);
-    setReload(!reload)
-    toast.success('Xóa quyền tài khoản thành công!');
+    try {
+      await roleService.delete(selectedPermission.id)
+      setIsDeleteDialogOpen(false);
+      setSelectedPermission(null);
+      setReload(!reload)
+      toast.success('Xóa quyền tài khoản thành công!');
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi xóa quyền tài khoản';
+      toast.error(errorMessage);
+    }
   };
   useEffect(() => {
     const fetchAction = async () => {

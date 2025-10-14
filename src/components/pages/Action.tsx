@@ -60,8 +60,9 @@ export function Action() {
       setIsDialogOpen(false);
       setFormData({ display_name: '', url: '', method: '', description: '', is_active: true });
       setReload(!reload);
-    } catch {
-      toast.error('Lỗi khi thêm API endpoint');
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi thêm API endpoint';
+      toast.error(errorMessage);
     }
   };
 
@@ -84,8 +85,9 @@ export function Action() {
       setIsEditDialogOpen(false);
       setSelectedItem(null);
       setReload(!reload);
-    } catch {
-      toast.error('Lỗi khi cập nhật API endpoint');
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi cập nhật API endpoint';
+      toast.error(errorMessage);
     }
   };
 
@@ -101,8 +103,9 @@ export function Action() {
       setIsDeleteDialogOpen(false);
       setSelectedItem(null);
       setReload(!reload);
-    } catch {
-      toast.error('Lỗi khi xóa API endpoint');
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi xóa API endpoint';
+      toast.error(errorMessage);
     }
   };
 

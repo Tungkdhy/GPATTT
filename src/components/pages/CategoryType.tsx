@@ -66,8 +66,9 @@ export function CategoryTypes() {
       resetForm();
       toast.success('Thêm danh mục thành công!');
       setReload(!reload);
-    } catch {
-      toast.error('Lỗi khi thêm danh mục');
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi thêm danh mục';
+      toast.error(errorMessage);
     }
   };
 
@@ -96,8 +97,9 @@ export function CategoryTypes() {
       resetForm();
       setReload(!reload);
       toast.success('Cập nhật danh mục thành công!');
-    } catch {
-      toast.error('Lỗi khi cập nhật danh mục');
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi cập nhật danh mục';
+      toast.error(errorMessage);
     }
   };
 
@@ -114,8 +116,9 @@ export function CategoryTypes() {
       setSelectedItem(null);
       toast.success('Xóa danh mục thành công!');
       setReload(!reload);
-    } catch {
-      toast.error('Lỗi khi xóa danh mục');
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi xóa danh mục';
+      toast.error(errorMessage);
     }
   };
 

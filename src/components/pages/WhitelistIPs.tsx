@@ -170,7 +170,8 @@ export function WhitelistIPs() {
       toast.success('Thêm IP manager thành công!');
       setReload(!reload);
     } catch (error: any) {
-      toast.error(error.message || 'Lỗi khi thêm IP manager');
+      const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi thêm IP manager';
+      toast.error(errorMessage);
     }
   };
 
@@ -228,7 +229,8 @@ export function WhitelistIPs() {
       toast.success('Cập nhật IP manager thành công!');
       setReload(!reload);
     } catch (error: any) {
-      toast.error(error.message || 'Lỗi khi cập nhật IP manager');
+      const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi cập nhật IP manager';
+      toast.error(errorMessage);
     }
   };
 
@@ -245,7 +247,8 @@ export function WhitelistIPs() {
       toast.success('Xóa IP manager thành công!');
       setReload(!reload);
     } catch (error: any) {
-      toast.error(error.message || 'Lỗi khi xóa IP manager');
+      const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi xóa IP manager';
+      toast.error(errorMessage);
     }
   };
 
@@ -274,7 +277,8 @@ export function WhitelistIPs() {
       
       toast.success('Xuất file CSV thành công!');
     } catch (error: any) {
-      toast.error(error.message || 'Lỗi khi xuất file CSV');
+      const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi xuất file CSV';
+      toast.error(errorMessage);
     }
   };
 

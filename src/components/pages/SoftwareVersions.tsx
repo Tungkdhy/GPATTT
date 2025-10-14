@@ -31,7 +31,8 @@ export function SoftwareVersions() {
       setVersions(res.data.rows || []);
       setTotalCount(res.data.count || 0);
     } catch (e: any) {
-      toast.error('Không thể tải danh sách phiên bản quản lý');
+      const errorMessage = e?.response?.data?.message || e?.message || 'Không thể tải danh sách phiên bản quản lý';
+      toast.error(errorMessage);
     }
   };
 
@@ -63,7 +64,8 @@ export function SoftwareVersions() {
       resetForm();
       await loadList();
     } catch (e: any) {
-      toast.error('Không thể thêm phiên bản');
+      const errorMessage = e?.response?.data?.message || e?.message || 'Không thể thêm phiên bản';
+      toast.error(errorMessage);
     }
   };
 
@@ -86,7 +88,8 @@ export function SoftwareVersions() {
       resetForm();
       await loadList();
     } catch (e: any) {
-      toast.error('Không thể cập nhật phiên bản');
+      const errorMessage = e?.response?.data?.message || e?.message || 'Không thể cập nhật phiên bản';
+      toast.error(errorMessage);
     }
   };
 
@@ -104,7 +107,8 @@ export function SoftwareVersions() {
       setSelectedItem(null);
       await loadList();
     } catch (e: any) {
-      toast.error('Không thể xóa phiên bản');
+      const errorMessage = e?.response?.data?.message || e?.message || 'Không thể xóa phiên bản';
+      toast.error(errorMessage);
     }
   };
 

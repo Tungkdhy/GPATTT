@@ -37,9 +37,10 @@ export function ScenarioLogs() {
         // Load users
         const usersResponse = await usersService.getAll(1, 10000, {});
         setUsers(usersResponse?.rows || []);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading filter options:', error);
-        toast.error('Lỗi khi tải dữ liệu filter');
+        const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi tải dữ liệu filter';
+        toast.error(errorMessage);
       }
     };
 

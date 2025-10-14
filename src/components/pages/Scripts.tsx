@@ -49,9 +49,10 @@ export function Scripts() {
         setLoadingTypes(true);
         const types = await scriptCategoriesService.getAll(1, 10000,{scope:"SCRIPT"});
         setScriptTypes(types.data.rows);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading script types:', error);
-        toast.error('Lỗi khi tải danh sách loại kịch bản');
+        const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi tải danh sách loại kịch bản';
+        toast.error(errorMessage);
       } finally {
         setLoadingTypes(false);
       }
@@ -101,9 +102,10 @@ export function Scripts() {
       resetForm();
       toast.success('Thêm kịch bản thành công!');
       setReload(!reload);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating script:', error);
-      toast.error('Lỗi khi thêm kịch bản');
+      const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi thêm kịch bản';
+      toast.error(errorMessage);
     }
   };
 
@@ -142,9 +144,10 @@ export function Scripts() {
       setSelectedScript(null);
       toast.success('Cập nhật kịch bản thành công!');
       setReload(!reload);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating script:', error);
-      toast.error('Lỗi khi cập nhật kịch bản');
+      const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi cập nhật kịch bản';
+      toast.error(errorMessage);
     }
   };
 
@@ -162,9 +165,10 @@ export function Scripts() {
       setSelectedScript(null);
       toast.success('Xóa kịch bản thành công!');
       setReload(!reload);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting script:', error);
-      toast.error('Lỗi khi xóa kịch bản');
+      const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi xóa kịch bản';
+      toast.error(errorMessage);
     }
   };
 

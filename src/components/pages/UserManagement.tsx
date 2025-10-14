@@ -87,8 +87,9 @@ export function UserManagement() {
       setFormData({ user_name: '', display_name: '', role_id: '', password: '' });
       toast.success('Thêm người dùng thành công!');
       setReload(!reload)
-    } catch (error) {
-      toast.error('Lỗi khi thêm người dùng');
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi thêm người dùng';
+      toast.error(errorMessage);
     }
   };
 
@@ -116,8 +117,9 @@ export function UserManagement() {
       setReload(!reload)
 
       toast.success('Cập nhật người dùng thành công!');
-    } catch (error) {
-      toast.error('Lỗi khi cập nhật người dùng');
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi cập nhật người dùng';
+      toast.error(errorMessage);
     }
   };
 
@@ -134,8 +136,9 @@ export function UserManagement() {
       setSelectedUser(null);
       toast.success('Xóa người dùng thành công!');
       setReload(!reload)
-    } catch (error) {
-      toast.error('Lỗi khi xóa người dùng');
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi xóa người dùng';
+      toast.error(errorMessage);
     }
   };
 
@@ -144,8 +147,9 @@ export function UserManagement() {
       await usersService.toggleActive(userId, !currentStatus);
       toast.success(`Đã ${!currentStatus ? 'kích hoạt' : 'vô hiệu hóa'} người dùng thành công!`);
       setReload(!reload);
-    } catch (error) {
-      toast.error('Lỗi khi cập nhật trạng thái người dùng');
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi cập nhật trạng thái người dùng';
+      toast.error(errorMessage);
     }
   };
 

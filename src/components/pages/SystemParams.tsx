@@ -21,7 +21,7 @@ import {
 } from '../ui/alert-dialog';
 import { Label } from '../ui/label';
 import { Plus, Edit, Trash2 } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { parametersService } from '../../services/api';
 import { useServerPagination } from '@/hooks/useServerPagination';
 
@@ -74,8 +74,9 @@ export function SystemParams() {
       resetForm();
       toast.success('Thêm tham số thành công!');
       setReload(!reload);
-    } catch (error) {
-      toast.error('Lỗi khi thêm tham số');
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi thêm tham số';
+      toast.error(errorMessage);
     }
   };
 
@@ -112,8 +113,9 @@ export function SystemParams() {
       resetForm();
       setReload(!reload);
       toast.success('Cập nhật tham số thành công!');
-    } catch (error) {
-      toast.error('Lỗi khi cập nhật tham số');
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi cập nhật tham số';
+      toast.error(errorMessage);
     }
   };
 
@@ -129,8 +131,9 @@ export function SystemParams() {
       setSelectedParam(null);
       toast.success('Xóa tham số thành công!');
       setReload(!reload);
-    } catch (error) {
-      toast.error('Lỗi khi xóa tham số');
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi xóa tham số';
+      toast.error(errorMessage);
     }
   };
 

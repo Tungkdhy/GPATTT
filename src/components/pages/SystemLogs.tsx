@@ -29,8 +29,10 @@ export function SystemLogs() {
       try {
         const types = await logsService.getLogTypes();
         setLogTypes(types);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching log types:', error);
+        const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi tải danh sách loại log';
+        toast.error(errorMessage);
       }
     };
     fetchLogTypes();
@@ -176,9 +178,10 @@ export function SystemLogs() {
       // Refresh the data
       setReload(!reload);
       refreshData();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting log:', error);
-      toast.error('Có lỗi xảy ra khi xóa log');
+      const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi xóa log';
+      toast.error(errorMessage);
     }
   };
 
@@ -190,8 +193,9 @@ export function SystemLogs() {
       toast.success('Xuất dữ liệu thành công');
       // Refresh data after export
       refreshData();
-    } catch (error) {
-      toast.error('Có lỗi xảy ra khi xuất dữ liệu');
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi xuất dữ liệu';
+      toast.error(errorMessage);
     }
   };
 
