@@ -47,6 +47,19 @@ export interface ScriptFilters {
   script_type_id?: string;
 }
 
+export interface ScriptStatistics {
+  statusCode: string;
+  message: string;
+  data: {
+    period: string | null;
+    summary: {
+      total_scripts: number;
+      published_scripts: number;
+      unpublished_scripts: number;
+    };
+  };
+}
+
 class ScriptsService {
   private baseUrl = 'scripts';
 
@@ -94,6 +107,17 @@ class ScriptsService {
   async publish(id: string, is_published: boolean): Promise<Script> {
     const response = await axiosInstance.put(`${this.baseUrl}/${id}/publish`, { is_published });
     return response.data.data;
+  }
+
+  async getStatistics(start_date?: string, end_date?: string): Promise<ScriptStatistics> {
+    const params: any = {};
+    if (start_date) params.start_date = start_date;
+    if (end_date) params.end_date = end_date;
+    
+    const response = await axiosInstance.get(`/dashboard/${this.baseUrl}/statistics`, { params });
+    console.log(response);
+    
+    return response.data;
   }
 }
 

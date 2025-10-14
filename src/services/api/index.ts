@@ -35,6 +35,8 @@ export { systemBackupService } from './systemBackup.service';
 export { unsafeDevicesService } from './unsafeDevices.service';
 export { alertsService } from './alerts.service';
 export { default as warningService } from './warning.service';
+export { default as cloudAuthService } from './cloudAuth.service';
+export { default as peripheralDevicesService } from './peripheralDevices.service';
 // parametersService
 // Export all services from allServices.ts
 export {
@@ -107,6 +109,12 @@ export type {
   WarningParams,
   WarningResponse
 } from './warning.service';
+export type {
+  TokenDetails,
+  CloudAuthManager,
+  TokenDetailsResponse,
+  CloudAuthManagersResponse
+} from './cloudAuth.service';
 export type { 
   ScriptCategory, 
   CreateScriptCategoryDto, 
@@ -117,7 +125,8 @@ export type {
   Script,
   CreateScriptDto,
   UpdateScriptDto,
-  ScriptResponse
+  ScriptResponse,
+  ScriptStatistics
 } from './scripts.service';
 export type {
   ScriptHistory,

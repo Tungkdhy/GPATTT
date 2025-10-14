@@ -29,18 +29,40 @@ export interface Alert {
   };
 }
 
+export interface AlertSeverityBreakdown {
+  severity: string;
+  count: string;
+}
+
+export interface AlertProcessedBreakdown {
+  status: string;
+  count: string;
+}
+export interface AlertTypeBreakdown {
+  type: string;
+  count: string;
+}
+export interface AlertsStatistics {
+  statusCode: string;
+  message: string;
+  data: {
+    period: string | null;
+    summary: {
+      total_alerts: number;
+      type_breakdown: AlertTypeBreakdown[];
+      severity_breakdown: AlertSeverityBreakdown[];
+      processed_breakdown: AlertProcessedBreakdown[];
+    };
+  };
+}
+
 export interface CreateAlertDto {
   agent_id: string;
   hostname: string;
   ts: number;
   type: string;
   severity: string;
-  source: string;
-  summary: string;
-  details_json?: any;
-  file_path?: string;
-  file_hash?: string;
-  yara_rule?: string;
+  count: string;
 }
 
 export interface UpdateAlertDto {
@@ -163,7 +185,19 @@ class AlertsService {
     }>(this.baseUrl, data);
     return response.data.data;
   }
-
+  async getStatistics(start_date?: string, end_date?: string): Promise<AlertsStatistics> {
+    try {
+      const params: any = {};
+      if (start_date) params.start_date = start_date;
+      if (end_date) params.end_date = end_date;
+      
+      const response = await axiosInstance.get('/dashboard/alerts/statistics', { params });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching alerts statistics:', error);
+      throw error;
+    }
+  }
   async update(id: string, data: UpdateAlertDto): Promise<Alert> {
     const response = await axiosInstance.put<{
       statusCode: string;

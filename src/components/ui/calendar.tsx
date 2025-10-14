@@ -3,7 +3,8 @@
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react@0.487.0";
 import { DayPicker } from "react-day-picker@8.10.1";
-
+import "react-day-picker/dist/style.css";
+// import "react-day-picker/style.css";
 import { cn } from "./utils";
 import { buttonVariants } from "./button";
 

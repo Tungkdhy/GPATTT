@@ -1,5 +1,5 @@
-import axiosInstance from './axiosInstance';
-import { API_ENDPOINTS } from './endpoints';
+// import axiosInstance from './axiosInstance';
+// import { API_ENDPOINTS } from './endpoints';
 
 // Mock data
 const mockScenarios = [
@@ -33,6 +33,19 @@ export interface UpdateScenarioDto {
   category?: string;
   priority?: string;
   status?: string;
+}
+
+export interface ScenarioStatistics {
+  statusCode: string;
+  message: string;
+  data: {
+    period: string | null;
+    summary: {
+      total_scenarios: number;
+      active_scenarios: number;
+      inactive_scenarios: number;
+    };
+  };
 }
 
 class ScenariosService {
@@ -115,7 +128,7 @@ class ScenariosService {
     }
   }
 
-  async delete(id: number): Promise<void> {
+  async delete(_id: number): Promise<void> {
     try {
       // await axiosInstance.delete(API_ENDPOINTS.SCENARIOS.DELETE(id));
       
@@ -124,6 +137,37 @@ class ScenariosService {
       });
     } catch (error) {
       console.error('Error deleting scenario:', error);
+      throw error;
+    }
+  }
+
+  async getStatistics(start_date?: string, end_date?: string): Promise<ScenarioStatistics> {
+    try {
+      const params: any = {};
+      if (start_date) params.start_date = start_date;
+      if (end_date) params.end_date = end_date;
+      
+      // const response = await axiosInstance.get('/scenarios/statistics', { params });
+      // return response.data;
+      
+      // Mock data for now
+      const activeCount = mockScenarios.filter(s => s.status === 'active').length;
+      const inactiveCount = mockScenarios.filter(s => s.status === 'inactive').length;
+      
+      return {
+        statusCode: '10000',
+        message: 'Scenarios statistics retrieved successfully',
+        data: {
+          period: null,
+          summary: {
+            total_scenarios: mockScenarios.length,
+            active_scenarios: activeCount,
+            inactive_scenarios: inactiveCount
+          }
+        }
+      };
+    } catch (error) {
+      console.error('Error fetching scenario statistics:', error);
       throw error;
     }
   }

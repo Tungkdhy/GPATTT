@@ -27,6 +27,7 @@ import { MalwareTypes } from './components/pages/MalwareTypes';
 import { AlertLevels } from './components/pages/AlertLevels';
 import { ErrorCodes } from './components/pages/ErrorCodes';
 import { RegionManagement } from './components/pages/RegionManagement';
+import { PeripheralDevices } from './components/pages/PeripheralDevices';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { AuthProvider } from './components/auth/AuthContext';
 import { Action } from './components/pages/Action';
@@ -35,6 +36,7 @@ import { CloudManagers } from './components/pages/CloudManagers';
 import { SystemBackup } from './components/pages/SystemBackup';
 import { Scripts } from './components/pages/Scripts';
 import { Alerts } from './components/pages/Alerts';
+import { CloudAuthentication } from './components/pages/CloudAuthentication';
 
 export default function App() {
   // Set dark theme on mount
@@ -81,8 +83,10 @@ export default function App() {
                     <Route path="/alert-levels" element={<AlertLevels />} />
                     <Route path="/error-codes" element={<ErrorCodes />} />
                     <Route path="/regions" element={<RegionManagement />} />
+                    <Route path="/peripheral-devices" element={<PeripheralDevices />} />
                     <Route path="/category-type" element={<CategoryTypes />} />
                     <Route path="/cloud-managers" element={<CloudManagers />} />
+                    <Route path="/cloud-authentication" element={<CloudAuthentication />} />
                     <Route path="/system-backup" element={<SystemBackup />} />
                     {/* <Route path="/script-categories" element={<ScriptCategories />} /> */}
                   </Routes>

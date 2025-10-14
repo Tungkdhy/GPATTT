@@ -34,6 +34,23 @@ export interface UpdateDeviceDto {
   location?: string;
 }
 
+export interface DeviceStatusBreakdown {
+  device_status: string;
+  count: string;
+}
+
+export interface DeviceStatistics {
+  statusCode: string;
+  message: string;
+  data: {
+    period: null;
+    summary: {
+      total_devices: number;
+      status_breakdown: DeviceStatusBreakdown[];
+    };
+  };
+}
+
 class DevicesService {
   async getAll(): Promise<Device[]> {
     try {
@@ -123,6 +140,25 @@ class DevicesService {
       });
     } catch (error) {
       console.error('Error deleting device:', error);
+      throw error;
+    }
+  }
+
+  async getStatistics(start_date?: string, end_date?: string): Promise<DeviceStatistics> {
+    try {
+      const params = new URLSearchParams();
+      if (start_date) params.append('start_date', start_date);
+      if (end_date) params.append('end_date', end_date);
+      
+      const queryString = params.toString();
+      const url = queryString ? 
+        `/dashboard/managed-devices/statistics?${queryString}` : 
+        '/dashboard/managed-devices/statistics';
+      
+      const response = await axiosInstance.get(url);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching device statistics:', error);
       throw error;
     }
   }

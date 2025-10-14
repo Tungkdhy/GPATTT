@@ -258,8 +258,8 @@ export function UserManagement() {
               <TableRow>
                 <TableHead>Tên đăng nhập</TableHead>
                 <TableHead>Tên hiển thị</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Số điện thoại</TableHead>
+                {/* <TableHead>Email</TableHead>
+                <TableHead>Số điện thoại</TableHead> */}
                 <TableHead>Vai trò</TableHead>
                 <TableHead>Trạng thái</TableHead>
                 <TableHead>Kích hoạt</TableHead>
@@ -271,8 +271,8 @@ export function UserManagement() {
                 <TableRow key={user.id} className="stagger-item" style={{ animationDelay: `${index * 0.05}s` }}>
                   <TableCell className="font-medium">{user.user_name}</TableCell>
                   <TableCell>{user.display_name}</TableCell>
-                  <TableCell>{user.email || '-'}</TableCell>
-                  <TableCell>{user.phone_number || '-'}</TableCell>
+                  {/* <TableCell>{user.email || '-'}</TableCell>
+                  <TableCell>{user.phone_number || '-'}</TableCell> */}
                   <TableCell>
                     <Badge variant="outline" className={getRoleColor(user?.role?.display_name)}>
                       {user?.role?.display_name}
