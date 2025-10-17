@@ -80,7 +80,9 @@ export type {
 export type { 
   CloudManager, 
   CreateCloudManagerDto, 
-  UpdateCloudManagerDto 
+  UpdateCloudManagerDto,
+  Agent,
+  AgentsResponse
 } from './cloudManagers.service';
 export type {
   SystemBackup,

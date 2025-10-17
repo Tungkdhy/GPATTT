@@ -91,7 +91,7 @@ export function SystemBackup() {
   const handleCreateBackup = async () => {
     try {
       setLoading(true);
-      await systemBackupService.createBackup();
+      await systemBackupService.createBackup({ type: 0 });
       toast.success('Tạo sao lưu thành công!');
       setReload(!reload);
     } catch (error) {

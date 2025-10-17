@@ -3,29 +3,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { Shield, Lock, AlertCircle } from 'lucide-react';
+import { Shield, Lock } from 'lucide-react';
 import { useAuth } from './AuthContext';
 
 export function LoginForm() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
     
-    // Simulate API call
-    setTimeout(() => {
-      const success = login(username, password);
-      if (!success) {
-        setError('Sai thông tin đăng nhập! Vui lòng sử dụng admin/admin');
-      }
+    try {
+      await login(username, password);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -66,12 +61,6 @@ export function LoginForm() {
                 required
               />
             </div>
-            {error && (
-              <div className="flex items-center gap-2 p-3 rounded-md bg-destructive/10 text-destructive text-sm">
-                <AlertCircle className="h-4 w-4" />
-                <span>{error}</span>
-              </div>
-            )}
             <Button 
               type="submit" 
               className="w-full btn-animate scale-hover" 

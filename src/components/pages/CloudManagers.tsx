@@ -10,7 +10,7 @@ import { Label } from '../ui/label';
 import { AdvancedFilter, FilterOption } from '../common/AdvancedFilter';
 import { Plus, Edit, Trash2, Eye, EyeOff, Copy } from 'lucide-react';
 import { toast } from 'sonner';
-import { cloudManagersService } from '../../services/api';
+import { cloudManagersService, Agent } from '../../services/api';
 import { useServerPagination } from '@/hooks/useServerPagination';
 
 export function CloudManagers() {
@@ -20,8 +20,11 @@ export function CloudManagers() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isAgentsDialogOpen, setIsAgentsDialogOpen] = useState(false);
   const [selectedManager, setSelectedManager] = useState<any>(null);
   const [showTokens, setShowTokens] = useState<Record<string, boolean>>({});
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [agentsLoading, setAgentsLoading] = useState(false);
   const [formData, setFormData] = useState({
     url: '',
     user_name: '',
@@ -44,12 +47,12 @@ export function CloudManagers() {
     {
       key: 'user_name',
       label: 'Tên người dùng',
-      type: 'text'
+      type: 'select'
     },
     {
       key: 'url',
       label: 'URL',
-      type: 'text'
+      type: 'select'
     }
   ];
 
@@ -81,9 +84,28 @@ export function CloudManagers() {
     }
   };
 
+  const handleRowClick = async (manager: any) => {
+    try {
+      setSelectedManager(manager);
+      setAgentsLoading(true);
+      const response = await cloudManagersService.getAgents(manager.id);
+      setAgents(response.agents);
+      setIsAgentsDialogOpen(true);
+    } catch (error: any) {
+      console.error('Error fetching agents:', error);
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error('Lỗi khi tải danh sách agents');
+      }
+    } finally {
+      setAgentsLoading(false);
+    }
+  };
+
   const handleAdd = async () => {
     try {
-      const response = await cloudManagersService.create(formData);
+      await cloudManagersService.create(formData);
       setIsDialogOpen(false);
       setFormData({ url: '', user_name: '', pass: '', token: '', refresh_token: '', expired_time: '' });
       toast.success('Thêm trình quản lý đám mây thành công!');
@@ -113,7 +135,7 @@ export function CloudManagers() {
 
   const handleUpdate = async () => {
     try {
-      const response = await cloudManagersService.update(selectedManager.id, formData);
+      await cloudManagersService.update(selectedManager.id, formData);
       setIsEditDialogOpen(false);
       setSelectedManager(null);
       setFormData({ url: '', user_name: '', pass: '', token: '', refresh_token: '', expired_time: '' });
@@ -136,7 +158,7 @@ export function CloudManagers() {
 
   const handleDelete = async () => {
     try {
-      const response = await cloudManagersService.delete(selectedManager.id);
+      await cloudManagersService.delete(selectedManager.id);
       setIsDeleteDialogOpen(false);
       setSelectedManager(null);
       toast.success('Xóa trình quản lý đám mây thành công!');
@@ -278,7 +300,12 @@ export function CloudManagers() {
             </TableHeader>
             <TableBody>
               {cloudManagers.map((manager: any, index: number) => (
-                <TableRow key={manager.id} className="stagger-item" style={{ animationDelay: `${index * 0.05}s` }}>
+                <TableRow 
+                  key={manager.id} 
+                  className="stagger-item cursor-pointer hover:bg-muted/50" 
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                  onClick={() => handleRowClick(manager)}
+                >
                   <TableCell className="font-medium">
                     <span className="font-mono text-sm">{manager.url}</span>
                   </TableCell>
@@ -294,14 +321,20 @@ export function CloudManagers() {
                        <Button
                          variant="ghost"
                          size="sm"
-                         onClick={() => toggleTokenVisibility(manager.id)}
+                         onClick={(e: React.MouseEvent) => {
+                           e.stopPropagation();
+                           toggleTokenVisibility(manager.id);
+                         }}
                        >
                          {showTokens[manager.id] ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                        </Button>
                        <Button
                          variant="ghost"
                          size="sm"
-                         onClick={() => copyToClipboard(manager.token, 'Token')}
+                         onClick={(e: React.MouseEvent) => {
+                           e.stopPropagation();
+                           copyToClipboard(manager.token, 'Token');
+                         }}
                          className="opacity-60 hover:opacity-100"
                        >
                          <Copy className="h-3 w-3" />
@@ -319,14 +352,20 @@ export function CloudManagers() {
                        <Button
                          variant="ghost"
                          size="sm"
-                         onClick={() => toggleTokenVisibility(manager.id)}
+                         onClick={(e: React.MouseEvent) => {
+                           e.stopPropagation();
+                           toggleTokenVisibility(manager.id);
+                         }}
                        >
                          {showTokens[manager.id] ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                        </Button>
                        <Button
                          variant="ghost"
                          size="sm"
-                         onClick={() => copyToClipboard(manager.refresh_token, 'Refresh Token')}
+                         onClick={(e: React.MouseEvent) => {
+                           e.stopPropagation();
+                           copyToClipboard(manager.refresh_token, 'Refresh Token');
+                         }}
                          className="opacity-60 hover:opacity-100"
                        >
                          <Copy className="h-3 w-3" />
@@ -350,10 +389,26 @@ export function CloudManagers() {
                   <TableCell>{formatDate(manager.created_at)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">
-                      <Button variant="ghost" size="sm" className="scale-hover" onClick={() => handleEdit(manager)}>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="scale-hover" 
+                        onClick={(e: React.MouseEvent) => {
+                          e.stopPropagation();
+                          handleEdit(manager);
+                        }}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" className="scale-hover" onClick={() => handleDeleteClick(manager)}>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="scale-hover" 
+                        onClick={(e: React.MouseEvent) => {
+                          e.stopPropagation();
+                          handleDeleteClick(manager);
+                        }}
+                      >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
@@ -434,6 +489,143 @@ export function CloudManagers() {
           <DialogFooter>
             <Button type="submit" className="w-full" onClick={handleUpdate}>
               Cập nhật
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Agents Dialog */}
+      <Dialog open={isAgentsDialogOpen} onOpenChange={setIsAgentsDialogOpen}>
+        <DialogContent 
+          style={{ 
+            width: '90vw', 
+            maxWidth: '1200px', 
+            // height: '80vh', 
+            maxHeight: '800px' 
+          }}
+          className="overflow-y-auto"
+        >
+          <DialogHeader>
+            <DialogTitle>Danh sách Agents</DialogTitle>
+            <DialogDescription>
+              Cloud Manager: <strong>{selectedManager?.url}</strong> - Tổng cộng {agents.length} agents
+            </DialogDescription>
+          </DialogHeader>
+          
+          {agentsLoading ? (
+            <div 
+              className="flex items-center justify-center" 
+              style={{ padding: '32px 0' }}
+            >
+              <div 
+                className="animate-spin rounded-full border-b-2 border-primary"
+                style={{ height: '24px', width: '24px' }}
+              ></div>
+              <span style={{ marginLeft: '8px' }}>Đang tải danh sách agents...</span>
+            </div>
+          ) : (
+            <div style={{ marginBottom: '16px' }}>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Hostname</TableHead>
+                    <TableHead>IP Address</TableHead>
+                    <TableHead>OS</TableHead>
+                    <TableHead>CPU Info</TableHead>
+                    <TableHead>RAM (GB)</TableHead>
+                    <TableHead>Disk (GB)</TableHead>
+                    <TableHead>Last Seen</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {agents.map((agent: Agent, index: number) => (
+                    <TableRow key={agent.id} className="stagger-item" style={{ animationDelay: `${index * 0.05}s` }}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center">
+                          <div 
+                            className="bg-green-500 rounded-full"
+                            style={{ 
+                              width: '8px', 
+                              height: '8px', 
+                              marginRight: '8px' 
+                            }}
+                          ></div>
+                          {agent.hostname}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span 
+                          className="font-mono"
+                          style={{ fontSize: '14px' }}
+                        >
+                          {agent.ip}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{agent.os}</div>
+                          <div 
+                            className="text-muted-foreground"
+                            style={{ fontSize: '12px' }}
+                          >
+                            {agent.os_version}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span 
+                          className="text-muted-foreground"
+                          style={{ fontSize: '12px' }}
+                        >
+                          {agent.cpu_info || 'N/A'}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{agent.ram_total_gb} GB</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{agent.disk_total_gb} GB</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span 
+                          className="text-muted-foreground"
+                          style={{ fontSize: '14px' }}
+                        >
+                          {new Date(agent.last_seen * 1000).toLocaleString('vi-VN')}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={agent.status === 'active' ? 'default' : 'secondary'}
+                          className={
+                            agent.status === 'active' 
+                              ? 'bg-green-500/10 text-green-500 border-green-500/20' 
+                              : 'bg-gray-500/10 text-gray-500 border-gray-500/20'
+                          }
+                        >
+                          {agent.status === 'active' ? 'Hoạt động' : 'Không hoạt động'}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              
+              {agents.length === 0 && (
+                <div 
+                  className="text-center text-muted-foreground"
+                  style={{ padding: '32px 0' }}
+                >
+                  Không có agents nào được tìm thấy
+                </div>
+              )}
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAgentsDialogOpen(false)}>
+              Đóng
             </Button>
           </DialogFooter>
         </DialogContent>

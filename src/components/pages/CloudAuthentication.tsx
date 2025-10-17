@@ -144,9 +144,9 @@ export function CloudAuthentication() {
     <div className="space-y-6 fade-in-up">
       <div className="slide-in-left flex justify-between items-center">
         <div>
-          <h1>Quản lý xác thực Cloud</h1>
+          <h1>Quản lý xác</h1>
           <p className="text-muted-foreground">
-            Quản lý token xác thực cho các Cloud Manager
+            Quản lý token xác thực cho các Quản lý đám mây
           </p>
         </div>
         <div className="flex gap-2">
@@ -156,15 +156,15 @@ export function CloudAuthentication() {
           </Button>
         </div>
       </div>
-
+git
       {/* Stats Cards */}
     
 
       <Card className="card-hover">
         <CardHeader>
-          <CardTitle>Danh sách Cloud Manager</CardTitle>
+          <CardTitle>Danh sách Quản lý đám mây</CardTitle>
           <CardDescription>
-            Hiển thị {cloudManagers.length} Cloud Manager trên trang {currentPage} / {totalPages}
+            Hiển thị {cloudManagers.length} Quản lý đám mây trên trang {currentPage} / {totalPages}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -181,8 +181,8 @@ export function CloudAuthentication() {
                   <TableRow>
                     <TableHead>Tên</TableHead>
                     <TableHead>URL</TableHead>
-                    <TableHead>User</TableHead>
-                    <TableHead>Token Status</TableHead>
+                    <TableHead>Người dùng</TableHead>
+                    <TableHead>Mã xác thực</TableHead>
                     <TableHead>Refresh Token</TableHead>
                     <TableHead>Ngày tạo</TableHead>
                     <TableHead className="text-right">Thao tác</TableHead>
@@ -216,7 +216,7 @@ export function CloudAuthentication() {
                               size="sm" 
                               className="scale-hover text-orange-500" 
                               onClick={() => handleDeleteTokenClick(cloud)}
-                              title="Xóa Token"
+                              title="Xóa mã xác thực"
                             >
                               <XCircle className="h-4 w-4" />
                             </Button>

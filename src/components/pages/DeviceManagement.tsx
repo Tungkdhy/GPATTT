@@ -59,7 +59,9 @@ export function DeviceManagement() {
     os: '',
     os_version: '',
     cpu_info: '',
-    ram_total_gb: ''
+    ram_total_gb: '',
+    agent_id: '',
+    token: ''
   });
 
   const filterOptions: FilterOption[] = [
@@ -160,7 +162,9 @@ export function DeviceManagement() {
       os: device.os,
       os_version: device.os_version,
       cpu_info: device.cpu_info,
-      ram_total_gb: device.ram_total_gb
+      ram_total_gb: device.ram_total_gb,
+      agent_id: device.agent_id || '',
+      token: device.token || ''
     });
     setIsEditDialogOpen(true);
   };
@@ -219,7 +223,9 @@ export function DeviceManagement() {
       os: '',
       os_version: '',
       cpu_info: '',
-      ram_total_gb: ''
+      ram_total_gb: '',
+      agent_id: '',
+      token: ''
     });
   };
 
@@ -393,6 +399,24 @@ export function DeviceManagement() {
                         placeholder="Nhập dung lượng RAM" 
                         value={formData.ram_total_gb}
                         onChange={(e) => setFormData({ ...formData, ram_total_gb: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="agent-id">Agent ID</Label>
+                      <Input 
+                        id="agent-id" 
+                        placeholder="Nhập Agent ID" 
+                        value={formData.agent_id}
+                        onChange={(e) => setFormData({ ...formData, agent_id: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="token">Token</Label>
+                      <Input 
+                        id="token" 
+                        placeholder="Nhập Token" 
+                        value={formData.token}
+                        onChange={(e) => setFormData({ ...formData, token: e.target.value })}
                       />
                     </div>
                   </div>
@@ -623,6 +647,24 @@ export function DeviceManagement() {
                   placeholder="Nhập dung lượng RAM" 
                   value={formData.ram_total_gb}
                   onChange={(e) => setFormData({ ...formData, ram_total_gb: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-agent-id">Agent ID</Label>
+                <Input 
+                  id="edit-agent-id" 
+                  placeholder="Nhập Agent ID" 
+                  value={formData.agent_id}
+                  onChange={(e) => setFormData({ ...formData, agent_id: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-token">Token</Label>
+                <Input 
+                  id="edit-token" 
+                  placeholder="Nhập Token" 
+                  value={formData.token}
+                  onChange={(e) => setFormData({ ...formData, token: e.target.value })}
                 />
               </div>
             </div>

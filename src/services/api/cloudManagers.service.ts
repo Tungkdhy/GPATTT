@@ -30,6 +30,25 @@ export interface UpdateCloudManagerDto {
   expired_time?: string;
 }
 
+export interface Agent {
+  id: string;
+  hostname: string;
+  ip: string;
+  os: string;
+  os_version: string;
+  cpu_info: string;
+  ram_total_gb: number;
+  disk_total_gb: number;
+  last_seen: number;
+  status: string;
+}
+
+export interface AgentsResponse {
+  cloud_manager_id: string;
+  agents: Agent[];
+  count: number;
+}
+
 class CloudManagersService {
   // Lấy danh sách cloud managers
   async getAll(page: number = 1, size: number = 20, params = {}): Promise<any> {
@@ -93,6 +112,18 @@ class CloudManagersService {
       throw error;
     }
   }
+
+  // Lấy danh sách agents của cloud manager
+  async getAgents(cloudManagerId: string): Promise<AgentsResponse> {
+    try {
+      const res = await axiosInstance.get(`cloud-management/${cloudManagerId}/agents`);
+      return res.data.data;
+    } catch (error) {
+      console.error('Error fetching agents:', error);
+      throw error;
+    }
+  }
 }
 
-export default new CloudManagersService();
+const cloudManagersService = new CloudManagersService();
+export default cloudManagersService;

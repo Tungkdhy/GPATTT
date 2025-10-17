@@ -1,3 +1,4 @@
+import { AnyARecord } from 'dns';
 import axiosInstance  from './axiosInstance';
 
 export interface SystemBackup {
@@ -57,9 +58,9 @@ class SystemBackupService {
     }
   }
 
-  async createBackup(): Promise<any> {
+  async createBackup(data:AnyARecord): Promise<any> {
     try {
-      const response = await axiosInstance.post(`${this.baseUrl}/backup`);
+      const response = await axiosInstance.post(`${this.baseUrl}/backup`, data);
       return response.data;
     } catch (error) {
       console.error('Error creating backup:', error);
