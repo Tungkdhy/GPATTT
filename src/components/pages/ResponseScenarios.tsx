@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Plus, Edit, Trash2, Search, Filter, X, ChevronDown, Eye, FileCode, Upload, XCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Filter, X, ChevronDown, Eye, FileCode, Upload, XCircle, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import scriptsService, { Script, CreateScriptDto } from '../../services/api/scripts.service';
 import scriptCategoriesService, { ScriptCategory } from '../../services/api/scriptCategories.service';
@@ -223,6 +223,34 @@ export function ResponseScenarios() {
     setCurrentPage(1);
     setReload(!reload);
   };
+
+  const handleExportCSV = async () => {
+    try {
+      toast.info('Đang xuất dữ liệu...');
+      const params = {
+        script_name: filters.script_name || undefined,
+        rule_file_name: filters.rule_file_name || undefined,
+        script_type_id: filters.script_type_id || undefined,
+        is_published: filters.is_published || undefined,
+      };
+      
+      const blob = await scriptsService.exportCSV(params, 1000);
+      
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `response-scenarios-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Đã xuất file CSV thành công!');
+    } catch (error: any) {
+      const errorMsg = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi xuất dữ liệu';
+      toast.error(errorMsg);
+    }
+  };
   
   const activeFiltersCount = Object.values(filters).filter(value => value !== '' && value !== undefined).length;
 
@@ -249,13 +277,18 @@ export function ResponseScenarios() {
                 Tổng cộng {total} kịch bản trong hệ thống
               </CardDescription>
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="btn-animate scale-hover">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Thêm Kịch bản
-                </Button>
-              </DialogTrigger>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={handleExportCSV} className="scale-hover">
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
+              </Button>
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="btn-animate scale-hover">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Thêm Kịch bản
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="overflow-hidden p-0" style={{ maxWidth: '900px', maxHeight: '90vh' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '90vh' }}>
                   <DialogHeader className="px-6 pt-6 pb-4 border-b">
@@ -348,7 +381,8 @@ export function ResponseScenarios() {
                   </DialogFooter>
                 </div>
               </DialogContent>
-            </Dialog>
+              </Dialog>
+            </div>
           </div>
         </CardHeader>
         <CardContent>

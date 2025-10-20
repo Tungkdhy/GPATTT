@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import { AdvancedFilter, FilterOption } from '../common/AdvancedFilter';
-import { Eye, AlertTriangle, Trash2, RefreshCw, CheckCircle } from 'lucide-react';
+import { Eye, Trash2, RefreshCw, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { warningService, Warning, WarningParams } from '@/services/api';
 import { TablePagination } from '../common/TablePagination';
@@ -39,9 +39,25 @@ export function Alerts() {
     setLoading(true);
     try {
       const params: WarningParams = {
-        search: searchTerm || undefined,
+        // search: searchTerm || undefined,
         ...filters
       };
+
+      // Add display_name search if searchTerm exists
+      if (searchTerm) {
+        params.display_name = searchTerm;
+      }
+
+      // Add date filters if they exist
+      if (filters.start_time) {
+        params.start_time = filters.start_time;
+      }
+      if (filters.end_time) {
+        params.end_time = filters.end_time;
+      }
+      
+      console.log('Warning filters:', filters);
+      console.log('Warning params:', params);
       
       const response = await warningService.getAll(currentPage, pageSize, params);
       setWarnings(response.data.rows);
@@ -75,24 +91,34 @@ export function Alerts() {
       ]
     },
     {
-      key: 'sort_by',
-      label: 'Sắp xếp theo',
-      type: 'select',
-      options: [
-        { value: 'display_name', label: 'Tên' },
-        { value: 'usage', label: 'Sử dụng' },
-        { value: 'created_at', label: 'Ngày tạo' }
-      ]
+      key: 'start_time',
+      label: 'Từ ngày',
+      type: 'date'
     },
     {
-      key: 'sort_order',
-      label: 'Thứ tự',
-      type: 'select',
-      options: [
-        { value: 'DESC', label: 'Giảm dần' },
-        { value: 'ASC', label: 'Tăng dần' }
-      ]
+      key: 'end_time',
+      label: 'Đến ngày',
+      type: 'date'
     }
+    // {
+    //   key: 'sort_by',
+    //   label: 'Sắp xếp theo',
+    //   type: 'select',
+    //   options: [
+    //     { value: 'display_name', label: 'Tên' },
+    //     { value: 'usage', label: 'Sử dụng' },
+    //     { value: 'created_at', label: 'Ngày tạo' }
+    //   ]
+    // },
+    // {
+    //   key: 'sort_order',
+    //   label: 'Thứ tự',
+    //   type: 'select',
+    //   options: [
+    //     { value: 'DESC', label: 'Giảm dần' },
+    //     { value: 'ASC', label: 'Tăng dần' }
+    //   ]
+    // }
   ];
 
   const getUsagePercentage = (usage: number, total: number) => {
@@ -285,7 +311,7 @@ export function Alerts() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* <div className="mb-6">
+          <div className="mb-6">
             <AdvancedFilter
               searchPlaceholder="Tìm kiếm cảnh báo..."
               searchValue={searchTerm}
@@ -293,9 +319,12 @@ export function Alerts() {
               filterOptions={filterOptions}
               filters={filters}
               onFiltersChange={setFilters}
-              onReset={() => setSearchTerm('')}
+              onReset={() => {
+                setSearchTerm('');
+                setFilters({});
+              }}
             />
-          </div> */}
+          </div>
 
           {loading ? (
             <LoadingSkeleton />

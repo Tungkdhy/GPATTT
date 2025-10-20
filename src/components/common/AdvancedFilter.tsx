@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -7,13 +6,14 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Badge } from '../ui/badge';
 import { Label } from '../ui/label';
 import { Separator } from '../ui/separator';
-import { Search, Filter, X, Calendar as CalendarIcon, RotateCcw, ChevronDown } from 'lucide-react';
+import { Search, Filter, X, ChevronDown } from 'lucide-react';
 
 export interface FilterOption {
   key: string;
   label: string;
-  type: 'select' | 'date' | 'dateRange' | 'multiSelect';
+  type: 'select' | 'date' | 'dateRange' | 'multiSelect' | 'text';
   options?: { value: string; label: string }[];
+  placeholder?: string;
 }
 
 interface AdvancedFilterProps {
@@ -36,7 +36,6 @@ export function AdvancedFilter({
   onReset
 }: AdvancedFilterProps) {
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
-  const [dateOpen, setDateOpen] = useState<string | null>(null);
 
   const handleFilterChange = (key: string, value: any) => {
     const newFilters = { ...filters, [key]: value };
@@ -84,25 +83,21 @@ export function AdvancedFilter({
 
       case 'date':
         return (
-          <Popover 
-            open={dateOpen === option.key} 
-            onOpenChange={(open:any) => setDateOpen(open ? option.key : null)}
-          >
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-full justify-start text-left font-normal h-8"
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {value ? value.toLocaleDateString('vi-VN') : `Chọn ${option.label.toLowerCase()}`}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <div className="p-4 text-sm text-muted-foreground">
-                Date picker temporarily disabled
-              </div>
-            </PopoverContent>
-          </Popover>
+          <div className="relative group">
+            <Input
+              type="date"
+              placeholder={option.placeholder || `Chọn ${option.label.toLowerCase()}`}
+              value={value || ''}
+              onChange={(e) => handleFilterChange(option.key, e.target.value)}
+              className="h-8 w-full bg-muted/50 border-muted-foreground/20 text-foreground w-full placeholder:text-muted-foreground/60 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all duration-200 hover:border-muted-foreground/40 cursor-pointer"
+              style={{
+                colorScheme: 'dark',
+                WebkitAppearance: 'none',
+                MozAppearance: 'textfield'
+              }}
+            />
+           
+          </div>
         );
 
       case 'multiSelect':
@@ -151,6 +146,16 @@ export function AdvancedFilter({
               </div>
             )}
           </div>
+        );
+
+      case 'text':
+        return (
+          <Input
+            placeholder={option.placeholder || `Nhập ${option.label.toLowerCase()}`}
+            value={value || ''}
+            onChange={(e) => handleFilterChange(option.key, e.target.value)}
+            className="h-8"
+          />
         );
 
       default:

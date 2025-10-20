@@ -3,15 +3,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import { AdvancedFilter, FilterOption } from '../common/AdvancedFilter';
 import { TablePagination } from '../common/TablePagination';
-import { Eye, Download, Activity, Trash2, Calendar, User, FileText, RefreshCw } from 'lucide-react';
+import { Eye, Download, Activity, Trash2, User, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useServerPagination } from '../../hooks/useServerPagination';
-import { logsService, Log, LogType } from '../../services/api';
+import { logsService, Log, axiosInstance } from '../../services/api';
 import { format } from 'date-fns';
+
+interface LogType {
+  id: string;
+  display_name: string;
+  code: string;
+}
 
 export function SystemLogs() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -20,61 +26,48 @@ export function SystemLogs() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [deleteLogId, setDeleteLogId] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [logTypes, setLogTypes] = useState<LogType[]>([]);
   const [reload,setReload] = useState(false);
+  const [logTypes, setLogTypes] = useState<LogType[]>([]);
 
-  // Fetch log types for filter options
-  useEffect(() => {
-    const fetchLogTypes = async () => {
-      try {
-        const types = await logsService.getLogTypes();
-        setLogTypes(types);
-      } catch (error: any) {
-        console.error('Error fetching log types:', error);
-        const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi tải danh sách loại log';
-        toast.error(errorMessage);
+  // Fetch log types
+  const fetchLogTypes = async () => {
+    try {
+      const response = await axiosInstance.get('/category?pageSize=10&pageIndex=1&scope=LOG_CLASSIFICATION');
+      if (response.data?.data?.rows) {
+        setLogTypes(response.data.data.rows);
       }
-    };
-    fetchLogTypes();
-  }, []);
+    } catch (error) {
+      console.error('Error fetching log types:', error);
+    }
+  };
 
   // Fetch logs with pagination
-  const fetchLogs = async (page: number, limit: number, params: any) => {
-    const queryParams = {
+  const fetchLogs = async (page: number, limit: number) => {
+    const queryParams: any = {
       type: 0, // Default type for system logs
       pageSize: limit,
-      pageIndex: page,
-      ...params
+      pageIndex: page
     };
 
     if (searchTerm) {
-      queryParams.name = searchTerm;
-    }
-
-    if (filters.logType) {
-      queryParams.logType = filters.logType;
-    }
-
-    if (filters.actionName) {
-      queryParams.actionName = filters.actionName;
-    }
-
-    if (filters.userId) {
-      queryParams.userId = filters.userId;
-    }
-
-    if (filters.isActive !== undefined) {
-      queryParams.isActive = filters.isActive;
+      queryParams.search = searchTerm;
     }
 
     if (filters.startDate) {
-      queryParams.startDate = filters.startDate;
+      queryParams.start_time = filters.startDate;
     }
 
     if (filters.endDate) {
-      queryParams.endDate = filters.endDate;
+      queryParams.end_time = filters.endDate;
     }
 
+    if (filters.logTypeId && filters.logTypeId !== '__all__') {
+      queryParams.log_type_id = filters.logTypeId;
+    }
+    
+    console.log('Filters:', filters);
+    console.log('Query Params:', queryParams);
+    
     const response = await logsService.getAll(queryParams);
     return response.data;
   };
@@ -88,7 +81,12 @@ export function SystemLogs() {
     error,
     setCurrentPage,
     pageSize
-  } = useServerPagination(fetchLogs, [searchTerm, filters,reload], { pageSize: 10 }, {});
+  } = useServerPagination(fetchLogs, [searchTerm, filters, reload], { pageSize: 10 });
+
+  // Fetch log types on component mount
+  useEffect(() => {
+    fetchLogTypes();
+  }, []);
 
   // Function to refresh data
   const refreshData = () => {
@@ -96,36 +94,6 @@ export function SystemLogs() {
   };
 
   const filterOptions: FilterOption[] = [
-    {
-      key: 'logType',
-      label: 'Loại log',
-      type: 'select',
-      options: logTypes.map(type => ({
-        value: type.id,
-        label: type.display_name
-      }))
-    },
-    {
-      key: 'actionName',
-      label: 'Hành động',
-      type: 'select',
-      options: [
-        { value: 'CREATE', label: 'Tạo mới' },
-        { value: 'UPDATE', label: 'Cập nhật' },
-        { value: 'DELETE', label: 'Xóa' },
-        { value: 'LOGIN', label: 'Đăng nhập' },
-        { value: 'LOGOUT', label: 'Đăng xuất' }
-      ]
-    },
-    {
-      key: 'isActive',
-      label: 'Trạng thái',
-      type: 'select',
-      options: [
-        { value: 'true', label: 'Hoạt động' },
-        { value: 'false', label: 'Không hoạt động' }
-      ]
-    },
     {
       key: 'startDate',
       label: 'Từ ngày',
@@ -135,6 +103,18 @@ export function SystemLogs() {
       key: 'endDate',
       label: 'Đến ngày',
       type: 'date'
+    },
+    {
+      key: 'logTypeId',
+      label: 'Loại log',
+      type: 'select',
+      options: [
+        { value: '__all__', label: 'Tất cả loại log' },
+        ...logTypes.map(logType => ({
+          value: logType.id,
+          label: logType.display_name
+        }))
+      ]
     }
   ];
 
@@ -326,7 +306,7 @@ export function SystemLogs() {
         <CardContent>
           <div className="mb-6">
             <AdvancedFilter
-              searchPlaceholder="Tìm kiếm log..."
+              searchPlaceholder="Tìm kiếm theo mô tả hoặc hành động..."
               searchValue={searchTerm}
               onSearchChange={setSearchTerm}
               filterOptions={filterOptions}

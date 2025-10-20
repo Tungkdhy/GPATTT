@@ -480,9 +480,9 @@ export function InsecureDevices() {
                           <Button variant="ghost" size="sm" className="scale-hover" onClick={() => handleViewDetail(device)}>
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" className="scale-hover" onClick={() => handleEditClick(device)}>
+                          {/* <Button variant="ghost" size="sm" className="scale-hover" onClick={() => handleEditClick(device)}>
                             <Edit className="h-4 w-4" />
-                          </Button>
+                          </Button> */}
                           <Button variant="ghost" size="sm" className="scale-hover text-red-500" onClick={() => handleDeleteClick(device)}>
                             <Trash2 className="h-4 w-4" />
                           </Button>

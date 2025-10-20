@@ -4,10 +4,13 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 import { AdvancedFilter, FilterOption } from '../common/AdvancedFilter';
 import { TablePagination } from '../common/TablePagination';
 import { LoadingSkeleton } from '../common/LoadingSkeleton';
-import { Eye, Download, AlertCircle } from 'lucide-react';
+import { Eye, Download, AlertCircle, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useServerPagination } from '@/hooks/useServerPagination';
 import { scriptHistoriesService, ScriptHistory, usersService } from '@/services/api';
@@ -23,6 +26,13 @@ export function ScenarioLogs() {
   });
   const [selectedLog, setSelectedLog] = useState<ScriptHistory | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [reload, setReload] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    ip_address: '',
+    user_agent: ''
+  });
   const [scripts, setScripts] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
 
@@ -67,7 +77,7 @@ export function ScenarioLogs() {
       });
       return response.data;
     },
-    [searchTerm, filters]
+    [searchTerm, filters,reload]
   );
 
   const filterOptions: FilterOption[] = [
@@ -130,6 +140,59 @@ export function ScenarioLogs() {
   const handleViewDetail = (log: ScriptHistory) => {
     setSelectedLog(log);
     setIsDetailOpen(true);
+  };
+
+  const handleEdit = (log: ScriptHistory) => {
+    setSelectedLog(log);
+    setEditForm({
+      ip_address: log.ip_address,
+      user_agent: log.user_agent
+    });
+    setIsEditOpen(true);
+  };
+
+  const handleDelete = (log: ScriptHistory) => {
+    setSelectedLog(log);
+    setIsDeleteOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedLog) return;
+
+    try {
+      await scriptHistoriesService.update(selectedLog.id, {
+        action: selectedLog.action,
+        old_values: selectedLog.old_values,
+        new_values: selectedLog.new_values,
+        ip_address: editForm.ip_address,
+        user_agent: editForm.user_agent
+      });
+      
+      toast.success('Cập nhật thành công');
+      setIsEditOpen(false);
+      // Refresh data by triggering a re-fetch
+      setReload(!reload)
+    } catch (error: any) {
+      console.error('Error updating script history:', error);
+      const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi cập nhật';
+      toast.error(errorMessage);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedLog) return;
+
+    try {
+      await scriptHistoriesService.delete(selectedLog.id);
+      toast.success('Xóa thành công');
+      setIsDeleteOpen(false);
+      // Refresh data by triggering a re-fetch
+      setReload(!reload)
+    } catch (error: any) {
+      console.error('Error deleting script history:', error);
+      const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi xóa';
+      toast.error(errorMessage);
+    }
   };
 
   const handleExport = () => {
@@ -244,9 +307,17 @@ export function ScenarioLogs() {
                       <TableCell className="font-mono text-sm">{log.ip_address}</TableCell>
                       <TableCell>{log.new_values?.script_type_name || 'N/A'}</TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" className="scale-hover" onClick={() => handleViewDetail(log)}>
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button variant="ghost" size="sm" className="scale-hover" onClick={() => handleViewDetail(log)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="scale-hover text-blue-600 hover:text-blue-700" onClick={() => handleEdit(log)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="scale-hover text-red-600 hover:text-red-700" onClick={() => handleDelete(log)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -337,6 +408,94 @@ export function ScenarioLogs() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Chỉnh sửa thông tin log</DialogTitle>
+            <DialogDescription>
+              Chỉnh sửa địa chỉ IP và User Agent cho bản ghi này
+            </DialogDescription>
+          </DialogHeader>
+          {selectedLog && (
+            <div className="space-y-4 py-4">
+              {/* Editable fields */}
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="ip_address" className="text-xs">Địa chỉ IP</Label>
+                  <Input
+                    id="ip_address"
+                    value={editForm.ip_address}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, ip_address: e.target.value }))}
+                    placeholder="Nhập địa chỉ IP"
+                    className="h-8"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="user_agent" className="text-xs">User Agent</Label>
+                  <Input
+                    id="user_agent"
+                    value={editForm.user_agent}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, user_agent: e.target.value }))}
+                    placeholder="Nhập User Agent"
+                    className="h-8"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t">
+                <Button variant="outline" size="sm" onClick={() => setIsEditOpen(false)}>
+                  Hủy
+                </Button>
+                <Button size="sm" onClick={handleSaveEdit}>
+                  Lưu thay đổi
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa bản ghi log này không? Hành động này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {selectedLog && (
+            <div className="py-4">
+              <div className="bg-muted p-4 rounded-md space-y-2">
+                <div className="text-sm">
+                  <span className="font-medium">Kịch bản:</span> {selectedLog.new_values?.script_name || 'N/A'}
+                </div>
+                <div className="text-sm">
+                  <span className="font-medium">Hành động:</span> {getActionLabel(selectedLog.action)}
+                </div>
+                <div className="text-sm">
+                  <span className="font-medium">Thời gian:</span> {formatDateTime(selectedLog.changed_at)}
+                </div>
+                <div className="text-sm">
+                  <span className="font-medium">IP:</span> {selectedLog.ip_address}
+                </div>
+              </div>
+            </div>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

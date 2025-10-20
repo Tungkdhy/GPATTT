@@ -306,9 +306,9 @@ export function WhitelistIPs() {
   return (
     <div className="space-y-6 fade-in-up">
       <div className="slide-in-left">
-        <h1>Quản lý IP Manager</h1>
+        <h1>Quản lý IP trắng</h1>
         <p className="text-muted-foreground">
-          Quản lý danh sách địa chỉ IP trong hệ thống
+          Quản lý danh sách địa chỉ IP trắng trong hệ thống
         </p>
       </div>
 

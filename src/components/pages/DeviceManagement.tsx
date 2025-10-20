@@ -10,7 +10,7 @@ import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
 import { AdvancedFilter, FilterOption } from '../common/AdvancedFilter';
-import { Plus, Edit, Trash2, Loader2, Eye } from 'lucide-react';
+import { Plus, Edit, Trash2, Loader2, Eye, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import managedDevicesService, { ManagedDevice, CreateManagedDeviceDto } from '../../services/api/managedDevices.service';
 import categoryService from '../../services/api/category.service';
@@ -239,6 +239,48 @@ export function DeviceManagement() {
     return owner ? (owner.display_name || owner.user_name) : 'Không xác định';
   };
 
+  const handleExportCSV = async () => {
+    try {
+      toast.info('Đang xuất dữ liệu...');
+      const blob = await managedDevicesService.exportCSV();
+      
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `devices-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Đã xuất file CSV thành công!');
+    } catch (error: any) {
+      const errorMsg = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi xuất dữ liệu';
+      toast.error(errorMsg);
+    }
+  };
+
+  const handleExportConfiguration = async () => {
+    try {
+      toast.info('Đang xuất cấu hình máy tác chiến...');
+      const blob = await managedDevicesService.exportConfiguration();
+      
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `device-configuration-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Đã xuất file cấu hình thành công!');
+    } catch (error: any) {
+      const errorMsg = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi xuất cấu hình';
+      toast.error(errorMsg);
+    }
+  };
+
   return (
     <div className="space-y-6 fade-in-up">
       <div className="slide-in-left">
@@ -257,13 +299,32 @@ export function DeviceManagement() {
                 Tổng cộng {devices.length} thiết bị trong hệ thống
               </CardDescription>
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="btn-animate scale-hover">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Thêm thiết bị
-                </Button>
-              </DialogTrigger>
+            <div className="flex space-x-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleExportCSV}
+                className="scale-hover"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleExportConfiguration}
+                className="scale-hover"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export Cấu hình
+              </Button>
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="btn-animate scale-hover">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Thêm thiết bị
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="sm:max-w-lg max-h-[70vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Thêm thiết bị mới</DialogTitle>
@@ -437,7 +498,8 @@ export function DeviceManagement() {
                   <Button type="submit" className="w-full" onClick={handleAdd}>Thêm thiết bị</Button>
                 </DialogFooter>
               </DialogContent>
-            </Dialog>
+              </Dialog>
+            </div>
           </div>
         </CardHeader>
         <CardContent>

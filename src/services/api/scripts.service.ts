@@ -119,6 +119,32 @@ class ScriptsService {
     
     return response.data;
   }
+
+  async exportCSV(params?: ScriptFilters, limit: number = 1000): Promise<Blob> {
+    const queryParams = new URLSearchParams();
+    queryParams.append('limit', limit.toString());
+
+    if (params?.script_name) {
+      queryParams.append('script_name', params.script_name);
+    }
+    if (params?.rule_file_name) {
+      queryParams.append('rule_file_name', params.rule_file_name);
+    }
+    if (params?.script_type_id) {
+      queryParams.append('script_type_id', params.script_type_id);
+    }
+    if (params?.is_published !== undefined) {
+      queryParams.append('is_published', params.is_published.toString());
+    }
+
+    const response = await axiosInstance.get(
+      `${this.baseUrl}/export/csv?${queryParams.toString()}`,
+      {
+        responseType: 'blob',
+      }
+    );
+    return response.data;
+  }
 }
 
 export const scriptsService = new ScriptsService();

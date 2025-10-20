@@ -120,6 +120,32 @@ class ManagedDevicesService {
       throw error;
     }
   }
+
+  async exportCSV(): Promise<Blob> {
+    try {
+      const response = await axiosInstance.get('/managed-devices/export/information', {
+        responseType: 'blob'
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Error exporting devices CSV:', error);
+      const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi xuất file CSV';
+      throw new Error(errorMessage);
+    }
+  }
+
+  async exportConfiguration(): Promise<Blob> {
+    try {
+      const response = await axiosInstance.get('/managed-devices/export/configuration', {
+        responseType: 'blob'
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Error exporting configuration CSV:', error);
+      const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi xuất file cấu hình';
+      throw new Error(errorMessage);
+    }
+  }
 }
 
 export default new ManagedDevicesService();

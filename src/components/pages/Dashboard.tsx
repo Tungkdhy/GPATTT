@@ -87,6 +87,27 @@ interface TimeRange {
   label: string;
 }
 
+interface SyncStatus {
+  alert_sync: {
+    isRunning: boolean;
+    config: {
+      batchSize: number;
+      syncIntervalMinutes: number;
+      maxRetries: number;
+      retryDelayMs: number;
+    };
+  };
+  command_polling: {
+    isPolling: boolean;
+    config: {
+      pollIntervalSeconds: number;
+      maxConcurrentCommands: number;
+      defaultTimeoutSeconds: number;
+    };
+    pendingCount: number;
+  };
+}
+
 export function Dashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     scenarios: 0,
@@ -126,6 +147,26 @@ export function Dashboard() {
   const [scriptStartDate, setScriptStartDate] = useState<Date | undefined>(undefined);
   const [scriptEndDate, setScriptEndDate] = useState<Date | undefined>(undefined);
   const [refreshing, setRefreshing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>({
+    alert_sync: {
+      isRunning: false,
+      config: {
+        batchSize: 100,
+        syncIntervalMinutes: 1,
+        maxRetries: 3,
+        retryDelayMs: 5000
+      }
+    },
+    command_polling: {
+      isPolling: false,
+      config: {
+        pollIntervalSeconds: 30,
+        maxConcurrentCommands: 50,
+        defaultTimeoutSeconds: 300
+      },
+      pendingCount: 0
+    }
+  });
   console.log(stats);
 
   // Helper function to get time range from dates
@@ -144,6 +185,17 @@ export function Dashboard() {
     };
   };
   
+  const fetchSyncStatus = async () => {
+    try {
+      const response = await axiosInstance.get('/cloud-management/sync/status');
+      if (response.data?.data) {
+        setSyncStatus(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching sync status:', error);
+    }
+  };
+
   const fetchStats = async () => {
     try {
       setLoading(true);
@@ -302,9 +354,13 @@ export function Dashboard() {
 
   useEffect(() => {
     fetchStats();
+    fetchSyncStatus();
     
     // Auto refresh every 30 seconds
-    const interval = setInterval(() => fetchStats(), 30000);
+    const interval = setInterval(() => {
+      fetchStats();
+      fetchSyncStatus();
+    }, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -346,6 +402,7 @@ export function Dashboard() {
 
   const handleRefresh = () => {
     fetchStats();
+    fetchSyncStatus();
   };
 
   // Custom Date Input Component
@@ -522,7 +579,7 @@ export function Dashboard() {
         </Card>
         <Card className="card-hover stagger-item flex-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Cảnh báo</CardTitle>
+            <CardTitle className="text-sm font-medium">Tổng số log</CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground bounce-soft" />
           </CardHeader>
           <CardContent>
@@ -530,7 +587,7 @@ export function Dashboard() {
               {loading ? '...' : stats.alerts.total.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              Cảnh báo hệ thống
+              Log hệ thống
             </p>
           </CardContent>
         </Card>
@@ -1227,6 +1284,165 @@ export function Dashboard() {
                   </div>
                 </div>
               )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Sync Status Monitoring */}
+      <div className="grid gap-4 lg:grid-cols-7">
+        {/* Sync Status Cards Section */}
+        <Card className="card-hover col-span-4">
+          <CardHeader>
+            <CardTitle className="text-lg">Giám sát gửi dữ liệu định kỳ</CardTitle>
+            <CardDescription>
+              Trạng thái đồng bộ dữ liệu và polling lệnh
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-blue-500/10 to-blue-600/10 border border-blue-500/20 hover:from-blue-500/20 hover:to-blue-600/20 transition-all duration-200">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 rounded-lg bg-blue-500/20">
+                    <Activity className="h-5 w-5 text-blue-500" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">Alert Sync</p>
+                    <p className="text-xs text-muted-foreground">
+                      {syncStatus.alert_sync.isRunning ? 'Đang chạy' : 'Đã dừng'}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className={`w-3 h-3 rounded-full ${syncStatus.alert_sync.isRunning ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {syncStatus.alert_sync.config.syncIntervalMinutes} phút
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-green-500/10 to-green-600/10 border border-green-500/20 hover:from-green-500/20 hover:to-green-600/20 transition-all duration-200">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 rounded-lg bg-green-500/20">
+                    <RefreshCw className="h-5 w-5 text-green-500" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">Command Polling</p>
+                    <p className="text-xs text-muted-foreground">
+                      {syncStatus.command_polling.isPolling ? 'Đang polling' : 'Đã dừng'}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className={`w-3 h-3 rounded-full ${syncStatus.command_polling.isPolling ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {syncStatus.command_polling.pendingCount} pending
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 rounded-xl bg-gradient-to-r from-purple-500/10 to-purple-600/10 border border-purple-500/20">
+                <div className="flex items-center space-x-3 mb-3">
+                  <div className="p-2 rounded-lg bg-purple-500/20">
+                    <Database className="h-5 w-5 text-purple-500" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">Cấu hình Alert Sync</p>
+                    <p className="text-xs text-muted-foreground">Thông số đồng bộ cảnh báo</p>
+                  </div>
+                </div>
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Batch Size:</span>
+                    <span className="font-medium">{syncStatus.alert_sync.config.batchSize}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Max Retries:</span>
+                    <span className="font-medium">{syncStatus.alert_sync.config.maxRetries}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Retry Delay:</span>
+                    <span className="font-medium">{syncStatus.alert_sync.config.retryDelayMs}ms</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-gradient-to-r from-orange-500/10 to-orange-600/10 border border-orange-500/20">
+                <div className="flex items-center space-x-3 mb-3">
+                  <div className="p-2 rounded-lg bg-orange-500/20">
+                    <Code className="h-5 w-5 text-orange-500" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">Cấu hình Command Polling</p>
+                    <p className="text-xs text-muted-foreground">Thông số polling lệnh</p>
+                  </div>
+                </div>
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Poll Interval:</span>
+                    <span className="font-medium">{syncStatus.command_polling.config.pollIntervalSeconds}s</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Max Concurrent:</span>
+                    <span className="font-medium">{syncStatus.command_polling.config.maxConcurrentCommands}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Timeout:</span>
+                    <span className="font-medium">{syncStatus.command_polling.config.defaultTimeoutSeconds}s</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Sync Status Chart Section */}
+        <Card className="col-span-3 card-hover">
+          <CardHeader>
+            <CardTitle>Trạng thái hệ thống</CardTitle>
+            <CardDescription>
+              Tổng quan hoạt động đồng bộ dữ liệu
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                <div className="flex items-center space-x-3">
+                  <div className={`w-3 h-3 rounded-full ${syncStatus.alert_sync.isRunning ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                  <span className="text-sm font-medium">Alert Sync</span>
+                </div>
+                <Badge variant={syncStatus.alert_sync.isRunning ? "default" : "secondary"}>
+                  {syncStatus.alert_sync.isRunning ? 'Hoạt động' : 'Dừng'}
+                </Badge>
+              </div>
+
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                <div className="flex items-center space-x-3">
+                  <div className={`w-3 h-3 rounded-full ${syncStatus.command_polling.isPolling ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                  <span className="text-sm font-medium">Command Polling</span>
+                </div>
+                <Badge variant={syncStatus.command_polling.isPolling ? "default" : "secondary"}>
+                  {syncStatus.command_polling.isPolling ? 'Hoạt động' : 'Dừng'}
+                </Badge>
+              </div>
+
+              <div className="pt-4 border-t">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-primary">
+                    {syncStatus.command_polling.pendingCount}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Lệnh đang chờ xử lý</p>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Cập nhật lần cuối:</span>
+                  <span className="font-medium">{new Date().toLocaleTimeString('vi-VN')}</span>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

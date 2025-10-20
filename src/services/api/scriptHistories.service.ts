@@ -59,6 +59,16 @@ class ScriptHistoriesService {
     const response = await axiosInstance.get(`${this.baseUrl}/${id}`);
     return response.data.data;
   }
+
+  async delete(id: string): Promise<void> {
+    const response = await axiosInstance.delete(`${this.baseUrl}/${id}`);
+    return response.data;
+  }
+
+  async update(id: string, data: any): Promise<void> {
+    const response = await axiosInstance.put(`${this.baseUrl}/${id}`, data);
+    return response.data;
+  }
 }
 
 export const scriptHistoriesService = new ScriptHistoriesService();

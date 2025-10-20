@@ -11,7 +11,7 @@ import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { AdvancedFilter, FilterOption } from '../common/AdvancedFilter';
 import { TablePagination } from '../common/TablePagination';
-import { Plus, Edit, Trash2, Shield, MapPin, Server, AlertTriangle, Trash } from 'lucide-react';
+import { Plus, Edit, Trash2, MapPin, Server, AlertTriangle, Trash, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { blacklistIPsService } from '../../services/api';
 import { useServerPagination } from '../../hooks/useServerPagination';
@@ -284,6 +284,27 @@ export function BlacklistIPs() {
     }
   };
 
+  const handleExportCSV = async () => {
+    try {
+      toast.info('Đang xuất dữ liệu...');
+      const blob = await blacklistIPsService.exportBlacklistCSV();
+      
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `blacklist-ips-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Đã xuất file CSV thành công!');
+    } catch (error: any) {
+      const errorMsg = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi xuất dữ liệu';
+      toast.error(errorMsg);
+    }
+  };
+
   // if (loading) {
   //   return (
   //     <div className="space-y-6 fade-in-up">
@@ -308,9 +329,9 @@ export function BlacklistIPs() {
   return (
     <div className="space-y-6 fade-in-up">
       <div className="slide-in-left">
-        <h1>Quản lý IP Manager</h1>
+        <h1>Quản lý đanh sách đen</h1>
         <p className="text-muted-foreground">
-          Quản lý danh sách địa chỉ IP manager trong hệ thống
+          Quản lý danh sách địa chỉ đanh sách đen trong hệ thống
         </p>
       </div>
 
@@ -318,12 +339,21 @@ export function BlacklistIPs() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Danh sách IP Manager</CardTitle>
+              <CardTitle>Danh sách đanh sách đen</CardTitle>
               <CardDescription>
-                Tổng cộng {total} IP manager trong hệ thống
+                Tổng cộng {total} đanh sách đen trong hệ thống
               </CardDescription>
             </div>
             <div className="flex space-x-2">
+              <Button 
+                variant="outline"
+                size="sm"
+                onClick={handleExportCSV}
+                className="scale-hover"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
+              </Button>
               <Button 
                 variant="destructive"
                 className="btn-animate scale-hover"
@@ -337,14 +367,14 @@ export function BlacklistIPs() {
                 <DialogTrigger asChild>
                   <Button className="btn-animate scale-hover">
                     <Plus className="mr-2 h-4 w-4" />
-                    Thêm IP Manager
+                    Thêm IP đen
                   </Button>
                 </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Thêm IP Manager mới</DialogTitle>
+                  <DialogTitle>Thêm IP đen mới</DialogTitle>
                   <DialogDescription>
-                    Thêm địa chỉ IP manager mới vào hệ thống
+                    Thêm địa chỉ IP đen mới vào hệ thống
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
@@ -370,7 +400,7 @@ export function BlacklistIPs() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="type">Loại *</Label>
-                    <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
+                    <Select value={formData.type} onValueChange={(value: string) => setFormData({ ...formData, type: value })}>
                       <SelectTrigger>
                         <SelectValue placeholder="Chọn loại" />
                       </SelectTrigger>
@@ -394,7 +424,7 @@ export function BlacklistIPs() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="status">Trạng thái *</Label>
-                    <Select value={formData.status} onValueChange={(value:any) => setFormData({ ...formData, status: value })}>
+                    <Select value={formData.status} onValueChange={(value: string) => setFormData({ ...formData, status: value })}>
                       <SelectTrigger>
                         <SelectValue placeholder="Chọn trạng thái" />
                       </SelectTrigger>
@@ -408,14 +438,14 @@ export function BlacklistIPs() {
                     <Label htmlFor="description">Mô tả</Label>
                     <Textarea 
                       id="description" 
-                      placeholder="Nhập mô tả cho IP manager" 
+                      placeholder="Nhập mô tả cho IP đen" 
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     />
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button type="submit" className="w-full" onClick={handleAdd}>Thêm IP Manager</Button>
+                  <Button type="submit" className="w-full" onClick={handleAdd}>Thêm IP đen</Button>
                 </DialogFooter>
               </DialogContent>
               </Dialog>
@@ -518,9 +548,9 @@ export function BlacklistIPs() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Chỉnh sửa IP Manager</DialogTitle>
+            <DialogTitle>Chỉnh sửa IP đen</DialogTitle>
             <DialogDescription>
-              Cập nhật thông tin IP manager
+              Cập nhật thông tin IP đen
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -546,7 +576,7 @@ export function BlacklistIPs() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-type">Loại *</Label>
-              <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
+              <Select value={formData.type} onValueChange={(value: string) => setFormData({ ...formData, type: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Chọn loại" />
                 </SelectTrigger>
@@ -570,7 +600,7 @@ export function BlacklistIPs() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-status">Trạng thái *</Label>
-              <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+              <Select value={formData.status} onValueChange={(value: string) => setFormData({ ...formData, status: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Chọn trạng thái" />
                 </SelectTrigger>
@@ -584,7 +614,7 @@ export function BlacklistIPs() {
               <Label htmlFor="edit-description">Mô tả</Label>
               <Textarea 
                 id="edit-description" 
-                placeholder="Nhập mô tả cho IP manager" 
+                placeholder="Nhập mô tả cho IP đen" 
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               />
@@ -691,7 +721,7 @@ export function BlacklistIPs() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa IP Manager <strong>{selectedIP?.ip_public}</strong>? 
+              Bạn có chắc chắn muốn xóa IP đen <strong>{selectedIP?.ip_public}</strong>? 
               Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>

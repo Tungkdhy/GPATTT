@@ -42,8 +42,8 @@ export interface LogsParams {
   actionName?: string;
   userId?: string;
   isActive?: boolean;
-  startDate?: string;
-  endDate?: string;
+  start_time?: string;
+  end_time?: string;
 }
 
 class LogsService {
@@ -59,8 +59,8 @@ class LogsService {
       if (params.actionName) queryParams.append('actionName', params.actionName);
       if (params.userId) queryParams.append('userId', params.userId);
       if (params.isActive !== undefined) queryParams.append('isActive', params.isActive.toString());
-      if (params.startDate) queryParams.append('startDate', params.startDate);
-      if (params.endDate) queryParams.append('endDate', params.endDate);
+      if (params.start_time) queryParams.append('start_time', params.start_time);
+      if (params.end_time) queryParams.append('end_time', params.end_time);
 
       const response = await axiosInstance.get(`${API_ENDPOINTS.LOGS.LIST}?${queryParams.toString()}`);
       return response.data;
