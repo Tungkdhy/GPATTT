@@ -328,7 +328,7 @@ export function WhitelistIPs() {
                 onClick={handleExportCSV}
               >
                 <Download className="mr-2 h-4 w-4" />
-                Xuất CSV
+                Xuất file CSV
               </Button>
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>

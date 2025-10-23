@@ -297,7 +297,7 @@ export function ScenarioManagement() {
       <div className="slide-in-left">
         <h1>Danh mục kịch bản</h1>
         <p className="text-muted-foreground">
-          Quản lý các danh mục kịch bản với scope SCRIPT
+          Quản lý các danh mục kịch bản
         </p>
       </div>
 

@@ -323,7 +323,7 @@ export function InsecureDevices() {
           )}
           <Button variant="outline" size="sm" onClick={handleExportCSV} className="scale-hover">
             <Download className="h-4 w-4 mr-2" />
-            Export CSV
+            Xuất file CSV
           </Button>
           <Button variant="outline" size="sm" onClick={handleRefresh} className="scale-hover">
             <RefreshCw className="h-4 w-4 mr-2" />

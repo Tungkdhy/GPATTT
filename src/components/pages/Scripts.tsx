@@ -373,7 +373,7 @@ export function Scripts() {
             <div className="flex items-center space-x-2">
               <Button variant="outline" size="sm" onClick={handleExportCSV} className="scale-hover">
                 <Download className="h-4 w-4 mr-2" />
-                Export CSV
+                Xuất file CSV
               </Button>
               <Popover open={showAdvancedFilter} onOpenChange={setShowAdvancedFilter}>
                 <PopoverTrigger asChild>

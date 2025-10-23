@@ -368,7 +368,7 @@ class SystemLogsService {
 
 export const systemLogsService = new SystemLogsService();
 
-// ============= MALWARE HASHES SERVICE =============
+// ============= mã băm SERVICE =============
 // Export malwareHashesService from separate file
 export { default as malwareHashesService } from './malwareHashes.service';
 
