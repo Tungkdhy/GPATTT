@@ -60,10 +60,10 @@ export function DeviceTypes() {
       await categoryService.create(formData);
       setIsDialogOpen(false);
       resetForm();
-      toast.success('Thêm danh mục thành công!');
+      toast.success('Thêm thiết bị thành công!');
       setReload(!reload);
     } catch {
-      toast.error('Lỗi khi thêm danh mục');
+      toast.error('Lỗi khi Thêm thiết bị');
     }
   };
 // 6c14530d-7d3e-477b-a0e4-c6305d800827
@@ -86,9 +86,9 @@ export function DeviceTypes() {
       setIsEditDialogOpen(false);
       resetForm();
       setReload(!reload);
-      toast.success('Cập nhật danh mục thành công!');
+      toast.success('Cập nhật thiết bị thành công!');
     } catch {
-      toast.error('Lỗi khi cập nhật danh mục');
+      toast.error('Lỗi khi cập nhật thiết bị');
     }
   };
 
@@ -103,10 +103,10 @@ export function DeviceTypes() {
       await categoryService.delete(selectedItem.id);
       setIsDeleteDialogOpen(false);
       setSelectedItem(null);
-      toast.success('Xóa danh mục thành công!');
+      toast.success('Xóa thiết bị thành công!');
       setReload(!reload);
     } catch {
-      toast.error('Lỗi khi xóa danh mục');
+      toast.error('Lỗi khi xóa thiết bị');
     }
   };
 
@@ -141,20 +141,20 @@ export function DeviceTypes() {
               <DialogTrigger asChild>
                 <Button className="btn-animate scale-hover">
                   <Plus className="mr-2 h-4 w-4" />
-                  Thêm danh mục
+                  Thêm mới
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Thêm loại danh mục mới</DialogTitle>
+                  <DialogTitle>Thêm loại thiết bị mới</DialogTitle>
                   <DialogDescription>
-                    Nhập thông tin loại danh mục
+                    Nhập thông tin loại thiết bị
                   </DialogDescription>
                 </DialogHeader>
                 {renderFormFields(formData, setFormData)}
                 <DialogFooter>
                   <Button type="submit" className="w-full" onClick={handleAdd}>
-                    Tạo danh mục
+                    Tạo thiết bị
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -166,7 +166,7 @@ export function DeviceTypes() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Tên danh mục</TableHead>
+                <TableHead>Tên thiết bị</TableHead>
                 <TableHead>Giá trị</TableHead>
                 <TableHead>Mô tả</TableHead>
                 {/* <TableHead>Loại</TableHead> */}
@@ -295,8 +295,8 @@ export function DeviceTypes() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Chỉnh sửa loại danh mục</DialogTitle>
-            <DialogDescription>Cập nhật thông tin loại danh mục</DialogDescription>
+            <DialogTitle>Chỉnh sửa loại thiết bị</DialogTitle>
+            <DialogDescription>Cập nhật thông tin loại thiết bị</DialogDescription>
           </DialogHeader>
           {renderFormFields(formData, setFormData)}
           <DialogFooter>
@@ -313,7 +313,7 @@ export function DeviceTypes() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa danh mục <strong>{selectedItem?.display_name}</strong>?
+              Bạn có chắc chắn muốn xóa thiết bị <strong>{selectedItem?.display_name}</strong>?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -332,7 +332,7 @@ function renderFormFields(formData: any, setFormData: any) {
   return (
     <div className="space-y-4 py-4">
       <div className="space-y-2">
-        <Label>Tên danh mục</Label>
+        <Label>Tên thiết bị</Label>
         <Input
           value={formData.display_name}
           onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}

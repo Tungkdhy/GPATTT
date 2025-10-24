@@ -3,7 +3,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Badge } from '../ui/badge';
 import { Progress } from '../ui/progress';
 import { Button } from '../ui/button';
-import { Calendar as CalendarComponent } from '../ui/calendar';
 import { 
   Monitor, 
   Shield, 
@@ -16,9 +15,7 @@ import {
   CheckCircle2,
   XCircle,
   Calendar,
-  RefreshCw,
-  Bug,
-  Virus
+  RefreshCw
 } from 'lucide-react';
 import { PieChart, Pie, Cell, Legend, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 
@@ -142,10 +139,10 @@ export function Dashboard() {
     }
   });
   const [loading, setLoading] = useState(true);
-  const [deviceStartDate, setDeviceStartDate] = useState<Date | undefined>(undefined);
-  const [deviceEndDate, setDeviceEndDate] = useState<Date | undefined>(undefined);
-  const [scriptStartDate, setScriptStartDate] = useState<Date | undefined>(undefined);
-  const [scriptEndDate, setScriptEndDate] = useState<Date | undefined>(undefined);
+  const [deviceStartDate, setDeviceStartDate] = useState<string>('');
+  const [deviceEndDate, setDeviceEndDate] = useState<string>('');
+  const [scriptStartDate, setScriptStartDate] = useState<string>('');
+  const [scriptEndDate, setScriptEndDate] = useState<string>('');
   const [refreshing, setRefreshing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>({
     alert_sync: {
@@ -170,12 +167,12 @@ export function Dashboard() {
   console.log(stats);
 
   // Helper function to get time range from dates
-  const getTimeRangeFromDates = (startDate?: Date, endDate?: Date): TimeRange => {
+  const getTimeRangeFromDates = (startDate?: string, endDate?: string): TimeRange => {
     if (startDate && endDate) {
       return {
-        start_date: startDate.toISOString().split('T')[0],
-        end_date: endDate.toISOString().split('T')[0],
-        label: `${startDate.toLocaleDateString('vi-VN')} - ${endDate.toLocaleDateString('vi-VN')}`
+        start_date: startDate,
+        end_date: endDate,
+        label: `${new Date(startDate).toLocaleDateString('vi-VN')} - ${new Date(endDate).toLocaleDateString('vi-VN')}`
       };
     }
     return {
@@ -365,17 +362,17 @@ export function Dashboard() {
   }, []);
 
   // Handle date changes with validation
-  const handleDeviceStartDateChange = (date: Date | undefined) => {
+  const handleDeviceStartDateChange = (date: string) => {
     setDeviceStartDate(date);
     // If end date is before new start date, clear it
     if (date && deviceEndDate && deviceEndDate < date) {
-      setDeviceEndDate(undefined);
+      setDeviceEndDate('');
     } else if (date && deviceEndDate) {
       fetchStats();
     }
   };
 
-  const handleDeviceEndDateChange = (date: Date | undefined) => {
+  const handleDeviceEndDateChange = (date: string) => {
     setDeviceEndDate(date);
     if (deviceStartDate && date && date >= deviceStartDate) {
       fetchStats();
@@ -383,17 +380,17 @@ export function Dashboard() {
   };
   console.log(stats);
   
-  const handleScriptStartDateChange = (date: Date | undefined) => {
+  const handleScriptStartDateChange = (date: string) => {
     setScriptStartDate(date);
     // If end date is before new start date, clear it
     if (date && scriptEndDate && scriptEndDate < date) {
-      setScriptEndDate(undefined);
+      setScriptEndDate('');
     } else if (date && scriptEndDate) {
       fetchStats();
     }
   };
 
-  const handleScriptEndDateChange = (date: Date | undefined) => {
+  const handleScriptEndDateChange = (date: string) => {
     setScriptEndDate(date);
     if (scriptStartDate && date && date >= scriptStartDate) {
       fetchStats();
@@ -405,104 +402,35 @@ export function Dashboard() {
     fetchSyncStatus();
   };
 
-  // Custom Date Input Component
-  const CustomDateInput = ({ 
-    date, 
-    onDateChange, 
-    placeholder = "dd/mm/yyyy",
-    minDate,
-    maxDate,
-    isEndDate = false
+  // Simple Date Input Component (like AdvancedFilter)
+  const DateInput = ({ 
+    value, 
+    onChange, 
+    placeholder = "Chọn ngày",
+    label
   }: {
-    date: Date | undefined;
-    onDateChange: (date: Date | undefined) => void;
+    value: string;
+    onChange: (value: string) => void;
     placeholder?: string;
-    minDate?: Date;
-    maxDate?: Date;
-    isEndDate?: boolean;
+    label: string;
   }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [inputValue, setInputValue] = useState('');
-
-
-    const formatDateForInput = (date: Date | undefined) => {
-      if (!date) return '';
-      return date.toISOString().split('T')[0];
-    };
-
-    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      const value = event.target.value;
-      setInputValue(value);
-      
-      // Try to parse the date
-      if (value.length === 10) {
-        const dateObj = new Date(value);
-        if (!isNaN(dateObj.getTime())) {
-          onDateChange(dateObj);
-        }
-      } else if (value === '') {
-        onDateChange(undefined);
-      }
-    };
-
-    const handleDateSelect = (selectedDate: Date) => {
-      onDateChange(selectedDate);
-      setInputValue(formatDateForInput(selectedDate));
-      setIsOpen(false);
-    };
-
-    const getDisabledDates = (date: Date) => {
-      const today = new Date();
-      today.setHours(23, 59, 59, 999);
-      
-      if (date > today) return true;
-      if (minDate && date < minDate) return true;
-      if (maxDate && date > maxDate) return true;
-      
-      return false;
-    };
-
-    // Update input value when date changes externally
-    useEffect(() => {
-      if (date) {
-        setInputValue(formatDateForInput(date));
-      } else {
-        setInputValue('');
-      }
-    }, [date]);
-
     return (
-      <div className="relative">
-        <input
-          type="text"
-          value={inputValue}
-          onChange={handleInputChange}
-          placeholder={placeholder}
-          className={`w-44 h-9 px-3 py-2 text-sm border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-            isEndDate && date && minDate && date < minDate 
-              ? 'border-red-500 text-red-500' 
-              : 'border-gray-300'
-          }`}
-          onFocus={() => setIsOpen(true)}
-        />
-        
-        {isOpen && (
-          <div className="absolute top-full left-0 z-50 mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
-            <CalendarComponent
-              mode="single"
-              selected={date}
-              onSelect={handleDateSelect}
-              disabled={getDisabledDates}
-              className="rounded-md"
-            />
-          </div>
-        )}
-        
-        {isEndDate && date && minDate && date < minDate && (
-          <div className="mt-1 text-xs text-red-500">
-            Ngày kết thúc phải sau ngày bắt đầu
-          </div>
-        )}
+      <div className="space-y-2">
+        <label className="text-sm font-medium">{label}</label>
+        <div className="relative group">
+          <input
+            type="date"
+            placeholder={placeholder}
+            value={value || ''}
+            onChange={(e) => onChange(e.target.value)}
+            className="h-8 w-full bg-muted/50 border-muted-foreground/20 text-foreground w-full placeholder:text-muted-foreground/60 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all duration-200 hover:border-muted-foreground/40 cursor-pointer"
+            style={{
+              colorScheme: 'dark',
+              WebkitAppearance: 'none',
+              MozAppearance: 'textfield'
+            }}
+          />
+        </div>
       </div>
     );
   };
@@ -749,25 +677,16 @@ export function Dashboard() {
                   </CardDescription>
                 </div>
                 <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-sm font-medium text-gray-700 min-w-[35px]">Từ:</span>
-                    <CustomDateInput
-                      date={scriptStartDate}
-                      onDateChange={handleScriptStartDateChange}
-                      placeholder="dd/mm/yyyy"
-                      maxDate={scriptEndDate}
-                    />
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <span className="text-sm font-medium text-gray-700 min-w-[35px]">Đến:</span>
-                    <CustomDateInput
-                      date={scriptEndDate}
-                      onDateChange={handleScriptEndDateChange}
-                      placeholder="dd/mm/yyyy"
-                      minDate={scriptStartDate}
-                      isEndDate={true}
-                    />
-                  </div>
+                  <DateInput
+                    label="Từ ngày"
+                    value={scriptStartDate}
+                    onChange={handleScriptStartDateChange}
+                  />
+                  <DateInput
+                    label="Đến ngày"
+                    value={scriptEndDate}
+                    onChange={handleScriptEndDateChange}
+                  />
                   <Button
                     variant="outline"
                     size="sm"
@@ -925,25 +844,16 @@ export function Dashboard() {
                   </CardDescription>
                 </div>
                 <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-sm font-medium text-gray-700 min-w-[35px]">Từ:</span>
-                    <CustomDateInput
-                      date={deviceStartDate}
-                      onDateChange={handleDeviceStartDateChange}
-                      placeholder="dd/mm/yyyy"
-                      maxDate={deviceEndDate}
-                    />
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <span className="text-sm font-medium text-gray-700 min-w-[35px]">Đến:</span>
-                    <CustomDateInput
-                      date={deviceEndDate}
-                      onDateChange={handleDeviceEndDateChange}
-                      placeholder="dd/mm/yyyy"
-                      minDate={deviceStartDate}
-                      isEndDate={true}
-                    />
-                  </div>
+                  <DateInput
+                    label="Từ ngày"
+                    value={deviceStartDate}
+                    onChange={handleDeviceStartDateChange}
+                  />
+                  <DateInput
+                    label="Đến ngày"
+                    value={deviceEndDate}
+                    onChange={handleDeviceEndDateChange}
+                  />
                   <Button
                     variant="outline"
                     size="sm"

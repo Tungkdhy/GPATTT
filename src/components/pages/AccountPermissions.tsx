@@ -69,7 +69,7 @@ export function AccountPermissions() {
     }
   ];
 
-
+  console.log(selectedPermission)
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -388,7 +388,7 @@ export function AccountPermissions() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa quyền của <strong>{selectedPermission?.username}</strong>?
+              Bạn có chắc chắn muốn xóa quyền <strong>{selectedPermission?.display_name}</strong>?
               Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
