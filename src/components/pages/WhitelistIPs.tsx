@@ -11,7 +11,7 @@ import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { AdvancedFilter, FilterOption } from '../common/AdvancedFilter';
 import { TablePagination } from '../common/TablePagination';
-import { Plus, Edit, Trash2, Shield, MapPin, Server, Download } from 'lucide-react';
+import { Plus, Edit, Trash2, MapPin, Server, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { blacklistIPsService } from '../../services/api';
 import { useServerPagination } from '../../hooks/useServerPagination';
@@ -36,12 +36,13 @@ export function WhitelistIPs() {
 
   // Fetch data with pagination
   const fetchIPs = async (page: number, limit: number, params: any) => {
-    const queryParams = {
+    const queryParams: any = {
       ...params
     };
 
-    if (searchTerm) {
-      queryParams.search = searchTerm;
+    // Thêm ip_public vào params nếu có searchTerm
+    if (searchTerm && searchTerm.trim()) {
+      queryParams.ip_public = searchTerm.trim();
     }
 
     if (filters.type) {
@@ -56,7 +57,7 @@ export function WhitelistIPs() {
       queryParams.location = filters.location;
     }
 
-    const response = await blacklistIPsService.getAll(page, limit, {...queryParams,ip_type:"whitelist"});
+    const response = await blacklistIPsService.getAll(page, limit, {...queryParams, ip_type: "whitelist"});
     return response;
   };
 
@@ -367,7 +368,7 @@ export function WhitelistIPs() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="type">Loại *</Label>
-                    <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
+                    <Select value={formData.type} onValueChange={(value: string) => setFormData({ ...formData, type: value })}>
                       <SelectTrigger>
                         <SelectValue placeholder="Chọn loại" />
                       </SelectTrigger>
@@ -391,7 +392,7 @@ export function WhitelistIPs() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="status">Trạng thái *</Label>
-                    <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                    <Select value={formData.status} onValueChange={(value: string) => setFormData({ ...formData, status: value })}>
                       <SelectTrigger>
                         <SelectValue placeholder="Chọn trạng thái" />
                       </SelectTrigger>
@@ -422,15 +423,22 @@ export function WhitelistIPs() {
         <CardContent>
           <div className="mb-6">
             <AdvancedFilter
-              searchPlaceholder="Tìm kiếm theo IP..."
+              searchPlaceholder="Tìm kiếm theo IP Public..."
               searchValue={searchTerm}
-              onSearchChange={setSearchTerm}
+              onSearchChange={(value) => {
+                setSearchTerm(value);
+                setCurrentPage(1); // Reset to first page when searching
+              }}
               filterOptions={filterOptions}
               filters={filters}
-              onFiltersChange={setFilters}
+              onFiltersChange={(newFilters) => {
+                setFilters(newFilters);
+                setCurrentPage(1); // Reset to first page when filtering
+              }}
               onReset={() => {
                 setSearchTerm('');
                 setFilters({});
+                setCurrentPage(1);
               }}
             />
           </div>
@@ -540,7 +548,7 @@ export function WhitelistIPs() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-type">Loại *</Label>
-              <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
+              <Select value={formData.type} onValueChange={(value: string) => setFormData({ ...formData, type: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Chọn loại" />
                 </SelectTrigger>
@@ -564,7 +572,7 @@ export function WhitelistIPs() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-status">Trạng thái *</Label>
-              <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+              <Select value={formData.status} onValueChange={(value: string) => setFormData({ ...formData, status: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Chọn trạng thái" />
                 </SelectTrigger>

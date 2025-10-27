@@ -18,7 +18,6 @@ import categoryService from '@/services/api/category.service';
 import { format } from 'date-fns';
 
 export function ScenarioLogs() {
-  const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<Record<string, any>>({
     script_id: '__all__',
     action: '__all__',
@@ -71,13 +70,13 @@ export function ScenarioLogs() {
   } = useServerPagination<ScriptHistory>(
     async (page, limit) => {
       const response = await scriptHistoriesService.getAll(page, limit, {
-        script_id: filters.script_id === '__all__' ? '' : (filters.script_id || searchTerm),
+        script_id: filters.script_id === '__all__' ? '' : filters.script_id,
         action: filters.action === '__all__' ? '' : filters.action,
         changed_by: filters.changed_by === '__all__' ? '' : filters.changed_by,
       });
       return response.data;
     },
-    [searchTerm, filters,reload]
+    [filters, reload]
   );
 
   const filterOptions: FilterOption[] = [
@@ -200,7 +199,6 @@ export function ScenarioLogs() {
   };
 
   const handleResetFilters = () => {
-    setSearchTerm('');
     setFilters({
       script_id: '__all__',
       action: '__all__',
@@ -259,9 +257,6 @@ export function ScenarioLogs() {
         <CardContent>
           <div className="mb-6">
             <AdvancedFilter
-              searchPlaceholder="Tìm kiếm theo tên kịch bản..."
-              searchValue={searchTerm}
-              onSearchChange={setSearchTerm}
               filterOptions={filterOptions}
               filters={filters}
               onFiltersChange={setFilters}

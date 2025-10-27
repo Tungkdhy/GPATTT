@@ -18,8 +18,8 @@ export interface FilterOption {
 
 interface AdvancedFilterProps {
   searchPlaceholder?: string;
-  searchValue: string;
-  onSearchChange: (value: string) => void;
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
   filterOptions?: FilterOption[];
   filters: Record<string, any>;
   onFiltersChange: (filters: Record<string, any>) => void;
@@ -27,7 +27,7 @@ interface AdvancedFilterProps {
 }
 
 export function AdvancedFilter({
-  searchPlaceholder = "Tìm kiếm...",
+  searchPlaceholder,
   searchValue,
   onSearchChange,
   filterOptions = [],
@@ -164,22 +164,25 @@ export function AdvancedFilter({
   };
 
   const activeFiltersCount = getActiveFiltersCount();
+  const showSearch = searchPlaceholder !== undefined && searchValue !== undefined && onSearchChange !== undefined;
 
   return (
     <div className="space-y-4">
       {/* Search and Filter Bar */}
       <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center space-x-2 flex-1">
-          <Search className="h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder={searchPlaceholder}
-            value={searchValue}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="max-w-sm input-focus"
-          />
-        </div>
+        {showSearch && (
+          <div className="flex items-center space-x-2 flex-1">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={searchPlaceholder}
+              value={searchValue}
+              onChange={(e) => onSearchChange!(e.target.value)}
+              className="max-w-sm input-focus"
+            />
+          </div>
+        )}
         
-        <div className="flex items-center space-x-2">
+        <div className={`flex items-center space-x-2 ${showSearch ? '' : 'ml-auto'}`}>
           {filterOptions.length > 0 && (
             <Popover open={showAdvancedFilter} onOpenChange={setShowAdvancedFilter}>
               <PopoverTrigger asChild>

@@ -35,15 +35,22 @@ axiosInstance.interceptors.response.use(
   (error) => {
     // Xử lý khi token expired
     const errorData = error.response?.data;
+    
+    // Kiểm tra các trường hợp token hết hạn
     const isTokenExpired = 
       errorData?.message === 'Token is expired' ||
       errorData?.message === 'Token đã hết hạn' ||
-      errorData?.statusCode === '10001';
+
+      (errorData?.statusCode === '10001' && errorData?.message === 'Token đã hết hạn');
     
     if (isTokenExpired) {
+      // Xóa thông tin authentication
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user');
+      
+      // Chuyển hướng về trang login
       window.location.href = '/login';
+      
       return Promise.reject(error);
     }
 

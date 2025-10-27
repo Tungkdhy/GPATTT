@@ -122,7 +122,7 @@ export function LogList() {
       label: 'Sắp xếp theo',
       type: 'select',
       options: [
-        { value: 'ts', label: 'Thời gian' },
+        // { value: 'ts', label: 'Thời gian' },
         { value: 'severity', label: 'Mức độ nghiêm trọng' },
         { value: 'type', label: 'Loại cảnh báo' },
         { value: 'created_at', label: 'Ngày tạo' }
