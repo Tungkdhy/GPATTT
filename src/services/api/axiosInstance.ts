@@ -34,7 +34,13 @@ axiosInstance.interceptors.response.use(
   },
   (error) => {
     // Xử lý khi token expired
-    if (error.response?.data?.message === 'Token is expired') {
+    const errorData = error.response?.data;
+    const isTokenExpired = 
+      errorData?.message === 'Token is expired' ||
+      errorData?.message === 'Token đã hết hạn' ||
+      errorData?.statusCode === '10001';
+    
+    if (isTokenExpired) {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user');
       window.location.href = '/login';

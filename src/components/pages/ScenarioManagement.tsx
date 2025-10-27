@@ -362,7 +362,7 @@ export function ScenarioManagement() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="mb-6">
+          {/* <div className="mb-6">
             <AdvancedFilter
               searchPlaceholder="Tìm kiếm danh mục..."
               searchValue={searchTerm}
@@ -382,7 +382,7 @@ export function ScenarioManagement() {
                 setCurrentPage(1);
               }}
             />
-          </div>
+          </div> */}
 
           <Table>
             <TableHeader>

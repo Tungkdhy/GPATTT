@@ -35,7 +35,7 @@ export function Header() {
 
       <div className="flex items-center space-x-4">
         {/* Notifications */}
-        <Button variant="ghost" size="sm" className="relative scale-hover">
+        {/* <Button variant="ghost" size="sm" className="relative scale-hover">
           <Bell className="h-5 w-5" />
           {notifications > 0 && (
             <Badge 
@@ -45,7 +45,7 @@ export function Header() {
               {notifications}
             </Badge>
           )}
-        </Button>
+        </Button> */}
 
         {/* User Menu */}
         <DropdownMenu>
@@ -75,14 +75,14 @@ export function Header() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer">
+            {/* <DropdownMenuItem className="cursor-pointer">
               <User className="mr-2 h-4 w-4" />
               <span>Thông tin cá nhân</span>
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer">
               <Settings className="mr-2 h-4 w-4" />
               <span>Cài đặt</span>
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               className="cursor-pointer text-destructive focus:text-destructive"

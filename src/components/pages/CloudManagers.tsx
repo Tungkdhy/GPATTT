@@ -272,7 +272,7 @@ export function CloudManagers() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="mb-6">
+          {/* <div className="mb-6">
             <AdvancedFilter
               searchPlaceholder="Tìm kiếm trình quản lý đám mây..."
               searchValue={name}
@@ -282,7 +282,7 @@ export function CloudManagers() {
               onFiltersChange={setFilters}
               onReset={() => setName('')}
             />
-          </div>
+          </div> */}
 
           <Table>
             <TableHeader>

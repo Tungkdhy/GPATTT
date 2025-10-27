@@ -455,7 +455,7 @@ export function BlacklistIPs() {
         <CardContent>
           <div className="mb-6">
             <AdvancedFilter
-              searchPlaceholder="Tìm kiếm IP manager..."
+              searchPlaceholder="Tìm kiếm theo IP..."
               searchValue={searchTerm}
               onSearchChange={setSearchTerm}
               filterOptions={filterOptions}
