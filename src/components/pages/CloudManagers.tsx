@@ -168,7 +168,7 @@ export function CloudManagers() {
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else {
-        toast.error('Lỗi khi xóa trình quản lý đám mây');
+        toast.error('Lỗi khi xóa ');
       }
     }
   };
@@ -176,9 +176,9 @@ export function CloudManagers() {
   return (
     <div className="space-y-6 fade-in-up">
       <div className="slide-in-left">
-        <h1>Quản lý xác thực Trình quản lý đám mây</h1>
+        <h1>Quản lý địa chỉ lưu log </h1>
         <p className="text-muted-foreground">
-          Quản lý thông tin xác thực và kết nối đến các Trình quản lý đám mây
+          Quản lý thông tin địa chỉ lưu log và kết nối đến các máy chủ
         </p>
       </div>
 
@@ -186,23 +186,23 @@ export function CloudManagers() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Danh sách Trình quản lý đám mây</CardTitle>
+              <CardTitle>Danh sách </CardTitle>
               <CardDescription>
-                Tổng cộng {cloudManagers.length} trình quản lý đám mây trong hệ thống
+                Tổng cộng {cloudManagers.length}  trong hệ thống
               </CardDescription>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="btn-animate scale-hover">
                   <Plus className="mr-2 h-4 w-4" />
-                  Thêm Trình quản lý đám mây
+                  Thêm 
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Thêm Trình quản lý đám mây mới</DialogTitle>
+                  <DialogTitle>Thêm địa chỉ lưu log</DialogTitle>
                   <DialogDescription>
-                    Thêm thông tin xác thực cho Trình quản lý đám mây mới
+                    Thêm thông tin cho địa chỉ lưu log
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
@@ -264,7 +264,7 @@ export function CloudManagers() {
                 </div>
                 <DialogFooter>
                   <Button type="submit" className="w-full" onClick={handleAdd}>
-                    Tạo Trình quản lý đám mây
+                    Tạo mới
                   </Button>
                 </DialogFooter>
               </DialogContent>

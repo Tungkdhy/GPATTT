@@ -35,6 +35,7 @@ interface DataTableProps {
   renderEditForm?: (record: any, formData: any, setFormData: (data: any) => void) => React.ReactNode;
   renderViewForm?: (record: any) => React.ReactNode;
   headerActions?: React.ReactNode;
+  hideFilter?: boolean;
 }
 
 export function DataTable({
@@ -51,7 +52,8 @@ export function DataTable({
   renderForm,
   renderEditForm,
   renderViewForm,
-  headerActions
+  headerActions,
+  hideFilter = false
 }: DataTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -264,74 +266,76 @@ export function DataTable({
               />
             </div>
             
-            <div className="flex items-center space-x-2">
-              <Popover open={showAdvancedFilter} onOpenChange={setShowAdvancedFilter}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="relative btn-animate scale-hover">
-                    <Filter className="h-4 w-4 mr-2" />
-                    Bộ lọc
-                    {activeFiltersCount > 0 && (
-                      <Badge variant="secondary" className="ml-2 h-5 w-5 rounded-full p-0 text-xs badge-bounce">
-                        {activeFiltersCount}
-                      </Badge>
-                    )}
-                    <ChevronDown className="h-4 w-4 ml-2" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80" align="end">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-medium">Bộ lọc nâng cao</h4>
+            {!hideFilter && (
+              <div className="flex items-center space-x-2">
+                <Popover open={showAdvancedFilter} onOpenChange={setShowAdvancedFilter}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="relative btn-animate scale-hover">
+                      <Filter className="h-4 w-4 mr-2" />
+                      Bộ lọc
                       {activeFiltersCount > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={clearFilters}
-                          className="h-8 px-2"
-                        >
-                          <X className="h-4 w-4 mr-1" />
-                          Xóa tất cả
-                        </Button>
+                        <Badge variant="secondary" className="ml-2 h-5 w-5 rounded-full p-0 text-xs badge-bounce">
+                          {activeFiltersCount}
+                        </Badge>
                       )}
+                      <ChevronDown className="h-4 w-4 ml-2" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80" align="end">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium">Bộ lọc nâng cao</h4>
+                        {activeFiltersCount > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={clearFilters}
+                            className="h-8 px-2"
+                          >
+                            <X className="h-4 w-4 mr-1" />
+                            Xóa tất cả
+                          </Button>
+                        )}
+                      </div>
+                      <Separator />
+                      
+                      {columns
+                        .filter(col => col.filterable)
+                        .map((column) => (
+                          <div key={column.key} className="space-y-2">
+                            <Label className="text-sm font-medium">{column.title}</Label>
+                            {column.filterType === 'select' && column.filterOptions ? (
+                              <Select
+                                value={filters[column.key] || 'all'}
+                                onValueChange={(value:any) => updateFilter(column.key, value)}
+                              >
+                                <SelectTrigger className="h-8">
+                                  <SelectValue placeholder="Tất cả" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="all">Tất cả</SelectItem>
+                                  {column.filterOptions.map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                      {option.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <Input
+                                placeholder={`Lọc theo ${column.title.toLowerCase()}`}
+                                value={filters[column.key] || ''}
+                                onChange={(e) => updateFilter(column.key, e.target.value)}
+                                className="h-8"
+                              />
+                            )}
+                          </div>
+                        ))}
                     </div>
-                    <Separator />
-                    
-                    {columns
-                      .filter(col => col.filterable)
-                      .map((column) => (
-                        <div key={column.key} className="space-y-2">
-                          <Label className="text-sm font-medium">{column.title}</Label>
-                          {column.filterType === 'select' && column.filterOptions ? (
-                            <Select
-                              value={filters[column.key] || 'all'}
-                              onValueChange={(value:any) => updateFilter(column.key, value)}
-                            >
-                              <SelectTrigger className="h-8">
-                                <SelectValue placeholder="Tất cả" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="all">Tất cả</SelectItem>
-                                {column.filterOptions.map((option) => (
-                                  <SelectItem key={option.value} value={option.value}>
-                                    {option.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <Input
-                              placeholder={`Lọc theo ${column.title.toLowerCase()}`}
-                              value={filters[column.key] || ''}
-                              onChange={(e) => updateFilter(column.key, e.target.value)}
-                              className="h-8"
-                            />
-                          )}
-                        </div>
-                      ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
           </div>
 
           <Table>

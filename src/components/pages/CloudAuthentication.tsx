@@ -144,9 +144,9 @@ export function CloudAuthentication() {
     <div className="space-y-6 fade-in-up">
       <div className="slide-in-left flex justify-between items-center">
         <div>
-          <h1>Quản lý xác</h1>
+          <h1>Quản lý xác thực</h1>
           <p className="text-muted-foreground">
-            Quản lý token xác thực cho các Quản lý đám mây
+            Quản lý token xác thực
           </p>
         </div>
         <div className="flex gap-2">
@@ -156,15 +156,14 @@ export function CloudAuthentication() {
           </Button>
         </div>
       </div>
-git
       {/* Stats Cards */}
     
 
       <Card className="card-hover">
         <CardHeader>
-          <CardTitle>Danh sách Quản lý đám mây</CardTitle>
+          <CardTitle>Danh sách xác thực</CardTitle>
           <CardDescription>
-            Hiển thị {cloudManagers.length} Quản lý đám mây trên trang {currentPage} / {totalPages}
+            Hiển thị {cloudManagers.length} xác thực trên trang {currentPage} / {totalPages}
           </CardDescription>
         </CardHeader>
         <CardContent>

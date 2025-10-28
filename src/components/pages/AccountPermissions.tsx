@@ -257,7 +257,7 @@ export function AccountPermissions() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="mb-6">
+          {/* <div className="mb-6">
             <AdvancedFilter
               searchPlaceholder="Tìm kiếm người dùng..."
               searchValue={search}
@@ -267,7 +267,7 @@ export function AccountPermissions() {
               onFiltersChange={setFilters}
               onReset={() => setSearch('')}
             />
-          </div>
+          </div> */}
 
           <Table>
             <TableHeader>

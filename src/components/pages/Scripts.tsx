@@ -405,7 +405,7 @@ export function Scripts() {
                       )}
                     </div>
                     <Separator />
-                    
+{/*                     
                     <div className="space-y-2">
                       <Label className="text-sm font-medium">Tên file rule</Label>
                       <Input
@@ -414,7 +414,7 @@ export function Scripts() {
                         onChange={(e) => setFilters({ ...filters, rule_file_name: e.target.value })}
                         className="h-8"
                       />
-                    </div>
+                    </div> */}
 
                     <div className="space-y-2">
                       <Label className="text-sm font-medium">Loại kịch bản</Label>

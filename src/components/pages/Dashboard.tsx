@@ -17,7 +17,11 @@ import {
   Calendar,
   RefreshCw
 } from 'lucide-react';
-import { PieChart, Pie, Cell, Legend, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+// @ts-ignore
+import { Pie } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 import scenariosService from '@/services/api/scenarios.service';
 import devicesService from '@/services/api/devices.service';
@@ -793,38 +797,55 @@ export function Dashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex justify-center">
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie
-                    data={[
-                      { name: 'Đã xuất bản', value: stats.scripts.published, color: '#10b981' },
-                      { name: 'Chưa xuất bản', value: stats.scripts.unpublished, color: '#f59e0b' }
-                    ]}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    innerRadius={30}
-                    fill="#8884d8"
-                    dataKey="value"
-                    paddingAngle={5}
-                  >
-                    {[
-                      { name: 'Đã xuất bản', value: stats.scripts.published, color: '#10b981' },
-                      { name: 'Chưa xuất bản', value: stats.scripts.unpublished, color: '#f59e0b' }
-                    ].map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Legend 
-                    verticalAlign="bottom" 
-                    height={36}
-                    wrapperStyle={{ paddingTop: '15px' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+            <div className="w-full">
+              <Pie
+                data={{
+                  labels: ['Đã xuất bản', 'Chưa xuất bản'],
+                  datasets: [
+                    {
+                      data: [stats.scripts.published, stats.scripts.unpublished],
+                      backgroundColor: ['#10b981', '#f59e0b'],
+                      borderWidth: 2,
+                      borderColor: 'rgba(255, 255, 255, 0.1)',
+                    },
+                  ],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: { 
+                      position: 'bottom' as const,
+                      labels: {
+                        padding: 10,
+                        font: {
+                          size: 10,
+                          weight: 'bold' as const,
+                        },
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        color: '#e2e8f0',
+                        boxWidth: 8,
+                        boxHeight: 8,
+                      },
+                    },
+                    tooltip: {
+                      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                      titleColor: '#fff',
+                      bodyColor: '#fff',
+                      borderColor: 'rgba(255, 255, 255, 0.1)',
+                      borderWidth: 1,
+                      padding: 12,
+                    },
+                  },
+                  layout: {
+                    padding: {
+                      bottom: 5,
+                    },
+                  },
+                }}
+                style={{ height: 240, width: '100%' }}
+              />
             </div>
           </CardContent>
         </Card>
@@ -980,40 +1001,59 @@ export function Dashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex justify-center">
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie
-                    data={[
-                      { name: 'Hoạt động', value: stats.deviceStats.statusBreakdown.active, color: '#10b981' },
-                      { name: 'Cảnh báo', value: stats.deviceStats.statusBreakdown.warning, color: '#f59e0b' },
-                      { name: 'Offline', value: stats.deviceStats.statusBreakdown.offline, color: '#ef4444' }
-                    ]}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    innerRadius={30}
-                    fill="#8884d8"
-                    dataKey="value"
-                    paddingAngle={5}
-                  >
-                    {[
-                      { name: 'Hoạt động', value: stats.deviceStats.statusBreakdown.active, color: '#10b981' },
-                      { name: 'Cảnh báo', value: stats.deviceStats.statusBreakdown.warning, color: '#f59e0b' },
-                      { name: 'Offline', value: stats.deviceStats.statusBreakdown.offline, color: '#ef4444' }
-                    ].map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Legend 
-                    verticalAlign="bottom" 
-                    height={36}
-                    wrapperStyle={{ paddingTop: '15px' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+            <div className="w-full">
+              <Pie
+                data={{
+                  labels: ['Hoạt động', 'Cảnh báo', 'Offline'],
+                  datasets: [
+                    {
+                      data: [
+                        stats.deviceStats.statusBreakdown.active,
+                        stats.deviceStats.statusBreakdown.warning,
+                        stats.deviceStats.statusBreakdown.offline,
+                      ],
+                      backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                      borderWidth: 2,
+                      borderColor: 'rgba(255, 255, 255, 0.1)',
+                    },
+                  ],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: { 
+                      position: 'bottom' as const,
+                      labels: {
+                        padding: 10,
+                        font: {
+                          size: 10,
+                          weight: 'bold' as const,
+                        },
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        color: '#e2e8f0',
+                        boxWidth: 8,
+                        boxHeight: 8,
+                      },
+                    },
+                    tooltip: {
+                      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                      titleColor: '#fff',
+                      bodyColor: '#fff',
+                      borderColor: 'rgba(255, 255, 255, 0.1)',
+                      borderWidth: 1,
+                      padding: 12,
+                    },
+                  },
+                  layout: {
+                    padding: {
+                      bottom: 5,
+                    },
+                  },
+                }}
+                style={{ height: 240, width: '100%' }}
+              />
             </div>
           </CardContent>
         </Card>
@@ -1111,89 +1151,100 @@ export function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[280px]">
-              {((stats.alerts.typeBreakdown || stats.alerts.type_breakdown) || []).length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={(stats.alerts.typeBreakdown || stats.alerts.type_breakdown || []).slice(0, 6).map(item => ({
+            <div className="w-full">
+              {(() => {
+                const alertTypeBreakdown = (stats.alerts.typeBreakdown || stats.alerts.type_breakdown) || [];
+                const hasData = alertTypeBreakdown.length > 0;
+                
+                // Prepare chart data
+                const chartData = hasData 
+                  ? alertTypeBreakdown.slice(0, 6).map(item => ({
                       name: item.type.replace(/_/g, ' '),
                       value: item.count,
-                      color: getAlertTypeColor(item.type)
-                    })).length > 0 ? (stats.alerts.typeBreakdown || stats.alerts.type_breakdown || []).slice(0, 6).map(item => ({
-                      name: item.type.replace(/_/g, ' '),
-                      value: item.count,
-                      color: getAlertTypeColor(item.type)
-                    })) : [
-                      { name: 'AI MALWARE DETECT', value: 307, color: '#ef4444' },
-                      { name: 'TCP CONNECT SCAN', value: 40, color: '#f97316' },
-                      { name: 'SYN SCAN', value: 20, color: '#eab308' },
-                      { name: 'BRUTE FORCE', value: 2, color: '#8b5cf6' },
-                      { name: 'HIGH USAGE', value: 2, color: '#06b6d4' },
-                      { name: 'WEIRD FLAG SCAN', value: 1, color: '#84cc16' }
-                    ]}
-                  margin={{
-                    top: 20,
-                    right: 30,
-                    left: 20,
-                    bottom: 60,
-                  }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" opacity={0.5} />
-                  <XAxis 
-                    dataKey="name" 
-                    angle={-45}
-                    textAnchor="end"
-                    height={80}
-                    fontSize={12}
-                    interval={0}
-                  />
-                  <YAxis 
-                    fontSize={12}
-                    tickFormatter={(value) => value.toLocaleString()}
-                  />
-                  <Tooltip 
-                    formatter={(value: any) => [value.toLocaleString(), 'Số lượng cảnh báo']}
-                    labelFormatter={(label) => `Loại: ${label}`}
-                    contentStyle={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.98)',
-                      border: '2px solid #e5e7eb',
-                      borderRadius: '12px',
-                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-                      fontSize: '14px',
-                      fontWeight: '500'
+                      color: getAlertTypeColor(item.type),
+                      type: item.type
+                    }))
+                  : [
+                      { name: 'AI MALWARE DETECT', value: 307, color: '#ef4444', type: 'AI_MALWARE_DETECT' },
+                      { name: 'TCP CONNECT SCAN', value: 40, color: '#f97316', type: 'TCP_CONNECT_SCAN' },
+                      { name: 'SYN SCAN', value: 20, color: '#eab308', type: 'SYN_SCAN' },
+                      { name: 'BRUTE FORCE', value: 2, color: '#8b5cf6', type: 'BRUTE_FORCE' },
+                      { name: 'HIGH USAGE', value: 2, color: '#06b6d4', type: 'HIGH_USAGE' },
+                      { name: 'WEIRD FLAG SCAN', value: 1, color: '#84cc16', type: 'WEIRD_FLAG_SCAN' }
+                    ];
+
+                if (!hasData && stats.alerts.total === 0) {
+                  return (
+                    <div className="flex items-center justify-center h-[240px] text-muted-foreground">
+                      <div className="text-center">
+                        <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                        <p className="text-lg font-medium">Không có dữ liệu cảnh báo</p>
+                        <p className="text-sm">Dữ liệu sẽ hiển thị khi có cảnh báo mới</p>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <Pie
+                    data={{
+                      labels: chartData.map(item => item.name),
+                      datasets: [
+                        {
+                          data: chartData.map(item => item.value),
+                          backgroundColor: chartData.map(item => item.color),
+                          borderWidth: 2,
+                          borderColor: 'rgba(255, 255, 255, 0.1)',
+                        },
+                      ],
                     }}
-                    labelStyle={{
-                      color: '#374151',
-                      fontWeight: '600',
-                      fontSize: '14px'
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { 
+                          position: 'bottom' as const,
+                          labels: {
+                            padding: 10,
+                            font: {
+                              size: 9,
+                              weight: 'bold' as const,
+                            },
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            color: '#e2e8f0',
+                            boxWidth: 6,
+                            boxHeight: 6,
+                          },
+                        },
+                        tooltip: {
+                          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                          titleColor: '#fff',
+                          bodyColor: '#fff',
+                          borderColor: 'rgba(255, 255, 255, 0.1)',
+                          borderWidth: 1,
+                          padding: 12,
+                          callbacks: {
+                            label: function(context: any) {
+                              const label = context.label || '';
+                              const value = context.parsed || 0;
+                              const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+                              const percentage = ((value / total) * 100).toFixed(1);
+                              return `${label}: ${value.toLocaleString()} (${percentage}%)`;
+                            },
+                          },
+                        },
+                      },
+                      layout: {
+                        padding: {
+                          bottom: 5,
+                        },
+                      },
                     }}
+                    style={{ height: 240, width: '100%' }}
                   />
-                  <Bar 
-                    dataKey="value" 
-                    radius={[6, 6, 0, 0]}
-                    maxBarSize={80}
-                    fill="#ef4444"
-                  >
-                    {((stats.alerts.typeBreakdown || stats.alerts.type_breakdown) || []).slice(0, 6).map((item, index) => (
-                      <Cell 
-                        key={`cell-${index}`} 
-                        fill={getAlertTypeColor(item.type)}
-                        stroke={getAlertTypeColor(item.type)}
-                        strokeWidth={2}
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-              ) : (
-                <div className="flex items-center justify-center h-full text-muted-foreground">
-                  <div className="text-center">
-                    <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                    <p className="text-lg font-medium">Không có dữ liệu cảnh báo</p>
-                    <p className="text-sm">Dữ liệu sẽ hiển thị khi có cảnh báo mới</p>
-                  </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
           </CardContent>
         </Card>

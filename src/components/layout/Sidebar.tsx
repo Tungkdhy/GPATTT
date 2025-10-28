@@ -147,7 +147,7 @@ const menuItems: MenuItem[] = [
       { id: 'software-versions', label: 'Phiên bản phần mềm', icon: Package, path: '/software-versions' },
       { id: 'category-type', label: 'Loại danh mục', icon: List, path: '/category-type' },
       { id: 'regions', label: 'Danh mục khu vực', icon: MapPin, path: '/regions' },
-      { id: 'cloud-authentication', label: 'Xác thực Cloud', icon: Key, path: '/cloud-authentication' },
+      { id: 'cloud-authentication', label: 'Quản lý xác thực', icon: Key, path: '/cloud-authentication' },
       { id: 'system-backup', label: 'Sao lưu & Phục hồi', icon: Database, path: '/system-backup' },
     ]
   },

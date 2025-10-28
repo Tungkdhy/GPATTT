@@ -1493,6 +1493,7 @@ export function FirewallConfigs() {
         renderForm={(formData, setFormData) => renderForm(formData, setFormData, selectedConfigType, setSelectedConfigType, aliasTypes)}
         renderEditForm={(record, formData, setFormData) => renderEditForm(record, formData, setFormData, aliasTypes)}
         renderViewForm={renderViewForm}
+        hideFilter={true}
         headerActions={
           <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
             <DialogTrigger asChild>
