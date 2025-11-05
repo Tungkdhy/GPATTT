@@ -18,13 +18,35 @@ export function Header() {
   const [notifications] = useState(3); // Mock notification count
 
   // Get user initials for avatar
-  const getUserInitials = (username: string) => {
-    return username
+  const getUserInitials = (name: string) => {
+    if (!name) return 'U';
+    return name
       .split(' ')
       .map(word => word[0])
       .join('')
       .toUpperCase()
       .slice(0, 2);
+  };
+
+  // Get display name from user
+  const getDisplayName = () => {
+    if (user?.display_name) return user.display_name;
+    if (user?.user_name) return user.user_name;
+    return 'User';
+  };
+
+  // Get role display name
+  const getRoleDisplayName = () => {
+    if (user?.role?.display_name) return user.role.display_name;
+    if (user?.role?.code) return user.role.code;
+    return 'User';
+  };
+
+  // Get email
+  const getEmail = () => {
+    if (user?.email) return user.email;
+    if (user?.user_name) return `${user.user_name}@example.com`;
+    return '';
   };
 
   return (
@@ -55,14 +77,14 @@ export function Header() {
               className="flex items-center space-x-3 h-auto py-2 px-3 scale-hover"
             >
               <Avatar className="h-8 w-8">
-                <AvatarImage src="" alt={user?.username || 'User'} />
+                <AvatarImage src="" alt={getDisplayName()} />
                 <AvatarFallback className="bg-primary text-primary-foreground">
-                  {getUserInitials(user?.username || 'Admin')}
+                  {getUserInitials(getDisplayName())}
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col items-start">
-                <span className="text-sm font-medium">{user?.username || 'Admin'}</span>
-                <span className="text-xs text-muted-foreground">{user?.role || 'Administrator'}</span>
+                <span className="text-sm font-medium">{getDisplayName()}</span>
+                <span className="text-xs text-muted-foreground">{getRoleDisplayName()}</span>
               </div>
               <ChevronDown className="h-4 w-4 text-muted-foreground" />
             </Button>
@@ -70,8 +92,8 @@ export function Header() {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium">{user?.username || 'Admin'}</p>
-                <p className="text-xs text-muted-foreground">{user?.email || 'admin@example.com'}</p>
+                <p className="text-sm font-medium">{getDisplayName()}</p>
+                <p className="text-xs text-muted-foreground">{getEmail() || 'No email'}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />

@@ -587,7 +587,7 @@ export function Dashboard() {
                 {stats.devices} thiết bị
               </Badge>
             </div>
-            <Progress value={stats.devices > 0 ? 95 : 0} className="h-2" />
+            <Progress value={stats.devices > 0 ? 100 : 0} className="h-2" />
             
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
@@ -598,7 +598,7 @@ export function Dashboard() {
                 {stats.malware} hash
               </Badge>
             </div>
-            <Progress value={stats.malware > 0 ? 88 : 0} className="h-2" />
+            <Progress value={stats.malware > 0 ? 100 : 0} className="h-2" />
             
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
@@ -609,7 +609,7 @@ export function Dashboard() {
                 {stats.blacklistIPs} IP
               </Badge>
             </div>
-            <Progress value={stats.blacklistIPs > 0 ? 75 : 0} className="h-2" />
+            <Progress value={stats.blacklistIPs > 0 ? 100 : 0} className="h-2" />
             
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">

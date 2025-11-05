@@ -80,6 +80,7 @@ export function ScenarioManagement() {
     totalPages,
     total,
     loading,
+    error: categoriesError,
     setCurrentPage,
     pageSize,
     refresh
@@ -93,6 +94,16 @@ export function ScenarioManagement() {
      // Add search term to server params
     }
   );
+
+  // Handle error notification when fetching categories fails
+  useEffect(() => {
+    if (categoriesError) {
+      const errorMessage = (categoriesError as any)?.response?.data?.message 
+        || (categoriesError as any)?.message 
+        || 'Lỗi khi tải danh sách danh mục kịch bản';
+      toast.error(errorMessage);
+    }
+  }, [categoriesError]);
 
   // Fetch category types
   const fetchCategoryTypes = async () => {
