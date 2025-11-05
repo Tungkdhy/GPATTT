@@ -109,6 +109,25 @@ interface SyncStatus {
   };
 }
 
+// Helper function to get default dates (3 months ago to today)
+const getDefaultDates = () => {
+  const today = new Date();
+  const threeMonthsAgo = new Date();
+  threeMonthsAgo.setMonth(today.getMonth() - 3);
+  
+  const formatDate = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  
+  return {
+    startDate: formatDate(threeMonthsAgo),
+    endDate: formatDate(today)
+  };
+};
+
 export function Dashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     scenarios: 0,
@@ -143,10 +162,22 @@ export function Dashboard() {
     }
   });
   const [loading, setLoading] = useState(true);
-  const [deviceStartDate, setDeviceStartDate] = useState<string>('');
-  const [deviceEndDate, setDeviceEndDate] = useState<string>('');
-  const [scriptStartDate, setScriptStartDate] = useState<string>('');
-  const [scriptEndDate, setScriptEndDate] = useState<string>('');
+  const [deviceStartDate, setDeviceStartDate] = useState<string>(() => {
+    const { startDate } = getDefaultDates();
+    return startDate;
+  });
+  const [deviceEndDate, setDeviceEndDate] = useState<string>(() => {
+    const { endDate } = getDefaultDates();
+    return endDate;
+  });
+  const [scriptStartDate, setScriptStartDate] = useState<string>(() => {
+    const { startDate } = getDefaultDates();
+    return startDate;
+  });
+  const [scriptEndDate, setScriptEndDate] = useState<string>(() => {
+    const { endDate } = getDefaultDates();
+    return endDate;
+  });
   const [refreshing, setRefreshing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>({
     alert_sync: {
@@ -1268,7 +1299,7 @@ export function Dashboard() {
                     <Activity className="h-5 w-5 text-blue-500" />
                   </div>
                   <div>
-                    <p className="font-medium text-sm">Alert Sync</p>
+                    <p className="font-medium text-sm">Đồng bộ cảnh báo</p>
                     <p className="text-xs text-muted-foreground">
                       {syncStatus.alert_sync.isRunning ? 'Đang chạy' : 'Đã dừng'}
                     </p>
@@ -1310,7 +1341,7 @@ export function Dashboard() {
                     <Database className="h-5 w-5 text-purple-500" />
                   </div>
                   <div>
-                    <p className="font-medium text-sm">Cấu hình Alert Sync</p>
+                    <p className="font-medium text-sm">Cấu hình đồng bộ cảnh báo</p>
                     <p className="text-xs text-muted-foreground">Thông số đồng bộ cảnh báo</p>
                   </div>
                 </div>

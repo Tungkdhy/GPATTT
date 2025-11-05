@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -38,12 +38,23 @@ export function UserManagement() {
   });
   const {
     data: users,
+    error: usersError,
   } = useServerPagination(
     (page, limit) => usersService.getAll(page, limit, { name: name }),
     [name,reload], // dependencies: ví dụ [searchTerm, filters]
     { pageSize: 10, initialPage: 1 },
     { name }
   );
+
+  // Handle error notification when fetching users fails
+  useEffect(() => {
+    if (usersError) {
+      const errorMessage = (usersError as any)?.response?.data?.message 
+        || (usersError as any)?.message 
+        || 'Lỗi khi tải danh sách người dùng';
+      toast.error(errorMessage);
+    }
+  }, [usersError]);
   const { options } = useMultiSelect([
 
     { key: "roles", fetcher: () => roleService.getAll(1, 10000), mapper: roleMapper },
