@@ -87,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password: password
       });
       
-      console.log(res);
+      // console.log(res);
       
       if (res.data) {
         setIsAuthenticated(true);
