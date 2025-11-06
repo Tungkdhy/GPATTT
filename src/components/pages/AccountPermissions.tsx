@@ -27,7 +27,8 @@ export function AccountPermissions() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedPermission, setSelectedPermission] = useState<any>(null);
   const [reload, setReload] = useState(false)
-  const [search, setSearch] = useState("")
+  const [searchInput, setSearchInput] = useState("") // Giá trị hiển thị trong input
+  const [search, setSearch] = useState("") // Giá trị thực tế để gửi API
   const [formData, setFormData] = useState({
     display_name: "",
     description: ""
@@ -39,6 +40,7 @@ export function AccountPermissions() {
     total,
     loading,
     setCurrentPage,
+    error: permissionsError,
   } = useServerPagination(
     (page, limit) => accountPermissionsService.getAll(page, limit, { search: search }),
     [search, reload], // dependencies: ví dụ [searchTerm, filters]
@@ -150,11 +152,38 @@ export function AccountPermissions() {
   };
   useEffect(() => {
     const fetchAction = async () => {
-      const res = await actionService.getAll(1, 10000)
-      setActions(res.rows)
+      try {
+        const res = await actionService.getAll(1, 10000)
+        setActions(res.rows)
+      } catch (error: any) {
+        const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi tải danh sách quyền hạn';
+        toast.error(errorMessage);
+      }
     }
     fetchAction()
   }, [])
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchInput);
+      setCurrentPage(1);
+    }, 500); // Debounce 500ms
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchInput, setCurrentPage]);
+
+  // Handle error notification when fetching permissions fails
+  useEffect(() => {
+    if (permissionsError) {
+      const errorMessage = (permissionsError as any)?.response?.data?.message 
+        || (permissionsError as any)?.message 
+        || 'Lỗi khi tải danh sách quyền tài khoản';
+      toast.error(errorMessage);
+    }
+  }, [permissionsError]);
   const togglePermission = (actionId: string) => {
     const current = actionSelect || [];
     const exists = current.includes(actionId);
@@ -289,17 +318,17 @@ export function AccountPermissions() {
           </div>
         </CardHeader>
         <CardContent>
-          {/* <div className="mb-6">
+          <div className="mb-6">
             <AdvancedFilter
-              searchPlaceholder="Tìm kiếm người dùng..."
-              searchValue={search}
-              onSearchChange={setSearch}
-              filterOptions={filterOptions}
+              searchPlaceholder="Tìm kiếm quyền tài khoản..."
+              searchValue={searchInput}
+              onSearchChange={setSearchInput}
+              filterOptions={[]}
               filters={filters}
               onFiltersChange={setFilters}
-              onReset={() => setSearch('')}
+              onReset={() => setSearchInput('')}
             />
-          </div> */}
+          </div>
 
           <Table>
             <TableHeader>
