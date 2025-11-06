@@ -133,8 +133,8 @@ export function LogList() {
       label: 'Thứ tự',
       type: 'select',
       options: [
-        { value: 'DESC', label: 'Giảm dần' },
-        { value: 'ASC', label: 'Tăng dần' }
+        { value: 'DESC', label: 'Tăng dần' },
+        { value: 'ASC', label: 'Giảm dần' }
       ]
     }
   ];
