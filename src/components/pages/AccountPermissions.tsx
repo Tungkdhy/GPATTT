@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from '../ui/checkbox';
 import { AdvancedFilter, FilterOption } from '../common/AdvancedFilter';
 import { Plus, Edit, Trash2, Key } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { useServerPagination } from '@/hooks/useServerPagination';
 import { accountPermissionsService, actionService, roleService } from '@/services/api';
 
@@ -46,40 +46,39 @@ export function AccountPermissions() {
     { search }
 
   );
-  const filterOptions: FilterOption[] = [
-    {
-      key: 'role',
-      label: 'Vai trò',
-      type: 'select',
-      options: [
-        { value: 'Admin', label: 'Admin' },
-        { value: 'Security', label: 'Security' },
-        { value: 'Operator', label: 'Operator' },
-        { value: 'Viewer', label: 'Viewer' }
-      ]
-    },
-    {
-      key: 'status',
-      label: 'Trạng thái',
-      type: 'select',
-      options: [
-        { value: 'active', label: 'Hoạt động' },
-        { value: 'inactive', label: 'Không hoạt động' }
-      ]
-    }
-  ];
+  // const filterOptions: FilterOption[] = [
+  //   {
+  //     key: 'role',
+  //     label: 'Vai trò',
+  //     type: 'select',
+  //     options: [
+  //       { value: 'Admin', label: 'Admin' },
+  //       { value: 'Security', label: 'Security' },
+  //       { value: 'Operator', label: 'Operator' },
+  //       { value: 'Viewer', label: 'Viewer' }
+  //     ]
+  //   },
+  //   {
+  //     key: 'status',
+  //     label: 'Trạng thái',
+  //     type: 'select',
+  //     options: [
+  //       { value: 'active', label: 'Hoạt động' },
+  //       { value: 'inactive', label: 'Không hoạt động' }
+  //     ]
+  //   }
+  // ];
 
-  console.log(selectedPermission)
 
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case 'Admin': return 'bg-red-500/10 text-red-500 border-red-500/20';
-      case 'Security': return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
-      case 'Operator': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-      case 'Viewer': return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
-      default: return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
-    }
-  };
+  // const getRoleColor = (role: string) => {
+  //   switch (role) {
+  //     case 'Admin': return 'bg-red-500/10 text-red-500 border-red-500/20';
+  //     case 'Security': return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
+  //     case 'Operator': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+  //     case 'Viewer': return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
+  //     default: return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
+  //   }
+  // };
 
   const handleAdd = async () => {
     try {
@@ -87,8 +86,10 @@ export function AccountPermissions() {
       console.log(res);
       await roleService.createAction({id:res.data.data.id,actionIds:actionSelect})
       toast.success('Thêm quyền quyền thành công!');
-      setReload(!reload)
-      setIsDialogOpen(false)
+      setReload(!reload);
+      setIsDialogOpen(false);
+      setFormData({ description: '', display_name: '' });
+      setActionSelect([]);
     }
     catch (e: any) {
       console.log(e);
@@ -118,9 +119,11 @@ export function AccountPermissions() {
         id:id,
         actionIds:actionSelect
       })
+      setReload(!reload);
       setIsEditDialogOpen(false);
       setSelectedPermission(null);
       setFormData({ description: '', display_name: '' });
+      setActionSelect([]);
       toast.success('Cập nhật quyền thành công!');
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi cập nhật quyền';
@@ -159,6 +162,20 @@ export function AccountPermissions() {
     setActionSelect(next);
   };
 
+  const toggleSelectAll = () => {
+    const current = actionSelect || [];
+    const allSelected = actions.length > 0 && actions.every((action: any) => current.includes(action.id));
+    if (allSelected) {
+      // Bỏ chọn tất cả
+      setActionSelect([]);
+    } else {
+      // Chọn tất cả
+      setActionSelect(actions.map((action: any) => action.id));
+    }
+  };
+
+  const isAllSelected = actions.length > 0 && actions.every((action: any) => (actionSelect || []).includes(action.id));
+
 
   return (
     <div className="space-y-6 fade-in-up">
@@ -178,7 +195,13 @@ export function AccountPermissions() {
                 Tổng cộng {permissions?.length} tài khoản đã được phân quyền
               </CardDescription>
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog open={isDialogOpen} onOpenChange={(open: boolean) => {
+              setIsDialogOpen(open);
+              if (!open) {
+                setFormData({ description: '', display_name: '' });
+                setActionSelect([]);
+              }
+            }}>
               <DialogTrigger asChild>
                 <Button className="btn-animate scale-hover">
                   <Plus className="mr-2 h-4 w-4" />
@@ -219,9 +242,18 @@ export function AccountPermissions() {
                     {/* Box chứa danh sách quyền — để lớn hơn và scroll khi có nhiều mục */}
                     <div style={{ height: 300 }} className="overflow-y-auto scroll-bar-1 border rounded-md p-3 bg-white shadow-sm">
                       {/* Header nhỏ (tuỳ chọn) */}
-                      <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center justify-between mb-2 pb-2 border-b">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="select-all-add"
+                            checked={isAllSelected}
+                            onCheckedChange={toggleSelectAll}
+                          />
+                          <label htmlFor="select-all-add" className="text-sm font-medium cursor-pointer select-none">
+                            Chọn tất cả
+                          </label>
+                        </div>
                         <div className="text-sm text-muted-foreground">Tổng: {actions.length} mục</div>
-                        <div className="text-xs text-muted-foreground">Scroll để xem tất cả</div>
                       </div>
 
                       {/* Container scrollable */}
@@ -310,7 +342,15 @@ export function AccountPermissions() {
         </CardContent>
       </Card>
 
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog open={isEditDialogOpen} onOpenChange={(open: boolean) => {
+        setIsEditDialogOpen(open);
+        if (!open) {
+          setSelectedPermission(null);
+          setFormData({ description: '', display_name: '' });
+          setActionSelect([]);
+          setId("");
+        }
+      }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Chỉnh sửa quyền</DialogTitle>
@@ -346,9 +386,18 @@ export function AccountPermissions() {
                 {/* Box chứa danh sách quyền — để lớn hơn và scroll khi có nhiều mục */}
                 <div style={{ height: 300 }} className="overflow-y-auto scroll-bar-1 border rounded-md p-3 bg-white shadow-sm">
                   {/* Header nhỏ (tuỳ chọn) */}
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-2 pb-2 border-b">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="select-all-edit"
+                        checked={isAllSelected}
+                        onCheckedChange={toggleSelectAll}
+                      />
+                      <label htmlFor="select-all-edit" className="text-sm font-medium cursor-pointer select-none">
+                        Chọn tất cả
+                      </label>
+                    </div>
                     <div className="text-sm text-muted-foreground">Tổng: {actions.length} mục</div>
-                    <div className="text-xs text-muted-foreground">Scroll để xem tất cả</div>
                   </div>
 
                   {/* Container scrollable */}

@@ -95,11 +95,11 @@ export function BlacklistIPs() {
         { value: 'inactive', label: 'Không hoạt động' }
       ]
     },
-    {
-      key: 'location',
-      label: 'Vị trí',
-      type: 'text'
-    }
+    // {
+    //   key: 'location',
+    //   label: 'Vị trí',
+    //   type: 'text'
+    // }
   ];
 
   const getStatusColor = (status: string) => {

@@ -9,7 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Plus, Edit, Trash2 } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { useServerPagination } from '@/hooks/useServerPagination';
 import { actionService, categoryService } from '@/services/api';
 import { useMultiSelect } from '@/hooks/useMultiSelect';

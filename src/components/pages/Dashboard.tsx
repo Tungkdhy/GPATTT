@@ -610,7 +610,7 @@ export function Dashboard() {
               </Badge>
             </div>
             <Progress value={stats.blacklistIPs > 0 ? 100 : 0} className="h-2" />
-            
+{/*             
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <FileText className="h-4 w-4" />
@@ -620,10 +620,7 @@ export function Dashboard() {
                 {stats.logProgress}%
               </Badge>
             </div>
-            <Progress value={stats.logProgress} className="h-2" />
-            
-
-           
+            <Progress value={stats.logProgress} className="h-2" /> */}
           </CardContent>
         </Card>
 
@@ -688,12 +685,12 @@ export function Dashboard() {
             
 
             
-            <div className="pt-4 border-t">
+            {/* <div className="pt-4 border-t">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Trạng thái tải log:</span>
                 <span className="font-medium">{stats.logProgress}%</span>
               </div>
-            </div>
+            </div> */}
           </CardContent>
         </Card>
       </div>
@@ -1301,7 +1298,7 @@ export function Dashboard() {
                   <div>
                     <p className="font-medium text-sm">Đồng bộ cảnh báo</p>
                     <p className="text-xs text-muted-foreground">
-                      {syncStatus.alert_sync.isRunning ? 'Đang chạy' : 'Đã dừng'}
+                      {syncStatus.alert_sync.isRunning ? 'Đang chạy' : 'Hoàn thành'}
                     </p>
                   </div>
                 </div>
@@ -1321,7 +1318,7 @@ export function Dashboard() {
                   <div>
                     <p className="font-medium text-sm">Command Polling</p>
                     <p className="text-xs text-muted-foreground">
-                      {syncStatus.command_polling.isPolling ? 'Đang polling' : 'Đã dừng'}
+                      {syncStatus.command_polling.isPolling ? 'Đang polling' : 'Hoàn thành'}
                     </p>
                   </div>
                 </div>
@@ -1406,7 +1403,7 @@ export function Dashboard() {
                   <span className="text-sm font-medium">Alert Sync</span>
                 </div>
                 <Badge variant={syncStatus.alert_sync.isRunning ? "default" : "secondary"}>
-                  {syncStatus.alert_sync.isRunning ? 'Hoạt động' : 'Dừng'}
+                  {syncStatus.alert_sync.isRunning ? 'Hoạt động' : 'Hoàn thành'}
                 </Badge>
               </div>
 
@@ -1416,7 +1413,7 @@ export function Dashboard() {
                   <span className="text-sm font-medium">Command Polling</span>
                 </div>
                 <Badge variant={syncStatus.command_polling.isPolling ? "default" : "secondary"}>
-                  {syncStatus.command_polling.isPolling ? 'Hoạt động' : 'Dừng'}
+                  {syncStatus.command_polling.isPolling ? 'Hoạt động' : 'Hoàn thành'}
                 </Badge>
               </div>
 
