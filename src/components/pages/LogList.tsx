@@ -767,7 +767,7 @@ export function LogList() {
                   <div className="col-span-2 text-sm font-mono text-xs break-all">{selectedAlert.file_hash}</div>
                 </div>
               )}
-              {selectedAlert.yara_rule && (
+              {selectedAlert?.yara_rule && (
                 <div className="grid grid-cols-3 gap-2">
                   <div className="text-sm text-muted-foreground">YARA Rule:</div>
                   <div className="col-span-2 text-sm font-mono text-xs">{selectedAlert.yara_rule}</div>
@@ -775,15 +775,15 @@ export function LogList() {
               )}
               <div className="grid grid-cols-3 gap-2">
                 <div className="text-sm text-muted-foreground">Thiết bị:</div>
-                <div className="col-span-2 text-sm">{selectedAlert.agent.device_name}</div>
+                <div className="col-span-2 text-sm">{selectedAlert?.agent?.device_name}</div>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div className="text-sm text-muted-foreground">Ngày tạo:</div>
-                <div className="col-span-2 text-sm">{new Date(selectedAlert.created_at).toLocaleString('vi-VN')}</div>
+                <div className="col-span-2 text-sm">{new Date(selectedAlert?.created_at).toLocaleString('vi-VN')}</div>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div className="text-sm text-muted-foreground">Cập nhật:</div>
-                <div className="col-span-2 text-sm">{new Date(selectedAlert.updated_at).toLocaleString('vi-VN')}</div>
+                <div className="col-span-2 text-sm">{new Date(selectedAlert?.updated_at).toLocaleString('vi-VN')}</div>
               </div>
             </div>
           )}
