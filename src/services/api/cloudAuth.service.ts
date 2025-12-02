@@ -68,6 +68,12 @@ class CloudAuthService {
     const response = await axiosInstance.delete(`/cloud-managers/${cloudId}/tokens`);
     return response.data;
   }
+
+  // Gia hạn token của cloud manager
+  async renewToken(cloudId: string): Promise<any> {
+    const response = await axiosInstance.post(`/cloud-managers/${cloudId}/tokens/renew`);
+    return response.data;
+  }
 }
 
 export default new CloudAuthService();

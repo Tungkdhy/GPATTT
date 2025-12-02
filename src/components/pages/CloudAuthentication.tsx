@@ -5,7 +5,7 @@ import { Badge } from '../ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
-import { Eye, Trash2, RefreshCw, Key, AlertCircle, XCircle } from 'lucide-react';
+import { Eye, Trash2, RefreshCw, Key, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import cloudAuthService, { CloudAuthManager, TokenDetails } from '@/services/api/cloudAuth.service';
 import { TablePagination } from '../common/TablePagination';
@@ -26,6 +26,8 @@ export function CloudAuthentication() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleteTokenDialogOpen, setIsDeleteTokenDialogOpen] = useState(false);
+  const [isRenewTokenDialogOpen, setIsRenewTokenDialogOpen] = useState(false);
+  const [isRenewing, setIsRenewing] = useState(false);
 
   // Fetch cloud managers
   const fetchCloudManagers = async () => {
@@ -103,6 +105,11 @@ export function CloudAuthentication() {
     setIsDeleteTokenDialogOpen(true);
   };
 
+  const handleRenewTokenClick = (cloud: CloudAuthManager) => {
+    setSelectedCloud(cloud);
+    setIsRenewTokenDialogOpen(true);
+  };
+
   const handleDeleteToken = async () => {
     if (!selectedCloud) return;
     
@@ -115,6 +122,24 @@ export function CloudAuthentication() {
     } catch (error: any) {
       const errorMsg = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi xóa token';
       toast.error(errorMsg);
+    }
+  };
+
+  const handleRenewToken = async () => {
+    if (!selectedCloud) return;
+
+    try {
+      setIsRenewing(true);
+      await cloudAuthService.renewToken(selectedCloud.id);
+      toast.success('Đã gia hạn Token thành công!');
+      setIsRenewTokenDialogOpen(false);
+      setSelectedCloud(null);
+      setReload(!reload);
+    } catch (error: any) {
+      const errorMsg = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi gia hạn token';
+      toast.error(errorMsg);
+    } finally {
+      setIsRenewing(false);
     }
   };
 
@@ -218,6 +243,17 @@ export function CloudAuthentication() {
                               title="Xóa mã xác thực"
                             >
                               <XCircle className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {cloud.token_details && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="scale-hover text-blue-500" 
+                              onClick={() => handleRenewTokenClick(cloud)}
+                              title="Gia hạn Token"
+                            >
+                              <Key className="h-4 w-4" />
                             </Button>
                           )}
                           <Button 
@@ -372,6 +408,24 @@ export function CloudAuthentication() {
             <AlertDialogCancel>Hủy</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteToken} className="bg-orange-600 text-white hover:bg-orange-700">
               Xóa Token
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Renew Token Dialog */}
+      <AlertDialog open={isRenewTokenDialogOpen} onOpenChange={setIsRenewTokenDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận gia hạn Token</AlertDialogTitle>
+            <AlertDialogDescription>
+              Hệ thống sẽ yêu cầu tạo token mới cho Cloud Manager này. Tiếp tục?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isRenewing}>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRenewToken} className="bg-blue-600 text-white hover:bg-blue-700" disabled={isRenewing}>
+              {isRenewing ? 'Đang gia hạn...' : 'Gia hạn Token'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

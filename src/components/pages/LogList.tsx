@@ -6,9 +6,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import { AdvancedFilter, FilterOption } from '../common/AdvancedFilter';
-import { Eye, AlertTriangle, Edit, Trash2, RefreshCw, Download, CheckCircle } from 'lucide-react';
+import { Eye, AlertTriangle, Edit, Trash2, RefreshCw, Download, CheckCircle, Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import { alertsService, Alert, UpdateAlertDto, AlertsParams, AlertStats } from '@/services/api';
+import { alertsService, Alert, UpdateAlertDto, AlertsParams, AlertStats, CreateAlertDto } from '@/services/api';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -24,6 +24,7 @@ export function LogList() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   // const [isDeleteMultipleDialogOpen, setIsDeleteMultipleDialogOpen] = useState(false);
   const [reload, setReload] = useState(false);
   
@@ -51,6 +52,16 @@ export function LogList() {
     summary: '',
     is_processed: 0
   });
+
+  const [createFormData, setCreateFormData] = useState<CreateAlertDto>({
+    agent_id: '',
+    hostname: '',
+    ts: Math.floor(Date.now() / 1000),
+    type: '',
+    severity: 'low',
+    count: '1'
+  });
+  const [isCreating, setIsCreating] = useState(false);
 
   // Fetch data
   const fetchAlerts = async () => {
@@ -176,6 +187,18 @@ export function LogList() {
     setIsEditDialogOpen(true);
   };
 
+  const handleCreateClick = () => {
+    setCreateFormData({
+      agent_id: '',
+      hostname: '',
+      ts: Math.floor(Date.now() / 1000),
+      type: '',
+      severity: 'low',
+      count: '1'
+    });
+    setIsCreateDialogOpen(true);
+  };
+
   const handleEdit = async () => {
     if (!selectedAlert) return;
     
@@ -209,6 +232,54 @@ export function LogList() {
     } catch (error: any) {
       const errorMsg = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi xóa cảnh báo';
       toast.error(errorMsg);
+    }
+  };
+
+  const handleCreate = async () => {
+    if (!createFormData.agent_id.trim()) {
+      toast.error('Vui lòng nhập Agent ID');
+      return;
+    }
+    if (!createFormData.hostname.trim()) {
+      toast.error('Vui lòng nhập Hostname');
+      return;
+    }
+    if (!createFormData.type.trim()) {
+      toast.error('Vui lòng nhập loại cảnh báo');
+      return;
+    }
+    if (!createFormData.severity) {
+      toast.error('Vui lòng chọn mức độ cảnh báo');
+      return;
+    }
+    if (!createFormData.count.trim() || Number(createFormData.count) <= 0) {
+      toast.error('Số lượng phải lớn hơn 0');
+      return;
+    }
+    if (!Number.isFinite(createFormData.ts) || createFormData.ts <= 0) {
+      toast.error('Timestamp không hợp lệ');
+      return;
+    }
+
+    try {
+      setIsCreating(true);
+      await alertsService.create({
+        agent_id: createFormData.agent_id,
+        hostname: createFormData.hostname,
+        ts: Math.floor(createFormData.ts),
+        type: createFormData.type,
+        severity: createFormData.severity,
+        count: createFormData.count
+      });
+      toast.success('Đã thêm Log mới thành công!');
+      setIsCreateDialogOpen(false);
+      setReload(!reload);
+      fetchStats();
+    } catch (error: any) {
+      const errorMsg = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi thêm Log';
+      toast.error(errorMsg);
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -323,6 +394,10 @@ export function LogList() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button size="sm" onClick={handleCreateClick} className="scale-hover">
+            <Plus className="h-4 w-4 mr-2" />
+            Thêm mới Log
+          </Button>
           {/* {selectedAlerts.size > 0 && (
             <>
               <Button 
@@ -458,23 +533,23 @@ export function LogList() {
                         />
                       </TableCell> */}
                       <TableCell>
-                        <Badge variant="outline" className={getTypeColor(alert.type)}>
-                          {alert.type}
+                        <Badge variant="outline" className={getTypeColor(alert?.type)}>
+                          {alert?.type}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={getSeverityColor(alert.severity)}>
-                          {alert.severity === 'low' ? 'Thấp' :
-                           alert.severity === 'medium' ? 'TB' :
-                           alert.severity === 'high' ? 'Cao' : 'NT'}
+                        <Badge variant="outline" className={getSeverityColor(alert?.severity)}>
+                          {alert?.severity === 'low' ? 'Thấp' :
+                           alert?.severity === 'medium' ? 'TB' :
+                           alert?.severity === 'high' ? 'Cao' : 'NT'}
                         </Badge>
                       </TableCell>
-                      <TableCell className="font-medium">{alert.hostname}</TableCell>
-                      <TableCell className="max-w-xs truncate">{alert.source}</TableCell>
-                      <TableCell className="max-w-xs truncate">{alert.summary}</TableCell>
-                      <TableCell className="text-sm">{formatTimestamp(alert.ts)}</TableCell>
+                      <TableCell className="font-medium">{alert?.hostname}</TableCell>
+                      <TableCell className="max-w-xs truncate">{alert?.source}</TableCell>
+                      <TableCell className="max-w-xs truncate">{alert?.summary}</TableCell>
+                      <TableCell className="text-sm">{formatTimestamp(alert?.ts)}</TableCell>
                       <TableCell>
-                        {alert.is_processed === 1 ? (
+                        {alert?.is_processed === 1 ? (
                           <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
                             Đã xử lý
                           </Badge>
@@ -486,12 +561,12 @@ export function LogList() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end space-x-2">
-                          {alert.is_processed === 0 && (
+                          {alert?.is_processed === 0 && (
                             <Button 
                               variant="ghost" 
                               size="sm" 
                               className="scale-hover text-green-500" 
-                              onClick={() => handleMarkAsProcessed(alert.id)}
+                              onClick={() => handleMarkAsProcessed(alert?.id)}
                             >
                               <CheckCircle className="h-4 w-4" />
                             </Button>
@@ -526,6 +601,94 @@ export function LogList() {
           )}
         </CardContent>
       </Card>
+
+      {/* Create Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Thêm Log mới</DialogTitle>
+            <DialogDescription>
+              Nhập thông tin để thêm Log mới vào hệ thống
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="create_agent_id">Agent ID</Label>
+              <Input
+                id="create_agent_id"
+                value={createFormData.agent_id}
+                onChange={(e) => setCreateFormData({ ...createFormData, agent_id: e.target.value })}
+                placeholder="Nhập Agent ID"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="create_hostname">Hostname</Label>
+              <Input
+                id="create_hostname"
+                value={createFormData.hostname}
+                onChange={(e) => setCreateFormData({ ...createFormData, hostname: e.target.value })}
+                placeholder="Nhập hostname"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="create_type">Loại cảnh báo</Label>
+              <Input
+                id="create_type"
+                value={createFormData.type}
+                onChange={(e) => setCreateFormData({ ...createFormData, type: e.target.value })}
+                placeholder="Nhập loại cảnh báo"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="create_severity">Mức độ</Label>
+              <Select
+                value={createFormData.severity}
+                onValueChange={(value: string) => setCreateFormData({ ...createFormData, severity: value as CreateAlertDto['severity'] })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Thấp</SelectItem>
+                  <SelectItem value="medium">Trung bình</SelectItem>
+                  <SelectItem value="high">Cao</SelectItem>
+                  <SelectItem value="critical">Nghiêm trọng</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="create_ts">Timestamp (giây)</Label>
+              <Input
+                id="create_ts"
+                type="number"
+                min="0"
+                value={createFormData.ts.toString()}
+                onChange={(e) => setCreateFormData({ ...createFormData, ts: Number(e.target.value) })}
+                placeholder="Nhập timestamp (giây)"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="create_count">Số lượng</Label>
+              <Input
+                id="create_count"
+                type="number"
+                min="1"
+                value={createFormData.count}
+                onChange={(e) => setCreateFormData({ ...createFormData, count: e.target.value })}
+                placeholder="Nhập số lượng"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} disabled={isCreating}>
+              Hủy
+            </Button>
+            <Button onClick={handleCreate} disabled={isCreating}>
+              {isCreating ? 'Đang thêm...' : 'Thêm'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Detail Dialog */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>

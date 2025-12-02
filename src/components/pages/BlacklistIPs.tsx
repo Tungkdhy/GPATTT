@@ -367,7 +367,7 @@ export function BlacklistIPs() {
                 <DialogTrigger asChild>
                   <Button className="btn-animate scale-hover">
                     <Plus className="mr-2 h-4 w-4" />
-                    Thêm IP đen
+                    Thêm danh sách IP đen
                   </Button>
                 </DialogTrigger>
               <DialogContent className="sm:max-w-md">
