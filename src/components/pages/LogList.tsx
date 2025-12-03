@@ -104,6 +104,19 @@ export function LogList() {
     fetchStats();
   }, [reload]);
 
+  // Auto refresh every 4 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Only refresh if not loading and no dialogs are open
+      if (!loading && !isDetailOpen && !isEditDialogOpen && !isDeleteDialogOpen && !isCreateDialogOpen) {
+        fetchAlerts();
+        fetchStats();
+      }
+    }, 4000); // 4 seconds
+
+    return () => clearInterval(interval);
+  }, [loading, isDetailOpen, isEditDialogOpen, isDeleteDialogOpen, isCreateDialogOpen]);
+
   const startIndex = (currentPage - 1) * pageSize + 1;
   const endIndex = Math.min(currentPage * pageSize, total);
 
